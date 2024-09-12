@@ -73,6 +73,10 @@ html::-webkit-scrollbar {
     color: #ad82ce;
 }
 
+.grey {
+    color: #c6c4c4;
+}
+
 .death {
     color: #f00000;
 }
