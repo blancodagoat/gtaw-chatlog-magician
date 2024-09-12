@@ -1,0 +1,70 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #24282e;
+    color: #ffffff;
+}
+
+.textarea-input {
+    background-color: #1e1e1e;
+    color: #fff;
+    border: 1px solid #555;
+}
+
+#output {
+    background-color: #1e1e1e;
+    border-radius: 5px;
+    padding: 10px;
+    color: #fff;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.generated {
+    display: inline;
+    background-color: #333;
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1.8;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+/* Color classes */
+.me { color: #ad82ce; }
+.death { color: #f00000; }
+.yellow { color: #fbf724; }
+.orange, .whisper { color: #f5b120; }
+.blue { color: #3896f3; }
+.grey { color: #c6c4c4; }
+.green, .money { color: #56d64b; }
+.white { color: #ffffff; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    #output {
+        padding: 5px;
+    }
+}
