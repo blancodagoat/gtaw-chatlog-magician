@@ -1,4 +1,4 @@
-﻿$(document).ready(function () {
+$(document).ready(function () {
   let applyBackground = false;
 
   $("#toggleBackground").click(function () {
@@ -84,14 +84,15 @@
     } else if (lowerLine.startsWith("you placed")) {
       return '<span class="orange">' + line + "</span>";
     } else if (
-      lowerLine.startsWith("you gave") ||
-      lowerLine.includes("paid you")
-    ) {
-      return (
-        '<span class="green">' +
-        line.replace(/(\$[\d,]+)/, '<span class="green">$1</span>') +
-        "</span>"
-      );
+      lowerLine.startsWith("you gave") || 
+  lowerLine.includes("paid you") || 
+  lowerLine.includes("you received")
+) {
+  return (
+    '<span class="green">' +
+    line.replace(/(\$[\d,]+)/, '<span class="green">$1</span>') +
+    "</span>"
+  );
     } else if (lowerLine.includes("from the property")) {
       return '<span class="death">' + line + "</span>";
     } else if (lowerLine.startsWith("[phone]")) {
@@ -192,7 +193,7 @@
   }
 
   function addLineBreaksAndHandleSpans(text) {
-    const maxLineLength = 100;
+    const maxLineLength = 77;
     let result = "";
     let currentLineLength = 0;
     let inSpan = false;
@@ -248,10 +249,10 @@
   function applyStyles() {
     $(".generated:first").css({
       "margin-top": "0",
-      "padding-top": "0px",
+      "padding-top": "1px",
     });
     $(".generated:last").css({
-      "padding-bottom": "0px",
+      "padding-bottom": "1px",
       "margin-bottom": "0",
     });
     $(".generated").css("background-color", "transparent");
