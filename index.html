@@ -50,7 +50,7 @@
           </div>
         </div>
         <div class="opacity-50">
-          <i> Mwah. </i>
+          <i> Please refer to <a href="https://community.ls-rp.com/forums/topic/13619-chatlog-magician/">this topic</a> for usage. </i>
         </div>
       </div>
       <div class="output" id="output"></div>
@@ -64,36 +64,145 @@
     <script src="js/download.js"></script>
     <script>
       $(document).ready(function() {
-        let scaleEnabled = false;
-        $("#scaleToggle").change(function() {
-          scaleEnabled = $(this).is(":checked");
+  let scaleEnabled = false;
+
+  // Dynamic Font Size Handling
+  $('#font-label').on('input', function() {
+    let fontSize = $(this).val() + 'px';
+    $('.textarea-input').css('font-size', fontSize); // Apply font size to textarea
+    $('#output').css('font-size', fontSize);         // Apply font size to the output
+  });
+
+  // Scale toggle for high-resolution images
+  $("#scaleToggle").change(function() {
+    scaleEnabled = $(this).is(":checked");
+  });
+
+  // Function to trim transparent areas from the canvas
+  function trimCanvas(canvas) {
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imgData.data;
+
+    let top = 0, bottom = canvas.height, left = 0, right = canvas.width;
+
+    // Find top boundary
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        let alpha = pixels[(y * canvas.width + x) * 4 + 3]; // Alpha value
+        if (alpha > 0) {
+          top = y;
+          break;
+        }
+      }
+      if (top !== 0) break;
+    }
+
+    // Find bottom boundary
+    for (let y = canvas.height - 1; y >= 0; y--) {
+      for (let x = 0; x < canvas.width; x++) {
+        let alpha = pixels[(y * canvas.width + x) * 4 + 3]; // Alpha value
+        if (alpha > 0) {
+          bottom = y;
+          break;
+        }
+      }
+      if (bottom !== canvas.height) break;
+    }
+
+    // Find left boundary
+    for (let x = 0; x < canvas.width; x++) {
+      for (let y = 0; y < canvas.height; y++) {
+        let alpha = pixels[(y * canvas.width + x) * 4 + 3]; // Alpha value
+        if (alpha > 0) {
+          left = x;
+          break;
+        }
+      }
+      if (left !== 0) break;
+    }
+
+    // Find right boundary
+    for (let x = canvas.width - 1; x >= 0; x--) {
+      for (let y = 0; y < canvas.height; y++) {
+        let alpha = pixels[(y * canvas.width + x) * 4 + 3]; // Alpha value
+        if (alpha > 0) {
+          right = x;
+          break;
+        }
+      }
+      if (right !== canvas.width) break;
+    }
+
+    // Create a trimmed canvas
+    let trimmedCanvas = document.createElement('canvas');
+    trimmedCanvas.width = right - left + 1;
+    trimmedCanvas.height = bottom - top + 1;
+
+    trimmedCanvas.getContext('2d').putImageData(ctx.getImageData(left, top, trimmedCanvas.width, trimmedCanvas.height), 0, 0);
+
+    return trimmedCanvas;
+  }
+
+  // Download the output as an image, trimming transparent areas
+  $("#downloadOutputTransparent").click(function() {
+    let scale = scaleEnabled ? 2 : 1; // Apply scaling based on toggle
+    let output = $("#output");
+
+    // Temporarily add extra bottom padding to prevent cutoff
+    let extraPaddingBottom = "30px";
+    let originalPadding = output.css("padding");
+    output.css({
+      "padding-top": "0",
+      "padding-bottom": extraPaddingBottom,
+    });
+
+    // Ensure the layout updates before capturing the image
+    output[0].offsetHeight; // Force reflow
+
+    // Capture the output element as an image
+    domtoimage.toBlob(document.getElementById("output"), {
+      width: output.width() * scale,
+      height: output.height() * scale + 30,  // Adjust height dynamically based on output
+      style: {
+        transform: `scale(${scale})`,
+        transformOrigin: "top left",
+      },
+    }).then(function(blob) {
+      // Create an image object to load the blob into the canvas
+      let img = new Image();
+      img.src = URL.createObjectURL(blob);
+      
+      img.onload = function() {
+        let canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        let ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        // Trim the transparent areas
+        let trimmedCanvas = trimCanvas(canvas);
+
+        // Convert the trimmed canvas to a blob and download it
+        trimmedCanvas.toBlob(function(trimmedBlob) {
+          window.saveAs(trimmedBlob, new Date().toLocaleString().replaceAll(",", "_")
+            .replaceAll(" ", "_").replaceAll("/", "-")
+            .replace("__", "_").replaceAll(":", "-") + "_chatlog.png");
+          
+          // Restore original padding after download
+          output.css("padding", originalPadding);
         });
-        $("#downloadOutputTransparent").click(function() {
-          let scale = scaleEnabled ? 2 : 1;
-          let output = $("#output");
-          let originalPadding = output.css("padding");
-          let extraPaddingBottom = "30px";
-          output.css({
-            "padding-top": "0",
-            "padding-bottom": extraPaddingBottom,
-          });
-          output[0].offsetHeight;
-          domtoimage.toBlob(document.getElementById("output"), {
-            width: output.width() * scale,
-            height: (output.height() + 30) * scale,
-            style: {
-              transform: `scale(${scale})`,
-              transformOrigin: "top left",
-            },
-          }).then(function(blob) {
-            window.saveAs(blob, new Date().toLocaleString().replaceAll(",", "_").replaceAll(" ", "_").replaceAll("/", "-").replace("__", "_").replaceAll(":", "-") + "_chatlog.png");
-            output.css("padding", originalPadding);
-          });
-        });
-        $("#toggleBackground").click(function() {
-          $("#output").toggleClass("background-active");
-        });
-      });
+      };
+    });
+  });
+
+  // Toggle background for output
+  $("#toggleBackground").click(function() {
+    $("#output").toggleClass("background-active");
+  });
+});
+
     </script>
     <script src="js/parse-text.js"></script>
     <script src="js/chat.js"></script>
