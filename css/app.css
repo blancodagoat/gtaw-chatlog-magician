@@ -133,7 +133,7 @@ html::-webkit-scrollbar {
 
 .logo-overlay {
     position: absolute;
-    top: 24%;
+    top: 23%;
     left: 50%;
     transform: translate(-50%, -40%);
     pointer-events: none;
