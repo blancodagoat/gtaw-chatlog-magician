@@ -8,7 +8,7 @@
     <meta name="modified by" content="blanco" />
     <meta name="description" content="Chatlog Magician for GTA World" />
     <meta name="keywords" content="GTAW, GTAWorld, GTA World, RAGE MP, chatlog magician, chatlog, magician" />
-    <title>Chatlog Magician</title>
+    <title>聊天记录魔术师</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.8.1/dist/css/foundation.min.css" />
     <link href="css/app.css" rel="stylesheet" />
     <link rel="icon" href="favicon.png" />
@@ -25,7 +25,7 @@
       ::placeholder {
         color: black;
       }
-      /* Add this rule to hide the placeholder */
+      /* 添加此规则以隐藏占位符 */
       #chatlogInput::placeholder {
         color: transparent;
       }
@@ -33,55 +33,55 @@
   </head>
   <body>
     <div class="grid-container">
-      <!-- Main Content -->
+      <!-- 主要内容 -->
       <div class="grid-x grid-margin-x">
         <div class="cell small-12">
-          <!-- Character Name and Font Size Settings -->
+          <!-- 角色名称和字体大小设置 -->
           <div class="grid-x grid-margin-x align-middle">
             <div class="cell small-4 medium-2">
-              <label for="font-label">Font Size:</label>
+              <label for="font-label">字体大小:</label>
               <input name="font-label" id="font-label" type="number" min="10" max="64" value="12" />
             </div>
             <div class="cell small-8 medium-10">
-              <label for="characterNameInput">Character Name Filter:</label>
+              <label for="characterNameInput">角色名称过滤器:</label>
               <div class="input-group">
-                <input type="text" id="characterNameInput" placeholder="Enter character name" />
+                <input type="text" id="characterNameInput" placeholder="输入你的角色名称" />
                 <div class="input-group-button">
-                  <button class="button small" onclick="applyFilter()">Apply</button>
+                  <button class="button small" onclick="applyFilter()">应用</button>
                 </div>
               </div>
             </div>
           </div>
-          <!-- Textarea for Chat Log Input -->
-          <label for="chatlogInput">Chat Log:</label>
+          <!-- 聊天记录输入文本区域 -->
+          <label for="chatlogInput">聊天记录:</label>
           <div class="textarea-container">
-            <textarea id="chatlogInput" class="form-control textarea-input" rows="15" placeholder="Enter your chat log here..."></textarea>
+            <textarea id="chatlogInput" class="form-control textarea-input" rows="15" placeholder="在这里插入你的聊天记录..."></textarea>
             <div class="logo-overlay">
               <img src="logo.png" alt="Logo" />
             </div>
           </div>
-          <!-- Button Group and High-Resolution Toggle -->
+          <!-- 按钮组和高分辨率切换 -->
           <div class="grid-x grid-margin-x align-middle">
             <div class="cell auto">
-              <button id="downloadOutputTransparent" class="button success"> Download </button>
-              <button id="toggleBackground" class="button secondary"> Toggle Background </button>
+              <button id="downloadOutputTransparent" class="button success"> 下载图片 </button>
+              <button id="toggleBackground" class="button secondary"> 隐藏背景 </button>
             </div>
             <div class="cell shrink">
               <div class="switch large">
                 <input class="switch-input" id="scaleToggle" type="checkbox" name="scale-toggle" />
                 <label class="switch-paddle" for="scaleToggle">
-                  <span class="switch-active" aria-hidden="true">2x</span>
-                  <span class="switch-inactive" aria-hidden="true">1x</span>
+                  <span class="switch-active" aria-hidden="true">2倍</span>
+                  <span class="switch-inactive" aria-hidden="true">1倍</span>
                 </label>
               </div>
             </div>
           </div>
-          <!-- Output Area -->
+          <!-- 输出区域 -->
           <div class="output" id="output"></div>
         </div>
       </div>
     </div>
-    <!-- Scripts -->
+    <!-- 插件 -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/foundation-sites@6.8.1/dist/js/foundation.min.js"></script>
     <script>
@@ -90,26 +90,26 @@
     <script src="js/download-img.js"></script>
     <script src="js/download.js"></script>
     <script>
-      // Move scaleEnabled outside so it can be accessed globally
+      // 将scaleEnabled移到外部，以便可以全局访问。
       let scaleEnabled = false;
       $(document).ready(function() {
-        // Dynamic Font Size Handling
+        // 动态字体大小处理
         function updateFontSize() {
           let fontSize = $('#font-label').val() + 'px';
-          $('.textarea-input').css('font-size', fontSize); // Apply font size to textarea
-          $('#output').css('font-size', fontSize); // Apply font size to the output
+          $('.textarea-input').css('font-size', fontSize); // 将字体大小应用于文本区域
+          $('#output').css('font-size', fontSize); // 将字体大小应用于输出
         }
-        // Initialize font size on page load
+        // 加载页面时初始化字体大小
         updateFontSize();
-        // Update font size when the font size input changes
+        // 当输入的字体大小发生变化时，更新字体大小
         $('#font-label').on('input', updateFontSize);
-        // Scale toggle for high-resolution images
+        // 高分辨率图像的比例切换
         $("#scaleToggle").change(function() {
           scaleEnabled = $(this).is(":checked");
         });
-        // Rest of your existing code...
+        // 您现有代码的其他部分...
       });
-      // Function to trim transparent areas from the canvas
+      // 裁剪画布透明区域的功能
       function trimCanvas(canvas) {
         const ctx = canvas.getContext("2d");
         const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -164,7 +164,7 @@
         trimmedCanvas.getContext("2d").putImageData(ctx.getImageData(left, top, trimmedCanvas.width, trimmedCanvas.height), 0, 0);
         return trimmedCanvas;
       }
-      // Download the output as an image, trimming transparent areas
+      // 将输出结果下载为图像，修剪透明区域
       $("#downloadOutputTransparent").click(function() {
         let scale = scaleEnabled ? 2 : 1;
         let output = $("#output");
@@ -174,7 +174,7 @@
           "padding-top": "0",
           "padding-bottom": extraPaddingBottom,
         });
-        output[0].offsetHeight; // Force reflow
+        output[0].offsetHeight; // 强制回流
         domtoimage.toBlob(document.getElementById("output"), {
           width: output.width() * scale,
           height: output.height() * scale + 30,
@@ -199,7 +199,7 @@
           };
         });
       });
-      // Toggle background for output
+      // 切换输出背景
       $("#toggleBackground").click(function() {
         $("#output").toggleClass("background-active");
       });

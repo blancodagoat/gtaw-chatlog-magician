@@ -90,7 +90,7 @@
         return lowerLine.includes(characterName) ? wrapSpan("radioColor", line) : wrapSpan("radioColor2", line);
     }
 
-    if (lowerLine.includes("says:") || lowerLine.includes("shouts:")) {
+    if (lowerLine.includes("说:") || lowerLine.includes("大喊:")) {
         if (!characterName) {
             return wrapSpan("white", line);
         }
@@ -108,38 +108,38 @@
     const lowerLine = line.toLowerCase();
 
     if (line.startsWith("*")) return wrapSpan("me", line);
-    if (lowerLine.includes("whispers:")) return handleWhispers(line);
-    if (lowerLine.includes("says (cellphone):")) return handleCellphone(line);
-    if (lowerLine.includes("says [low]:")) return wrapSpan("grey", line);
-    if (lowerLine.includes("says:") || lowerLine.includes("shouts:"))
+    if (lowerLine.includes("密语:")) return handleWhispers(line);
+    if (lowerLine.includes("说 (手机):")) return handleCellphone(line);
+    if (lowerLine.includes("说 [悄悄地]:")) return wrapSpan("grey", line);
+    if (lowerLine.includes("说:") || lowerLine.includes("大喊:"))
       return wrapSpan("white", line);
     if (
-      lowerLine.includes("(goods)") ||
+      lowerLine.includes("(商品)") ||
       lowerLine.match(/(.+?)\s+x(\d+)\s+\((\d+g)\)/)
     )
       return handleGoods(line);
-    if (lowerLine.includes("[megaphone]:")) return wrapSpan("yellow", line);
-    if (lowerLine.startsWith("info:")) return formatInfo(line);
-    if (lowerLine.includes("you have received $")) return colorMoneyLine(line);
-    if (lowerLine.includes("[drug lab]")) return formatDrugLab();
+    if (lowerLine.includes("[扩音器]:")) return wrapSpan("yellow", line);
+    if (lowerLine.startsWith("信息:")) return formatInfo(line);
+    if (lowerLine.includes("向您的银行账户转账了 $")) return colorMoneyLine(line);
+    if (lowerLine.includes("[药品工厂]")) return formatDrugLab();
     if (lowerLine.includes("[character kill]")) return formatCharacterKill(line);
-    if (lowerLine.startsWith("[info]")) return colorInfoLine(line);
-    if (/\[.*? intercom\]/i.test(lowerLine)) return formatIntercom(line);
-    if (lowerLine.startsWith("you placed")) return wrapSpan("orange", line);
-    if (lowerLine.includes("from the property")) return wrapSpan("death", line);
-    if (lowerLine.startsWith("[phone]")) return colorPhoneLine(line);
-    if (lowerLine.startsWith("use /phonecursor")) return formatPhoneCursor(line);
-    if (lowerLine.includes("has shown you their")) return formatShown(line);
+    if (lowerLine.startsWith("[信息]")) return colorInfoLine(line);
+    if (/\[.*? 无线电\]/i.test(lowerLine)) return formatIntercom(line);
+    if (lowerLine.startsWith("你将")) return wrapSpan("orange", line);
+    if (lowerLine.includes("从资产")) return wrapSpan("death", line);
+    if (lowerLine.startsWith("[手机]")) return colorPhoneLine(line);
+    if (lowerLine.startsWith("使用 /phonecursor")) return formatPhoneCursor(line);
+    if (lowerLine.includes("向您出示了他的")) return formatShown(line);
     if (
-      lowerLine.includes("you have successfully sent your current location")
+      lowerLine.includes("您已成功发送当前位置信息")
     )
       return wrapSpan("green", line);
-      if (lowerLine.includes("you received a location from"))
+      if (lowerLine.includes("您收到了新的位置信息, 来自"))
         return colorLocationLine(line);
       if (
-        lowerLine.includes("you gave") ||
-        lowerLine.includes("paid you") ||
-        lowerLine.includes("you received")
+        lowerLine.includes("您将") ||
+        lowerLine.includes("支付了您") ||
+        lowerLine.includes("您收到了")
       )
         return handleTransaction(line);
 
@@ -151,7 +151,7 @@
   }
 
   function handleWhispers(line) {
-    return line.startsWith("(Car)")
+    return line.startsWith("(车中)")
       ? wrapSpan("yellow", line)
       : wrapSpan("whisper", line);
   }
@@ -181,12 +181,12 @@
     const amountMatch = line.match(/\$(\d+)/);
     const objectMatch = line.match(/from the (.+)$/i);
     return amountMatch && objectMatch
-      ? `<span class="orange">Info:</span> <span class="white">You took</span> <span class="green">$${amountMatch[1]}</span> <span class="white">from the ${objectMatch[1]}</span>`
+      ? `<span class="orange">信息:</span> <span class="white">You took</span> <span class="green">$${amountMatch[1]}</span> <span class="white">from the ${objectMatch[1]}</span>`
       : line;
   }
 
   function formatDrugLab() {
-    return '<span class="orange">[DRUG LAB]</span> <span class="white">Drug production has started.</span>';
+    return '<span class="orange">[药品工厂]</span> <span class="white">药品已经开始生产.</span>';
   }
 
   function formatCharacterKill(line) {
@@ -199,19 +199,19 @@
 
   function formatIntercom(line) {
     return line.replace(
-      /\[(.*?) intercom\]: (.*)/i,
-      '<span class="blue">[$1 Intercom]: $2</span>'
+      /\[(.*?) 无线电\]: (.*)/i,
+      '<span class="blue">[$1 无线电]: $2</span>'
     );
   }
 
   function formatPhoneCursor(line) {
-    return '<span class="white">Use <span class="yellow">/phonecursor (/pc)</span> to activate the cursor to use the phone.</span>';
+    return '<span class="white">使用 <span class="yellow">/phonecursor (/pc)</span> 激活光标以使用电话.</span>';
   }
 
   function formatShown(line) {
     return `<span class="green">${line.replace(
-      /their (.+)\./,
-      'their <span class="white">$1</span>.'
+      /他的 (.+)\./,
+      '他的 <span class="white">$1</span>.'
     )}</span>`;
   }
 
@@ -227,8 +227,8 @@
   function colorMoneyLine(line) {
     return line
       .replace(
-        /You have received \$(\d+)/,
-        '<span class="white">You have received </span><span class="green">$$$1</span>'
+        /向您的银行账户转账了 \$(\d+)/,
+        '<span class="white">向您的银行账户转账了 </span><span class="green">$$$1</span>'
       )
       .replace(
         /from (.+) on your bank account\./,
@@ -238,23 +238,23 @@
 
   function colorPhoneLine(line) {
     return line
-      .replace(/\[PHONE\]/, '<span class="white">$&</span>')
+      .replace(/\[手机\]/, '<span class="white">$&</span>')
       .replace(
-        /Your (.+?) is ringing/,
-        '<span class="white">Your </span><span class="yellow">$1</span><span class="white"> is ringing</span>'
+        /您的 (.+?) 响了/,
+        '<span class="white">您的 </span><span class="yellow">$1</span><span class="white"> 响了</span>'
       )
       .replace(
-        /\(PH: ([^()]+)\)/,
-        '<span class="white">(PH: </span><span class="white">$1</span><span class="white">)</span>'
+        /\(来自号码: ([^()]+)\)/,
+        '<span class="white">(来自号码: </span><span class="white">$1</span><span class="white">)</span>'
       )
       .replace(/\/pickup/, '<span class="green">$&</span>')
       .replace(/\/hangup/, '<span class="yellow">$&</span>')
-      .replace(/(use the UI buttons\.)/, '<span class="white">$1</span>');
+      .replace(/(使用手机界面进行操作\.)/, '<span class="white">$1</span>');
   }
 
   function colorLocationLine(line) {
     return line.replace(
-      /(You received a location from) (#\d+)(. Use )(\/removelocation)( to delete the marker\.)/,
+      /(您收到了新的位置信息, 来自) (#\d+)(, 输入 )(\/removelocation)( 来清除地图 GPS 标记\.)/,
       '<span class="green">$1 </span>' +
       '<span class="yellow">$2</span>' +
       '<span class="green">$3</span>' +
@@ -264,13 +264,13 @@
   }
 
   function colorInfoLine(line) {
-    const datePattern = /\[INFO\]:\s\[(\d{2})\/([A-Z]{3})\/(\d{4})\]\s(.+)/;
+    const datePattern = /\[信息\]:\s\[(\d{2})\/([A-Z]{3})\/(\d{4})\]\s(.+)/;
     if (datePattern.test(line)) {
       return applyDatePattern(line);
     }
     let formattedLine = line.replace(
-      /^\[INFO\]/,
-      '<span class="blue">[INFO]</span>'
+      /^\[信息\]/,
+      '<span class="blue">[信息]</span>'
     );
     formattedLine = applyPhoneRequestFormatting(formattedLine);
     formattedLine = applyContactShareFormatting(formattedLine);
@@ -282,36 +282,36 @@
 
   function applyDatePattern(line) {
     return line.replace(
-      /\[INFO\]:\s\[(\d{2})\/([A-Z]{3})\/(\d{4})\]\s(.+)/,
-      '<span class="blue">[INFO]:</span> <span class="orange">[$1/$2/$3]</span> <span class="white">$4</span>'
+      /\[信息\]:\s\[(\d{2})\/([A-Z]{3})\/(\d{4})\]\s(.+)/,
+      '<span class="blue">[信息]:</span> <span class="orange">[$1/$2/$3]</span> <span class="white">$4</span>'
     );
   }
 
   function applyPhoneRequestFormatting(line) {
     return line.replace(
-      /(.+?)\shas sent you a request to share their main phone number\s\(#(.+?)\)\sunder a name:\s(.+?)\sUse\s(\/acceptnumber)\sto add it to your contact list, or\s(\/declinenumber)\sto deny their offer!/,
-      '<span class="yellow">$1</span> <span class="white">has sent you a request to share their main phone number (</span><span class="green">#$2</span><span class="white">) under a name: </span><span class="yellow">$3</span><span class="white"> Use </span><span class="blue">$4</span><span class="white"> to add it to your contact list, or </span><span class="blue">$5</span><span class="white"> to deny their offer!</span>'
+      /(.+?)\s请求将他的主手机电话号码\s\(#(.+?)\)\s分享给您,\s署名为:\s(.+?),\s输入\s(\/acceptnumber)\s来将其加入您的通讯录, 或\s(\/declinenumber)\s来拒绝该请求!/,
+      '<span class="yellow">$1</span> <span class="white">请求将他的主手机电话号码 (</span><span class="green">#$2</span><span class="white">) 分享给您, 署名为: </span><span class="yellow">$3</span><span class="white">, 输入 </span><span class="blue">$4</span><span class="white"> 来将其加入您的通讯录, 或 </span><span class="blue">$5</span><span class="white"> 来拒绝该请求!</span>'
     );
   }
 
   function applyContactShareFormatting(line) {
     return line.replace(
-      /(.+?)\sshared their contact called\s(.+?)\s\(#(.+?)\)\sto you!\sUse\s(\/acceptcontact)\sto save this contact on your main phone, or\s(\/declinecontact)\sto decline that offer!/,
-      '<span class="yellow">$1</span> <span class="white">shared their contact called </span><span class="white">$2</span> <span class="white">(</span><span class="yellow">#$3</span><span class="white">)</span><span class="white"> to you! Use </span><span class="yellow">$4</span><span class="white"> to save this contact on your main phone, or </span><span class="yellow">$5</span><span class="white"> to decline that offer!</span>'
+      /(.+?)\s分享了他的手机联系人\s(.+?)\s\(#(.+?)\)\s给您!\s输入\s(\/acceptcontact)\s来将该联系人保存至您的手机, 或输入\s(\/declinecontact)\s来拒绝该请求!/,
+      '<span class="yellow">$1</span> <span class="white">分享了他的手机联系人 </span><span class="white">$2</span> <span class="white">(</span><span class="yellow">#$3</span><span class="white">)</span><span class="white"> 给您! 输入 </span><span class="yellow">$4</span><span class="white"> 来将该联系人保存至您的手机, 或输入 </span><span class="yellow">$5</span><span class="white"> 来拒绝该请求!</span>'
     );
   }
 
   function applyNumberShareFormatting(line) {
     return line.replace(
-      /You sent a request to share your main phone number\s\(#(.+?)\)\sto\s(.+?)\sunder a name:\s(.+?)\./,
-      '<span class="white">You sent a request to share your main phone number (</span><span class="green">#$1</span><span class="white">) to </span><span class="yellow">$2</span><span class="white"> under a name: </span><span class="yellow">$3</span><span class="white">.</span>'
+      /您请求将主手机的电话号码\s\(#(.+?)\)\s分享给\s(.+?)\s并署名:\s(.+?)\./,
+      '<span class="white">您请求将主手机的电话号码 (</span><span class="green">#$1</span><span class="white">) 分享给 </span><span class="yellow">$2</span><span class="white"> 并署名: </span><span class="yellow">$3</span>'
     );
   }
 
   function applyContactSharedFormatting(line) {
     return line.replace(
-      /You've shared your contact called\s(.+?)\s\(#(.+?)\)\sto\s(.+?)!/,
-      '<span class="white">You\'ve shared your contact called </span><span class="yellow">$1</span><span class="white"> (</span><span class="yellow">#$2</span><span class="white">) to </span><span class="yellow">$3</span><span class="white">!</span>'
+      /您已将手机联系人\s(.+?)\s\(#(.+?)\)\s分享给\s(.+?)!/,
+      '<span class="white">您已将手机联系人 </span><span class="yellow">$1</span><span class="white"> (</span><span class="yellow">#$2</span><span class="white">) 分享给 </span><span class="yellow">$3</span><span class="white">!</span>'
     );
   }
 

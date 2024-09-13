@@ -24,7 +24,7 @@
         d.open("GET", a), d.responseType = "blob", d.onload = function() {
             g(d.response, b, c)
         }, d.onerror = function() {
-            console.error("could not download file")
+            console.error("无法下载文件")
         }, d.send()
     }
 
@@ -73,7 +73,7 @@
                 })
             }
         } : function(b, d, e, g) {
-            if (g = g || open("", "_blank"), g && (g.document.title = g.document.body.innerText = "downloading..."), "string" == typeof b) return c(b, d, e);
+            if (g = g || open("", "_blank"), g && (g.document.title = g.document.body.innerText = "下载中..."), "string" == typeof b) return c(b, d, e);
             var h = "application/octet-stream" === b.type,
                 i = /constructor/i.test(f.HTMLElement) || f.safari,
                 j = /CriOS\/[\d]+/.test(navigator.userAgent);
