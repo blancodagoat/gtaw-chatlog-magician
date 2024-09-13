@@ -107,6 +107,7 @@
   function formatLine(line) {
     const lowerLine = line.toLowerCase();
 
+    if (/\*\* \[[^\]]+ -> [^\]]+\]/.test(line)) return wrapSpan("depColor", line);
     if (line.startsWith("*")) return wrapSpan("me", line);
     if (line.startsWith(">")) return wrapSpan("ame", line);
     if (lowerLine.includes("whispers:")) return handleWhispers(line);
@@ -143,7 +144,15 @@
         lowerLine.includes("you paid") ||
         lowerLine.includes("you received")
       )
-        return handleTransaction(line);
+    return handleTransaction(line);
+    if (lowerLine.includes("you are now masked")) return wrapSpan("green", line);
+    if (lowerLine.includes("you have shown your inventory")) return wrapSpan("green", line);
+    if (lowerLine.includes("you are not masked anymore")) return wrapSpan("death", line);
+    if (lowerLine.includes("you're being robbed, use /arob")) return formatRobbery(line);
+    if (lowerLine.includes("you've set your main phone to")) return formatPhoneSet(line);
+    if (lowerLine.includes("sms sent on")) return formatSmsSent(line);
+    if (lowerLine.includes("sms received on your")) return formatSmsReceived(line);
+    if (lowerLine.startsWith("you've cut")) return formatDrugCut(line);
 
     return replaceColorCodes(line);
   }
@@ -317,75 +326,120 @@
     );
   }
 
-  function addLineBreaksAndHandleSpans(text) {
-    const maxLineLength = 77;
-    let result = "";
-    let currentLineLength = 0;
-    let inSpan = false;
-    let currentSpan = "";
+  function formatRobbery(line) {
+    return line
+        .replace(/\/arob/, '<span class="blue">/arob</span>')
+        .replace(/\/report/, '<span class="death">/report</span>')
+        .replace(/You're being robbed, use (.+?) to show your inventory/, '<span class="white">You\'re being robbed, use </span><span class="blue">$1</span><span class="white"> to show your inventory</span>');
+}
 
-    function addLineBreak() {
-      if (inSpan) {
-        result +=
-          '</span><br><span class="' +
-          currentSpan.match(/class="([^"]+)"/)[1] +
-          '">';
-      } else {
-        result += "<br>";
+
+  function formatPhoneSet(line) {
+    return line.replace(/(#\d+)/, '<span class="blue">$1</span>');
+  }
+
+  function formatSmsSent(line) {
+    return line
+        .replace(/sent/, '<span class="death">sent</span>')
+        .replace(/\[(#[^\]]+)\]/, '[<span class="green">$1</span>]')
+        .replace(/on (.+?) \[/, 'on <span class="yellow">$1</span> [');
+}
+
+function formatSmsReceived(line) {
+  return line
+      .replace(/received/, '<span class="green">received</span>')
+      .replace(/\[(#[^\]]+)\]/, '[<span class="green">$1</span>]')
+      .replace(/your (.+?) \[/, 'your <span class="yellow">$1</span> [');
+}
+
+  function formatDrugCut(line) {
+    const drugCutPattern = /You've cut (.+?) x(\d+) into x(\d+)\./i;
+    const match = line.match(drugCutPattern);
+  
+    if (match) {
+      const drugName = match[1];  // Drug name (e.g., Vicodin)
+      const firstAmount = match[2];  // First quantity (e.g., 250)
+      const secondAmount = match[3];  // Second quantity (e.g., 328)
+  
+      return (
+        `<span class="white">You've cut </span>` +
+        `<span class="blue">${drugName}</span>` +
+        `<span class="white"> x</span><span class="blue">${firstAmount}</span>` +
+        `<span class="white"> into x</span><span class="blue">${secondAmount}</span>` +
+        `<span class="blue">.</span>`
+      );
+    }
+  }
+
+function addLineBreaksAndHandleSpans(text) {
+  const maxLineLength = 77;
+  let result = "";
+  let currentLineLength = 0;
+  let inSpan = false;
+  let currentSpan = "";
+
+  function addLineBreak() {
+    if (inSpan) {
+      result +=
+        '</span><br><span class="' +
+        currentSpan.match(/class="([^"]+)"/)[1] +
+        '">';
+    } else {
+      result += "<br>";
+    }
+    currentLineLength = 0;
+  }
+
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "<" && text.substr(i, 5) === "<span") {
+      let spanEnd = text.indexOf(">", i);
+      currentSpan = text.substring(i, spanEnd + 1);
+      i = spanEnd;
+      inSpan = true;
+      result += currentSpan;
+    } else if (text[i] === "<" && text.substr(i, 7) === "</span>") {
+      inSpan = false;
+      result += "</span>";
+      i += 6;
+    } else {
+      result += text[i];
+      currentLineLength++;
+
+      if (currentLineLength >= maxLineLength && text[i] === " ") {
+        addLineBreak();
       }
-      currentLineLength = 0;
-    }
-
-    for (let i = 0; i < text.length; i++) {
-      if (text[i] === "<" && text.substr(i, 5) === "<span") {
-        let spanEnd = text.indexOf(">", i);
-        currentSpan = text.substring(i, spanEnd + 1);
-        i = spanEnd;
-        inSpan = true;
-        result += currentSpan;
-      } else if (text[i] === "<" && text.substr(i, 7) === "</span>") {
-        inSpan = false;
-        result += "</span>";
-        i += 6;
-      } else {
-        result += text[i];
-        currentLineLength++;
-
-        if (currentLineLength >= maxLineLength && text[i] === " ") {
-          addLineBreak();
-        }
-      }
-    }
-
-    return result;
-  }
-
-  function cleanUp() {
-    $output.find(".generated").each(function () {
-      let html = $(this).html();
-      html = html.replace(/<br>\s*<br>/g, "<br>");
-      html = html.replace(/^<br>|<br>$/g, "");
-      html = html.replace(/<span[^>]*>\s*<\/span>/g, "");
-      $(this).html(html);
-    });
-    applyStyles();
-  }
-
-  function applyStyles() {
-    $(".generated:first").css({
-      "margin-top": "0",
-      "padding-top": "1px",
-    });
-    $(".generated:last").css({
-      "padding-bottom": "1px",
-      "margin-bottom": "0",
-    });
-    $(".generated").css("background-color", "transparent");
-
-    if (applyBackground) {
-      $(".generated").css("background-color", "#000000");
     }
   }
 
-  processOutput();
+  return result;
+}
+
+function cleanUp() {
+  $output.find(".generated").each(function () {
+    let html = $(this).html();
+    html = html.replace(/<br>\s*<br>/g, "<br>");
+    html = html.replace(/^<br>|<br>$/g, "");
+    html = html.replace(/<span[^>]*>\s*<\/span>/g, "");
+    $(this).html(html);
+  });
+  applyStyles();
+}
+
+function applyStyles() {
+  $(".generated:first").css({
+    "margin-top": "0",
+    "padding-top": "1px",
+  });
+  $(".generated:last").css({
+    "padding-bottom": "1px",
+    "margin-bottom": "0",
+  });
+  $(".generated").css("background-color", "transparent");
+
+  if (applyBackground) {
+    $(".generated").css("background-color", "#000000");
+  }
+}
+
+processOutput();
 });
