@@ -139,6 +139,7 @@
       if (
         lowerLine.includes("you gave") ||
         lowerLine.includes("paid you") ||
+        lowerLine.includes("you paid") ||
         lowerLine.includes("you received")
       )
         return handleTransaction(line);
