@@ -12,49 +12,76 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.8.1/dist/css/foundation.min.css" />
     <link href="css/app.css" rel="stylesheet" />
     <link rel="icon" href="favicon.png" />
+    <style>
+      label {
+        display: none;
+      }
+      ::-webkit-input-placeholder {
+        color: black;
+      }
+      :-ms-input-placeholder {
+        color: black;
+      }
+      ::placeholder {
+        color: black;
+      }
+      /* Add this rule to hide the placeholder */
+      #chatlogInput::placeholder {
+        color: transparent;
+      }
+    </style>
   </head>
   <body>
     <div class="grid-container">
-      <div class="grid-x">
-        <div class="cell">
-          <input type="hidden" class="form-control" id="name" />
+      <!-- Main Content -->
+      <div class="grid-x grid-margin-x">
+        <div class="cell small-12">
+          <!-- Character Name and Font Size Settings -->
+          <div class="grid-x grid-margin-x align-middle">
+            <div class="cell small-4 medium-2">
+              <label for="font-label">Font Size:</label>
+              <input name="font-label" id="font-label" type="number" min="10" max="64" value="12" />
+            </div>
+            <div class="cell small-8 medium-10">
+              <label for="characterNameInput">Character Name Filter:</label>
+              <div class="input-group">
+                <input type="text" id="characterNameInput" placeholder="Enter character name" />
+                <div class="input-group-button">
+                  <button class="button small" onclick="applyFilter()">Apply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Textarea for Chat Log Input -->
+          <label for="chatlogInput">Chat Log:</label>
+          <div class="textarea-container">
+            <textarea id="chatlogInput" class="form-control textarea-input" rows="15" placeholder="Enter your chat log here..."></textarea>
+            <div class="logo-overlay">
+              <img src="logo.png" alt="Logo" />
+            </div>
+          </div>
+          <!-- Button Group and High-Resolution Toggle -->
+          <div class="grid-x grid-margin-x align-middle">
+            <div class="cell auto">
+              <button id="downloadOutputTransparent" class="button success"> Download </button>
+              <button id="toggleBackground" class="button secondary"> Toggle Background </button>
+            </div>
+            <div class="cell shrink">
+              <div class="switch large">
+                <input class="switch-input" id="scaleToggle" type="checkbox" name="scale-toggle" />
+                <label class="switch-paddle" for="scaleToggle">
+                  <span class="switch-active" aria-hidden="true">2x</span>
+                  <span class="switch-inactive" aria-hidden="true">1x</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <!-- Output Area -->
+          <div class="output" id="output"></div>
         </div>
       </div>
-      <div class="clog_settings">
-        <div class="grid-x grid-margin-x">
-          <div class="cell small-1 medium-1 large-1">
-            <label for="font-label">Font Size</label>
-            <input name="font-label" id="font-label" type="number" min="10" max="64" value="12" />
-          </div>
-        </div>
-      </div>
-      <div class="text-center">
-        <div class="textarea-container">
-          <textarea class="form-control textarea-input" rows="15" placeholder=""></textarea>
-          <div class="logo-overlay">
-            <img src="logo.png" alt="Logo" />
-          </div>
-        </div>
-        <div class="button-group-container">
-          <div class="button-group">
-            <button id="downloadOutputTransparent" class="button success">Download</button>
-            <button id="toggleBackground" class="button secondary">Toggle Background</button>
-          </div>
-          <div class="scale-toggle">
-            <input class="switch-input" id="scaleToggle" type="checkbox" name="scale-toggle" />
-            <label class="switch-paddle" for="scaleToggle">
-              <span class="switch-active" aria-hidden="true">Yes</span>
-              <span class="switch-inactive" aria-hidden="true">No</span>
-            </label>
-            <span class="toggle-label">Enable High-Resolution Image</span>
-          </div>
-        </div>
-        <div class="opacity-50">
-          <i> Mwah. </i>
-        </div>
-      </div>
-      <div class="output" id="output"></div>
     </div>
+    <!-- Scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/foundation-sites@6.8.1/dist/js/foundation.min.js"></script>
     <script>
@@ -63,146 +90,119 @@
     <script src="js/download-img.js"></script>
     <script src="js/download.js"></script>
     <script>
+      // Move scaleEnabled outside so it can be accessed globally
+      let scaleEnabled = false;
       $(document).ready(function() {
-  let scaleEnabled = false;
-
-  // Dynamic Font Size Handling
-  $('#font-label').on('input', function() {
-    let fontSize = $(this).val() + 'px';
-    $('.textarea-input').css('font-size', fontSize); // Apply font size to textarea
-    $('#output').css('font-size', fontSize);         // Apply font size to the output
-  });
-
-  // Scale toggle for high-resolution images
-  $("#scaleToggle").change(function() {
-    scaleEnabled = $(this).is(":checked");
-  });
-
-  // Function to trim transparent areas from the canvas
-  function trimCanvas(canvas) {
-    const ctx = canvas.getContext('2d');
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = imgData.data;
-
-    let top = 0, bottom = canvas.height, left = 0, right = canvas.width;
-
-    // Find top boundary
-    for (let y = 0; y < canvas.height; y++) {
-      for (let x = 0; x < canvas.width; x++) {
-        let alpha = pixels[(y * canvas.width + x) * 4 + 3]; // Alpha value
-        if (alpha > 0) {
-          top = y;
-          break;
+        // Dynamic Font Size Handling
+        function updateFontSize() {
+          let fontSize = $('#font-label').val() + 'px';
+          $('.textarea-input').css('font-size', fontSize); // Apply font size to textarea
+          $('#output').css('font-size', fontSize); // Apply font size to the output
         }
-      }
-      if (top !== 0) break;
-    }
-
-    // Find bottom boundary
-    for (let y = canvas.height - 1; y >= 0; y--) {
-      for (let x = 0; x < canvas.width; x++) {
-        let alpha = pixels[(y * canvas.width + x) * 4 + 3]; // Alpha value
-        if (alpha > 0) {
-          bottom = y;
-          break;
-        }
-      }
-      if (bottom !== canvas.height) break;
-    }
-
-    // Find left boundary
-    for (let x = 0; x < canvas.width; x++) {
-      for (let y = 0; y < canvas.height; y++) {
-        let alpha = pixels[(y * canvas.width + x) * 4 + 3]; // Alpha value
-        if (alpha > 0) {
-          left = x;
-          break;
-        }
-      }
-      if (left !== 0) break;
-    }
-
-    // Find right boundary
-    for (let x = canvas.width - 1; x >= 0; x--) {
-      for (let y = 0; y < canvas.height; y++) {
-        let alpha = pixels[(y * canvas.width + x) * 4 + 3]; // Alpha value
-        if (alpha > 0) {
-          right = x;
-          break;
-        }
-      }
-      if (right !== canvas.width) break;
-    }
-
-    // Create a trimmed canvas
-    let trimmedCanvas = document.createElement('canvas');
-    trimmedCanvas.width = right - left + 1;
-    trimmedCanvas.height = bottom - top + 1;
-
-    trimmedCanvas.getContext('2d').putImageData(ctx.getImageData(left, top, trimmedCanvas.width, trimmedCanvas.height), 0, 0);
-
-    return trimmedCanvas;
-  }
-
-  // Download the output as an image, trimming transparent areas
-  $("#downloadOutputTransparent").click(function() {
-    let scale = scaleEnabled ? 2 : 1; // Apply scaling based on toggle
-    let output = $("#output");
-
-    // Temporarily add extra bottom padding to prevent cutoff
-    let extraPaddingBottom = "30px";
-    let originalPadding = output.css("padding");
-    output.css({
-      "padding-top": "0",
-      "padding-bottom": extraPaddingBottom,
-    });
-
-    // Ensure the layout updates before capturing the image
-    output[0].offsetHeight; // Force reflow
-
-    // Capture the output element as an image
-    domtoimage.toBlob(document.getElementById("output"), {
-      width: output.width() * scale,
-      height: output.height() * scale + 30,  // Adjust height dynamically based on output
-      style: {
-        transform: `scale(${scale})`,
-        transformOrigin: "top left",
-      },
-    }).then(function(blob) {
-      // Create an image object to load the blob into the canvas
-      let img = new Image();
-      img.src = URL.createObjectURL(blob);
-      
-      img.onload = function() {
-        let canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-
-        let ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-
-        // Trim the transparent areas
-        let trimmedCanvas = trimCanvas(canvas);
-
-        // Convert the trimmed canvas to a blob and download it
-        trimmedCanvas.toBlob(function(trimmedBlob) {
-          window.saveAs(trimmedBlob, new Date().toLocaleString().replaceAll(",", "_")
-            .replaceAll(" ", "_").replaceAll("/", "-")
-            .replace("__", "_").replaceAll(":", "-") + "_chatlog.png");
-          
-          // Restore original padding after download
-          output.css("padding", originalPadding);
+        // Initialize font size on page load
+        updateFontSize();
+        // Update font size when the font size input changes
+        $('#font-label').on('input', updateFontSize);
+        // Scale toggle for high-resolution images
+        $("#scaleToggle").change(function() {
+          scaleEnabled = $(this).is(":checked");
         });
-      };
-    });
-  });
-
-  // Toggle background for output
-  $("#toggleBackground").click(function() {
-    $("#output").toggleClass("background-active");
-  });
-});
-
+        // Rest of your existing code...
+      });
+      // Function to trim transparent areas from the canvas
+      function trimCanvas(canvas) {
+        const ctx = canvas.getContext("2d");
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imgData.data;
+        let top = 0,
+          bottom = canvas.height,
+          left = 0,
+          right = canvas.width;
+        for (let y = 0; y < canvas.height; y++) {
+          for (let x = 0; x < canvas.width; x++) {
+            let alpha = pixels[(y * canvas.width + x) * 4 + 3];
+            if (alpha > 0) {
+              top = y;
+              break;
+            }
+          }
+          if (top !== 0) break;
+        }
+        for (let y = canvas.height - 1; y >= 0; y--) {
+          for (let x = 0; x < canvas.width; x++) {
+            let alpha = pixels[(y * canvas.width + x) * 4 + 3];
+            if (alpha > 0) {
+              bottom = y;
+              break;
+            }
+          }
+          if (bottom !== canvas.height) break;
+        }
+        for (let x = 0; x < canvas.width; x++) {
+          for (let y = 0; y < canvas.height; y++) {
+            let alpha = pixels[(y * canvas.width + x) * 4 + 3];
+            if (alpha > 0) {
+              left = x;
+              break;
+            }
+          }
+          if (left !== 0) break;
+        }
+        for (let x = canvas.width - 1; x >= 0; x--) {
+          for (let y = 0; y < canvas.height; y++) {
+            let alpha = pixels[(y * canvas.width + x) * 4 + 3];
+            if (alpha > 0) {
+              right = x;
+              break;
+            }
+          }
+          if (right !== canvas.width) break;
+        }
+        let trimmedCanvas = document.createElement("canvas");
+        trimmedCanvas.width = right - left + 1;
+        trimmedCanvas.height = bottom - top + 1;
+        trimmedCanvas.getContext("2d").putImageData(ctx.getImageData(left, top, trimmedCanvas.width, trimmedCanvas.height), 0, 0);
+        return trimmedCanvas;
+      }
+      // Download the output as an image, trimming transparent areas
+      $("#downloadOutputTransparent").click(function() {
+        let scale = scaleEnabled ? 2 : 1;
+        let output = $("#output");
+        let extraPaddingBottom = "30px";
+        let originalPadding = output.css("padding");
+        output.css({
+          "padding-top": "0",
+          "padding-bottom": extraPaddingBottom,
+        });
+        output[0].offsetHeight; // Force reflow
+        domtoimage.toBlob(document.getElementById("output"), {
+          width: output.width() * scale,
+          height: output.height() * scale + 30,
+          style: {
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+          },
+        }).then(function(blob) {
+          let img = new Image();
+          img.src = URL.createObjectURL(blob);
+          img.onload = function() {
+            let canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            let ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            let trimmedCanvas = trimCanvas(canvas);
+            trimmedCanvas.toBlob(function(trimmedBlob) {
+              window.saveAs(trimmedBlob, new Date().toLocaleString().replaceAll(",", "_").replaceAll(" ", "_").replaceAll("/", "-").replace("__", "_").replaceAll(":", "-") + "_chatlog.png");
+              output.css("padding", originalPadding);
+            });
+          };
+        });
+      });
+      // Toggle background for output
+      $("#toggleBackground").click(function() {
+        $("#output").toggleClass("background-active");
+      });
     </script>
     <script src="js/parse-text.js"></script>
     <script src="js/chat.js"></script>
