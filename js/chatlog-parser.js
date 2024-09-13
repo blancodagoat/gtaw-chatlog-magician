@@ -108,6 +108,7 @@
     const lowerLine = line.toLowerCase();
 
     if (line.startsWith("*")) return wrapSpan("me", line);
+    if (line.startsWith(">")) return wrapSpan("ame", line);
     if (lowerLine.includes("whispers:")) return handleWhispers(line);
     if (lowerLine.includes("says (cellphone):")) return handleCellphone(line);
     if (lowerLine.includes("says [low]:")) return wrapSpan("grey", line);
