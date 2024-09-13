@@ -25,4 +25,5 @@
 <h4 id="credits">鸣谢</h4>
 <p><a href="https://github.com/ulasbayraktar">@Ulaş Eren Bayraktar</a> 原版 LS-RP 魔法师的创作者</p>
 <p><a href="https://forum.gta.world/en/topic/130134-guide-dude-man-template-photoshop-template-with-various-rp-lines-and-colors/">@Jax</a> 创建了我用来制作着色和格式化逻辑的模板</p>
-<p><a href="https://forum.gta-w.cn/index.php?/profile/65-ayorishy/">@ayorishy</a> 基于@Jax的基础上进行了汉化以及修改.</p>
+<p><a href="[https://forum.gta.world/en/topic/130134-guide-dude-man-template-photoshop-template-with-various-rp-lines-and-colors/](https://forum.gta.world/en/profile/45557-blanco-leopardo/)">@blancodagoat</a>将以上两位作者的代码进行重置</p>
+<p><a href="https://forum.gta-w.cn/index.php?/profile/65-ayorishy/">@ayorishy</a> 基于@blancodagoat的基础上进行了汉化以及修改.</p>
