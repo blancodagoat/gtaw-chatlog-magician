@@ -1,4 +1,4 @@
-﻿$(document).ready(function () {
+$(document).ready(function () {
   let applyBackground = false;
   let characterName = "";
   const $textarea = $("#chatlogInput");
@@ -364,8 +364,8 @@ function formatSmsReceived(line) {
       return (
         `<span class="white">You've cut </span>` +
         `<span class="blue">${drugName}</span>` +
-        `<span class="white"> x</span><span class="blue">${firstAmount}</span>` +
-        `<span class="white"> into x</span><span class="blue">${secondAmount}</span>` +
+        `<span class="blue"> x${firstAmount}</span>` +
+        `<span class="white"> into </span><span class="blue">x${secondAmount}</span>` +
         `<span class="blue">.</span>`
       );
     }
