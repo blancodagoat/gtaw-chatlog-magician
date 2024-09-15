@@ -90,6 +90,23 @@
         return lowerLine.includes(characterName) ? wrapSpan("radioColor", line) : wrapSpan("radioColor2", line);
     }
 
+    if (line.includes("^")) {
+        const parts = line.split("^");
+        const beforeCaret = parts[0].trim();
+        const afterCaret = parts.slice(1).join("^").trim();
+        let result = "";
+        
+        if (beforeCaret) {
+            result += wrapSpan("white", beforeCaret);
+        }
+
+        if (afterCaret) {
+            result += wrapSpan("me", afterCaret);
+        }
+
+        return result;
+    }
+    
     if (lowerLine.includes("says:") || lowerLine.includes("shouts:")) {
         if (!characterName) {
             return wrapSpan("white", line);
