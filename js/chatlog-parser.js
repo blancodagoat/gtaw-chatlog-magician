@@ -1,4 +1,4 @@
-$(document).ready(function () {
+﻿$(document).ready(function () {
   let applyBackground = false;
   let characterName = "";
   const $textarea = $("#chatlogInput");
@@ -189,12 +189,26 @@ $(document).ready(function () {
   }
 
   function formatInfo(line) {
-    const amountMatch = line.match(/\$(\d+)/);
-    const objectMatch = line.match(/from the (.+)$/i);
-    return amountMatch && objectMatch
-      ? `<span class="orange">Info:</span> <span class="white">You took</span> <span class="green">$${amountMatch[1]}</span> <span class="white">from the ${objectMatch[1]}</span>`
-      : line;
-  }
+    const moneyMatch = line.match(/\$(\d+)/);
+    const itemMatch = line.match(/took\s(.+?)\s\((\d+)\)\sfrom\s(the\s.+)\.$/i);
+
+    if (moneyMatch) {
+        const objectMatch = line.match(/from the (.+)\.$/i);
+        return objectMatch
+            ? `<span class="orange">Info:</span> <span class="white">You took</span> <span class="green">$${moneyMatch[1]}</span> <span class="white">from the ${objectMatch[1]}</span>.`
+            : line;
+    }
+
+    if (itemMatch) {
+        const itemName = itemMatch[1];
+        const itemQuantity = itemMatch[2];
+        const fromObject = itemMatch[3];
+
+        return `<span class="orange">Info:</span> <span class="white">You took</span> <span class="white">${itemName}</span> <span class="white">(${itemQuantity})</span> <span class="white">from ${fromObject}</span>.`;
+    }
+
+    return line;
+}
 
   function formatDrugLab() {
     return '<span class="orange">[DRUG LAB]</span> <span class="white">Drug production has started.</span>';
@@ -357,9 +371,9 @@ function formatSmsReceived(line) {
     const match = line.match(drugCutPattern);
   
     if (match) {
-      const drugName = match[1];  // Drug name (e.g., Vicodin)
-      const firstAmount = match[2];  // First quantity (e.g., 250)
-      const secondAmount = match[3];  // Second quantity (e.g., 328)
+      const drugName = match[1];
+      const firstAmount = match[2];
+      const secondAmount = match[3];
   
       return (
         `<span class="white">You've cut </span>` +
