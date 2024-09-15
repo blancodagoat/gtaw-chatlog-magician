@@ -25,15 +25,17 @@ border-radius: 10px;
 }
 
 .textarea-input::-webkit-scrollbar-thumb:hover {
-background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 1);
 }
 
 .textarea-input {
+font-family: Arial, sans-serif;
+-webkit-font-smoothing: none !important;
 width: 100%;
 border-radius: 5px;
 resize: none;
 margin-top: 20px;
-background-color: #ffffff25;
+background-color: rgba(255, 255, 255, 0.15);
 color: #fff;
 border: none;
 padding: 1rem;
@@ -44,14 +46,40 @@ padding-top: 5px;
 }
 
 .textarea-input:focus {
-width: 100%;
+font-family: Arial, sans-serif;
+-webkit-font-smoothing: none !important;
+outline: none;
 border-radius: 5px;
 resize: none;
-margin-top: 20px;
+transition: none;
 background-color: #ffffff25;
 color: #fff;
 border: none;
-padding: 1rem;
+box-shadow: none;
+}
+
+.textarea-container {
+    position: relative;
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+}
+
+
+.textarea-input {
+    width: 100%;
+    padding-left: 50px;
+    height: 150px;
+    font-size: 16px;
+}
+
+.textarea-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.textarea-container,
+.input-group input {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .generated {
@@ -134,6 +162,10 @@ color: #a19558;
 color: #ccca15;
 }
 
+.vesseltraffic {
+color: #33C1C9;
+}
+
 .output {
 line-height: 0;
 -webkit-font-smoothing: none !important;
@@ -148,7 +180,8 @@ padding: 20px;
 
 /* BUTTON STYLES */
 .button {
-    padding: 0.5rem 1rem;
+    padding: 0.7rem 1.2rem;
+    font-size: 16px;
     border-radius: 0.5rem;
     background-color: #111;
     color: #fff;
@@ -158,7 +191,14 @@ padding: 20px;
 }
 
 .button:hover {
-    background-color: #333;
+    background-color: #555;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
+}
+
+.button:focus {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
 }
 
 /* INPUT GROUP STYLING */
@@ -171,19 +211,21 @@ padding: 20px;
 
 /* INPUT FIELD STYLES */
 .input-group input {
-    padding: 0.5rem;
+    padding: 0.6rem;
     border-radius: 0.5rem !important;
     flex: 1;
-    border: 1px solid #ccc;
+    border: 1px solid #666;
     box-sizing: border-box;
     font-size: 14px;
     height: auto;
     margin-bottom: 0;
+    transition: border-color 0.3s ease;
 }
 
 /* BUTTON STYLING INSIDE INPUT GROUP */
 .input-group-button .button {
-    padding: 1.1em 1.1em;
+    padding: 0.7rem 1.2rem;
+    font-size: 16px;
     border-radius: 0.5rem !important;
     background-color: #111;
     color: #fff;
@@ -195,6 +237,19 @@ padding: 20px;
 
 .input-group-button .button:hover {
     background-color: #333;
+}
+
+.input-group input:hover,
+.input-group input:focus {
+    border-color: #999;
+}
+
+.button, .input-group input {
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.textarea-input:focus, .input-group input:focus {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 /* LABEL STYLES */
@@ -255,7 +310,7 @@ padding: 20px;
 
 /* GENERAL CONTAINER STYLES */
 .grid-container {
-    padding: 1rem;
+    padding: 1.5rem;
 }
 
 /* INPUT CELL SPECIFIC STYLES */
@@ -284,16 +339,16 @@ padding: 20px;
 /* LOGO OVERLAY STYLES */
 .logo-overlay {
     position: absolute;
-    top: 22%;
-    left: 50%;
-    transform: translate(-50%, -40%);
+    top: 0px;
+    left: 7px;
+    width: 30px;
+    height: auto;
     pointer-events: none;
-    opacity: 100%;
     z-index: -1;
 }
 
 .logo-overlay img {
-    opacity: 15%;
+    opacity: 60%;
     max-width: auto;
     max-height: auto;
 }
@@ -309,4 +364,17 @@ padding: 20px;
     display: flex;
     align-items: center;
     gap: 20px;
+}
+
+@media only screen and (max-width: 768px) {
+    .grid-container {
+        padding: 1rem; /* Adjust padding for smaller screens */
+    }
+    .textarea-input {
+        font-size: 14px; /* Adjust font size for smaller screens */
+        padding-left: 10px; /* Less padding for mobile */
+    }
+    .button {
+        font-size: 14px; /* Smaller button text for mobile */
+    }
 }

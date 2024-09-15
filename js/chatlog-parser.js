@@ -101,13 +101,14 @@
 }
 
   function isRadioLine(line) {
-    return /\*\* \[S: \d+ \| CH: .+\]/.test(line);
+    return /\[S: \d+ \| CH: .+\]/.test(line);
   }
 
   function formatLine(line) {
     const lowerLine = line.toLowerCase();
 
-    if (/\*\* \[[^\]]+ -> [^\]]+\]/.test(line)) return wrapSpan("depColor", line);
+    if (lowerLine.includes("[ch: vts - vessel traffic service]")) return formatVesselTraffic(line);
+    if (/\[[^\]]+ -> [^\]]+\]/.test(line)) return wrapSpan("depColor", line);
     if (line.startsWith("*")) return wrapSpan("me", line);
     if (line.startsWith(">")) return wrapSpan("ame", line);
     if (lowerLine.includes("whispers:")) return handleWhispers(line);
@@ -153,6 +154,7 @@
     if (lowerLine.includes("sms sent on")) return formatSmsSent(line);
     if (lowerLine.includes("sms received on your")) return formatSmsReceived(line);
     if (lowerLine.startsWith("you've cut")) return formatDrugCut(line);
+    if (lowerLine.includes("[property robbery]")) return formatPropertyRobbery(line);
 
     return replaceColorCodes(line);
   }
@@ -383,6 +385,31 @@ function formatSmsReceived(line) {
         `<span class="blue">.</span>`
       );
     }
+  }
+
+  function formatPropertyRobbery(line) {
+    const robberyPattern = /\[PROPERTY ROBBERY\](.*?)(\$[\d,]+)(.*)/;
+    const match = line.match(robberyPattern);
+  
+    if (match) {
+      const textBeforeAmount = match[1];
+      const amount = match[2];
+      const textAfterAmount = match[3];
+  
+      return `<span class="green">[PROPERTY ROBBERY]</span>${textBeforeAmount}<span class="green">${amount}</span>${textAfterAmount}`;
+    }
+  
+    return line;
+  }
+
+  function formatVesselTraffic(line) {
+    const vesselTrafficPattern = /\*\*\s*\[CH: VTS - Vessel Traffic Service\]/;
+  
+    if (vesselTrafficPattern.test(line)) {
+      return `<span class="vesseltraffic">${line}</span>`;
+    }
+  
+    return line;
   }
 
 function addLineBreaksAndHandleSpans(text) {

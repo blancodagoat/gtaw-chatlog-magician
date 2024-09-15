@@ -10,7 +10,7 @@
     <meta name="keywords" content="GTAW, GTAWorld, GTA World, RAGE MP, chatlog magician, chatlog, magician" />
     <title>Chatlog Magician</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.8.1/dist/css/foundation.min.css" />
-    <link href="css/app.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/app.css"/>
     <link rel="icon" href="favicon.png" />
     <style>
       label {
@@ -25,7 +25,6 @@
       ::placeholder {
         color: black;
       }
-      /* Add this rule to hide the placeholder */
       #chatlogInput::placeholder {
         color: transparent;
       }
@@ -33,10 +32,8 @@
   </head>
   <body>
     <div class="grid-container">
-      <!-- Main Content -->
       <div class="grid-x grid-margin-x">
         <div class="cell small-12">
-          <!-- Character Name and Font Size Settings -->
           <div class="grid-x grid-margin-x align-middle">
             <div class="cell small-4 medium-2">
               <label for="font-label">Font Size:</label>
@@ -52,15 +49,13 @@
               </div>
             </div>
           </div>
-          <!-- Textarea for Chat Log Input -->
           <label for="chatlogInput">Chat Log:</label>
           <div class="textarea-container">
             <textarea id="chatlogInput" class="form-control textarea-input" rows="15" placeholder="Enter your chat log here..."></textarea>
             <div class="logo-overlay">
-              <img src="logo.png" alt="Logo" />
+              <img src="logo.png" alt="Logo" loading="lazy" />
             </div>
           </div>
-          <!-- Button Group and High-Resolution Toggle -->
           <div class="grid-x grid-margin-x align-middle">
             <div class="cell auto">
               <button id="downloadOutputTransparent" class="button success"> Download </button>
@@ -76,12 +71,10 @@
               </div>
             </div>
           </div>
-          <!-- Output Area -->
           <div class="output" id="output"></div>
         </div>
       </div>
     </div>
-    <!-- Scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/foundation-sites@6.8.1/dist/js/foundation.min.js"></script>
     <script>
@@ -90,26 +83,19 @@
     <script src="js/download-img.js"></script>
     <script src="js/download.js"></script>
     <script>
-      // Move scaleEnabled outside so it can be accessed globally
       let scaleEnabled = false;
       $(document).ready(function() {
-        // Dynamic Font Size Handling
         function updateFontSize() {
           let fontSize = $('#font-label').val() + 'px';
-          $('.textarea-input').css('font-size', fontSize); // Apply font size to textarea
-          $('#output').css('font-size', fontSize); // Apply font size to the output
+          $('.textarea-input').css('font-size', fontSize);
+          $('#output').css('font-size', fontSize);
         }
-        // Initialize font size on page load
         updateFontSize();
-        // Update font size when the font size input changes
         $('#font-label').on('input', updateFontSize);
-        // Scale toggle for high-resolution images
         $("#scaleToggle").change(function() {
           scaleEnabled = $(this).is(":checked");
         });
-        // Rest of your existing code...
       });
-      // Function to trim transparent areas from the canvas
       function trimCanvas(canvas) {
         const ctx = canvas.getContext("2d");
         const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -164,7 +150,6 @@
         trimmedCanvas.getContext("2d").putImageData(ctx.getImageData(left, top, trimmedCanvas.width, trimmedCanvas.height), 0, 0);
         return trimmedCanvas;
       }
-      // Download the output as an image, trimming transparent areas
       $("#downloadOutputTransparent").click(function() {
         let scale = scaleEnabled ? 2 : 1;
         let output = $("#output");
@@ -199,9 +184,14 @@
           };
         });
       });
-      // Toggle background for output
       $("#toggleBackground").click(function() {
         $("#output").toggleClass("background-active");
+      });
+
+      const textarea = document.querySelector('.textarea-input');
+      textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
       });
     </script>
     <script src="js/parse-text.js"></script>
