@@ -84,21 +84,34 @@
     const lowerLine = line.toLowerCase();
 
     if (isRadioLine(line)) {
-        if (!characterName) {
-            return wrapSpan("radioColor", line);
-        }
-        return lowerLine.includes(characterName) ? wrapSpan("radioColor", line) : wrapSpan("radioColor2", line);
+      if (!characterName) {
+        return wrapSpan("radioColor", line);
+      }
+      return lowerLine.includes(characterName)
+        ? wrapSpan("radioColor", line)
+        : wrapSpan("radioColor2", line);
+    }
+
+    if (lowerLine.includes("says [low]:")) {
+      if (!characterName) {
+        return wrapSpan("grey", line);
+      }
+      return lowerLine.includes(characterName)
+        ? wrapSpan("lightgrey", line)
+        : wrapSpan("grey", line);
     }
 
     if (lowerLine.includes("says:") || lowerLine.includes("shouts:")) {
-        if (!characterName) {
-            return wrapSpan("white", line);
-        }
-        return lowerLine.includes(characterName) ? wrapSpan("white", line) : wrapSpan("grey", line);
+      if (!characterName) {
+        return wrapSpan("white", line);
+      }
+      return lowerLine.includes(characterName)
+        ? wrapSpan("white", line)
+        : wrapSpan("lightgrey", line);
     }
 
     return formatLine(line);
-}
+  }
 
   function isRadioLine(line) {
     return /\[S: \d+ \| CH: .+\]/.test(line);
