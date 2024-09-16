@@ -172,6 +172,7 @@ color: #33C1C9;
 
 .output {
 line-height: 0;
+font-smooth: none !important;
 -webkit-font-smoothing: none !important;
 font-weight: 700;
 color: #fff;
