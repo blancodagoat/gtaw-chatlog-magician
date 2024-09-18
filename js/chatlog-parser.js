@@ -1,11 +1,17 @@
 ﻿$(document).ready(function () {
   let applyBackground = false;
+  let applyCensorship = false; // State for censorship
+  let censorshipStyle = 'pixelated'; // 'blurred' or 'hidden'
   let characterName = "";
   const $textarea = $("#chatlogInput");
   const $output = $("#output");
   const $toggleBackgroundBtn = $("#toggleBackground");
+  const $toggleCensorshipBtn = $("#toggleCensorship"); // Censor Button
+  const $toggleCensorshipStyleBtn = $("#toggleCensorshipStyle"); // Censorship Style Toggle
 
   $toggleBackgroundBtn.click(toggleBackground);
+  $toggleCensorshipBtn.click(toggleCensorship); // Handle Censor Button Click
+  $toggleCensorshipStyleBtn.click(toggleCensorshipStyle); // Handle Censorship Style Toggle
 
   function toggleBackground() {
     applyBackground = !applyBackground;
@@ -15,6 +21,20 @@
       .toggleClass("btn-dark", applyBackground)
       .toggleClass("btn-outline-dark", !applyBackground);
 
+    processOutput();
+  }
+
+  function toggleCensorship() {
+    applyCensorship = !applyCensorship;
+    $toggleCensorshipBtn
+      .toggleClass("btn-dark", applyCensorship)
+      .toggleClass("btn-outline-dark", !applyCensorship);
+    processOutput();
+  }
+
+  function toggleCensorshipStyle() {
+    censorshipStyle = (censorshipStyle === 'pixelated') ? 'hidden' : 'pixelated';
+    $toggleCensorshipStyleBtn.text(`Censor Style: ${censorshipStyle.charAt(0).toUpperCase() + censorshipStyle.slice(1)}`);
     processOutput();
   }
 
@@ -59,21 +79,80 @@
     const chatText = $textarea.val();
     const chatLines = chatText.split("\n").map(removeTimestamps);
     let fragment = document.createDocumentFragment();
-
+  
     chatLines.forEach((line) => {
       const div = document.createElement("div");
       div.className = "generated";
-      div.innerHTML = addLineBreaksAndHandleSpans(formatLineWithFilter(line));
+  
+      // Apply formatting first
+      let formattedLine = formatLineWithFilter(line);
+  
+      // Then apply censorship
+      if (applyCensorship) {
+        formattedLine = applyCensorshipToLine(formattedLine, line);
+      }
+  
+      div.innerHTML = addLineBreaksAndHandleSpans(formattedLine);
       fragment.appendChild(div);
-
+  
       const clearDiv = document.createElement("div");
       clearDiv.className = "clear";
       fragment.appendChild(clearDiv);
     });
-
+  
     $output.html('');
     $output.append(fragment);
     cleanUp();
+  }
+
+  function applyCensorshipToLine(formattedLine, originalLine) {
+    const exclusionPatterns = [
+      /\[S:\s*\d+\s*\|\s*CH:.*\]/,
+      /\[\d{2}\/[A-Z]{3}\/\d{4}\]/,
+      /intercom/i
+    ];
+
+    if (exclusionPatterns.some((pattern) => pattern.test(originalLine))) {
+      return formattedLine;
+    }
+
+    const censorshipRules = [
+      {
+        regex: /\$\d+(?:,\d{3})*\.\d{1,3}/g, // Matches $123.456, $1,234.56
+        replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
+      },
+      {
+        regex: /\[\$\d+(?:,\d{3})*\.\d{1,3}\]/g, // Matches [$123.456], [$1,234.56]
+        replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
+      },
+      {
+        regex: /\$\d+(?:,\d{3})*(?:\.\d{1,3})?/g, // Matches $500, $10,584, $123.456
+        replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
+      },
+      {
+        regex: /\(\d+g\)/g, // (2000g)
+        replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
+      },
+      {
+        regex: /#\d+/g, // #456987123
+        replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
+      },
+      {
+        regex: /\[#\d+\]/g, // [#420420]
+        replacement: (match) => `<span class="${censorshipStyle}">[#${match.match(/#\d+/)[0].slice(1)}]</span>`
+      },
+      {
+        regex: /(?=.*<span class="blue">)x(\d+)/g,
+        replacement: (_match, p1) => `x<span class="${censorshipStyle}">${p1}</span>`
+      }
+    ];
+
+    let censoredLine = formattedLine;
+  censorshipRules.forEach(rule => {
+      censoredLine = censoredLine.replace(rule.regex, rule.replacement);
+    });
+
+    return censoredLine;
   }
 
   function removeTimestamps(line) {
@@ -198,7 +277,7 @@
   function handleTransaction(line) {
     return (
       '<span class="green">' +
-      line.replace(/(\$[\d,]+)/, '<span class="green">$1</span>') +
+    line.replace(/(\$\d+(?:,\d{3})*(?:\.\d{1,3})?)/g, '<span class="green">$1</span>') +
       "</span>"
     );
   }
@@ -267,9 +346,9 @@
   function colorMoneyLine(line) {
     return line
       .replace(
-        /You have received \$(\d+)/,
-        '<span class="white">You have received </span><span class="green">$$$1</span>'
-      )
+        /You have received (\$\d+(?:,\d{3})*(?:\.\d{1,3})?)/,
+        '<span class="white">You have received </span><span class="green">$1</span>'
+    )
       .replace(
         /from (.+) on your bank account\./,
         '<span class="white">from </span><span class="white">$1</span><span class="white"> on your bank account.</span>'
