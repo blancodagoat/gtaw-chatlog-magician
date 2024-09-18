@@ -130,7 +130,11 @@
         replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
       },
       {
-        regex: /\(\d+g\)/g, // (2000g)
+        regex: /\(\d+(g)?\)/g, // Matches (number) and (numberg)
+        replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
+      },
+      {
+        regex: /(?<!<span class="me">[^<]*\s)\d+(?=\s[a-zA-Z]+\b)/g,
         replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
       },
       {
@@ -148,7 +152,7 @@
     ];
 
     let censoredLine = formattedLine;
-  censorshipRules.forEach(rule => {
+    censorshipRules.forEach(rule => {
       censoredLine = censoredLine.replace(rule.regex, rule.replacement);
     });
 
