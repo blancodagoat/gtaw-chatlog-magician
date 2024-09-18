@@ -121,11 +121,11 @@ color: #c2a3da;
 }
 
 .grey {
-color: #939799;
+color: #c6c4c4;
 }
 
 .lightgrey {
-color: #c6c4c4
+color: #e2e2e2
 }
 
 .death {
@@ -151,7 +151,7 @@ color: #3896f3;
 }
 
 .white {
-color: #f1f1f1;
+color: #ffffff;
 }
 
 .radioColor {
@@ -381,13 +381,4 @@ padding: 20px;
     .button {
         font-size: 14px; /* Smaller button text for mobile */
     }
-}
-
-/* Censorship Styles */
-.pixelated {
-  filter: url(#pixelate-filter);
-}
-
-.hidden {
-  opacity: 0;
 }

@@ -31,16 +31,6 @@
     </style>
   </head>
   <body>
-    <svg xmlns='http://www.w3.org/2000/svg'>
-        <filter id="pixelate-filter" x="0" y="0" height="100%" width="100%"> 
-        <feOffset dx="0" dy="0" result="box-blur" />
-          <feFlood x="1" y="1" height="1" width="1"/>
-          <feComposite width='3' height='3'/>
-          <feTile result='tiles'/>
-          <feComposite in='box-blur' operator='in'/>
-          <feMorphology operator='dilate' radius='1'/>
-      </filter>
-    </svg>
     <div class="grid-container">
       <div class="grid-x grid-margin-x">
         <div class="cell small-12">
@@ -70,8 +60,6 @@
             <div class="cell auto">
               <button id="downloadOutputTransparent" class="button success"> Download </button>
               <button id="toggleBackground" class="button secondary"> Toggle Background </button>
-              <button id="toggleCensorship" class="button"> Toggle Censorship </button>
-              <button id="toggleCensorshipStyle" class="button"> Toggle Censorship Style </button>
             </div>
             <div class="cell shrink">
               <div class="switch large">
