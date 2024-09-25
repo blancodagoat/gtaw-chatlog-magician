@@ -162,21 +162,32 @@
 
 	function formatLineWithFilter(line) {
 		const lowerLine = line.toLowerCase();
+		const toSectionPattern = /\(to [^)]+\)/i;
+		const lineWithoutToSection = line.replace(toSectionPattern, "");
 
 		if (isRadioLine(line)) {
 			if (!characterName) {
 				return wrapSpan("radioColor", line);
 			}
-			return lowerLine.includes(characterName) ?
+			return lineWithoutToSection.toLowerCase().includes(characterName) ?
 				wrapSpan("radioColor", line) :
 				wrapSpan("radioColor2", line);
 		}
 
-		if (lowerLine.includes("says [low]:")) {
+		if (lowerLine.includes("says [lower]")) {
+			if (!characterName) {
+				return wrapSpan("darkgrey", line);
+			}
+			return lineWithoutToSection.toLowerCase().includes(characterName) ?
+				wrapSpan("grey", line) :
+				wrapSpan("darkgrey", line);
+		}
+
+		if (lowerLine.includes("says [low]")) {
 			if (!characterName) {
 				return wrapSpan("grey", line);
 			}
-			return lowerLine.includes(characterName) ?
+			return lineWithoutToSection.toLowerCase().includes(characterName) ?
 				wrapSpan("lightgrey", line) :
 				wrapSpan("grey", line);
 		}
@@ -185,7 +196,7 @@
 			if (!characterName) {
 				return wrapSpan("white", line);
 			}
-			return lowerLine.includes(characterName) ?
+			return lineWithoutToSection.toLowerCase().includes(characterName) ?
 				wrapSpan("white", line) :
 				wrapSpan("lightgrey", line);
 		}
@@ -204,9 +215,11 @@
 		if (/\[[^\]]+ -> [^\]]+\]/.test(line)) return wrapSpan("depColor", line);
 		if (line.startsWith("*")) return wrapSpan("me", line);
 		if (line.startsWith(">")) return wrapSpan("ame", line);
+		if (lowerLine.includes("(phone) *")) return wrapSpan("me", line);
 		if (lowerLine.includes("whispers:")) return handleWhispers(line);
 		if (lowerLine.includes("says (cellphone):")) return handleCellphone(line);
-		if (lowerLine.includes("says [low]:")) return wrapSpan("grey", line);
+		if (lowerLine.includes("says [low]")) return wrapSpan("grey", line);
+		if (lowerLine.includes("says [lower]")) return wrapSpan("darkgrey", line);
 		if (lowerLine.includes("says:") || lowerLine.includes("shouts:"))
 			return wrapSpan("white", line);
 		if (

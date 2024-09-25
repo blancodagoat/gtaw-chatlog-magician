@@ -121,6 +121,10 @@ html::-webkit-scrollbar {
 	color: #c2a3da;
 }
 
+.darkgrey {
+	color: #5a5a5b;
+}
+
 .grey {
 	color: #939799;
 }
