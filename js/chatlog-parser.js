@@ -79,7 +79,7 @@
     $textarea.off("input").on("input", throttle(processOutput, 200));
 
     function replaceDashes(text) {
-        return text.replace(/\.{2,3}-/g, '—');
+        return text.replace(/(\.{2,3}-|-\.{2,3})/g, '—');
     }
 
     function processOutput() {
