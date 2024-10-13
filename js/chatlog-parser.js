@@ -78,9 +78,15 @@
 
     $textarea.off("input").on("input", throttle(processOutput, 200));
 
+    function replaceDashes(text) {
+        return text.replace(/\.{2,3}-/g, '—');
+    }
+
     function processOutput() {
         const chatText = $textarea.val();
-        const chatLines = chatText.split("\n").map(removeTimestamps);
+        const chatLines = chatText.split("\n")
+                                  .map(removeTimestamps)
+                                  .map(replaceDashes); // Apply dash replacement
         let fragment = document.createDocumentFragment();
 
         chatLines.forEach((line) => {
