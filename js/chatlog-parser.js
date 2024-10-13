@@ -13,6 +13,11 @@
     $toggleCensorshipBtn.click(toggleCensorship);
     $toggleCensorshipStyleBtn.click(toggleCensorshipStyle);
 
+    // Add listener for lineLengthInput within the existing ready function
+    $("#lineLengthInput").on("input", processOutput);
+
+    $("#characterNameInput").on("input", debounce(applyFilter, 300));
+
     function toggleBackground() {
         applyBackground = !applyBackground;
         $output.toggleClass("background-active", applyBackground);
@@ -37,8 +42,6 @@
         $toggleCensorshipStyleBtn.text(`Censor Style: ${censorshipStyle.charAt(0).toUpperCase() + censorshipStyle.slice(1)}`);
         processOutput();
     }
-
-    $("#characterNameInput").on("input", debounce(applyFilter, 300));
 
     function applyFilter() {
         characterName = $("#characterNameInput").val().toLowerCase();
@@ -211,6 +214,9 @@
     function formatLine(line) {
         const lowerLine = line.toLowerCase();
 
+        if (/^\*\* \[PRISON PA\].*\*\*$/.test(line)) {
+            return formatPrisonPA(line);
+        }
         if (/\([^\)]+\) Message from [^:]+: .+/.test(line)) {
             return formatSmsMessage(line);
         }
@@ -269,7 +275,12 @@
         if (lowerLine.includes("you're being robbed, use /arob")) return formatRobbery(line);
         if (lowerLine.startsWith("you've cut")) return formatDrugCut(line);
         if (lowerLine.includes("[property robbery]")) return formatPropertyRobbery(line);
-
+        if (/You've just taken .+?! You will feel the effects of the drug soon\./.test(line)) {
+            return formatDrugEffect(line);
+        }
+        if (line.includes("[CASHTAP]")) {
+            return formatCashTap(line);
+        }
         return replaceColorCodes(line);
     }
 
@@ -285,7 +296,7 @@
 
     function handleCellphone(line) {
         return line.startsWith("!") ?
-            wrapSpan("yellow", line.slice(1)) :
+            wrapSpan('yellow', line.slice(1)) :
             wrapSpan("white", line);
     }
 
@@ -583,8 +594,41 @@
         return line;
     }
 
+    function formatDrugEffect(line) {
+        const pattern = /You've just taken (.+?)! You will feel the effects of the drug soon\./;
+        const match = line.match(pattern);
+    
+        if (match) {
+            const drugName = match[1];
+            return `<span class="white">You've just taken </span><span class="green">${drugName}</span><span class="white">! You will feel the effects of the drug soon.</span>`;
+        }
+    
+        return line;
+    }
+
+    function formatPrisonPA(line) {
+        const pattern = /^\*\* \[PRISON PA\].*\*\*$/;
+        if (pattern.test(line)) {
+            return `<span class="blue">${line}</span>`;
+        }
+        return line;
+    }
+
+    function formatCashTap(line) {
+        if (line.includes("[CASHTAP]")) {
+            return line.replace(
+                /\[CASHTAP\]/g,
+                '<span class="green">[CASHTAP]</span>'
+            ).replace(
+                /^(.*?)(<span class="green">\[CASHTAP\]<\/span>)(.*)$/,
+                '<span class="white">$1</span>$2<span class="white">$3</span>'
+            );
+        }
+        return line;
+    }
+
     function addLineBreaksAndHandleSpans(text) {
-        const maxLineLength = 77;
+        const maxLineLength = document.getElementById("lineLengthInput").value;
         let result = "";
         let currentLineLength = 0;
         let inSpan = false;
@@ -592,10 +636,9 @@
 
         function addLineBreak() {
             if (inSpan) {
-                result +=
-                    '</span><br><span class="' +
-                    currentSpan.match(/class="([^"]+)"/)[1] +
-                    '">';
+                const spanClassMatch = currentSpan.match(/class="([^"]+)"/);
+                const spanClass = spanClassMatch ? spanClassMatch[1] : "";
+                result += `</span><br><span class="${spanClass}">`;
             } else {
                 result += "<br>";
             }

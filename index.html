@@ -35,51 +35,58 @@
   </style>
  </head>
  <body>
-  <div class="grid-container">
-   <div class="grid-x grid-margin-x">
-    <div class="cell small-12">
-     <div class="grid-x grid-margin-x align-middle">
-      <div class="cell small-4 medium-2">
-       <label for="font-label">Font Size:</label>
-       <input name="font-label" id="font-label" type="number" min="10" max="64" value="12" />
-      </div>
-      <div class="cell small-8 medium-10">
-       <label for="characterNameInput">Character Name Filter:</label>
-       <div class="input-group">
-        <input type="text" id="characterNameInput" placeholder="Enter character name" />
-        <div class="input-group-button">
-         <button class="button small" onclick="applyFilter()">Apply</button>
+    <div class="grid-container">
+        <div class="grid-x grid-margin-x">
+           <div class="cell small-12">
+              <div class="grid-x grid-margin-x align-middle">
+                 <div class="cell small-4 medium-2">
+                    <label for="font-label">Font Size:</label>
+                    <input name="font-label" id="font-label" type="number" min="10" max="64" value="12" />
+                 </div>
+                 <div class="cell small-4 medium-2">
+                    <label for="lineLengthInput">Line Length:</label>
+                    <input type="range" id="lineLengthInput" min="50" max="90" value="77">
+                 </div>
+                 <div class="cell small-8 medium-8">
+                    <label for="characterNameInput">Character Name Filter:</label>
+                    <div class="input-group">
+                       <input type="text" id="characterNameInput" placeholder="Enter character name" />
+                       <div class="input-group-button">
+                          <button class="button small" onclick="applyFilter()">Apply</button>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+              <label for="chatlogInput">Chat Log:</label>
+              <div class="textarea-container">
+                 <textarea id="chatlogInput" class="form-control textarea-input" rows="15" placeholder="Enter your chat log here..."></textarea>
+                 <div class="logo-overlay">
+                    <img src="logo.png" alt="Logo" loading="lazy" />
+                 </div>
+              </div>
+              <div class="grid-x grid-margin-x align-middle">
+                 <div class="cell auto">
+                    <button id="downloadOutputTransparent" class="button success"> Download </button>
+                    <button id="toggleBackground" class="button secondary"> Toggle Background </button>
+                    <button id="toggleCensorship" class="button"> Toggle Censorship </button>
+                    <button id="toggleCensorshipStyle" class="button"> Toggle Censorship Style </button>
+                 </div>
+                 <div class="cell shrink">
+                    <div class="switch large">
+                       <input class="switch-input" id="scaleToggle" type="checkbox" name="scale-toggle" />
+                       <label class="switch-paddle" for="scaleToggle">
+                          <span class="switch-active" aria-hidden="true">2x</span>
+                          <span class="switch-inactive" aria-hidden="true">1x</span>
+                       </label>
+                    </div>
+                 </div>
+              </div>
+              <div id="output" class="output">
+                 <div class="normal-content">Visible Content</div>
+                 <div class="censored-content pixelated">Censored Content</div>
+              </div>
+           </div>
         </div>
-       </div>
-      </div>
-     </div>
-     <label for="chatlogInput">Chat Log:</label>
-     <div class="textarea-container">
-      <textarea id="chatlogInput" class="form-control textarea-input" rows="15" placeholder="Enter your chat log here..."></textarea>
-      <div class="logo-overlay">
-       <img src="logo.png" alt="Logo" loading="lazy" />
-      </div>
-     </div>
-     <div class="grid-x grid-margin-x align-middle">
-      <div class="cell auto">
-       <button id="downloadOutputTransparent" class="button success"> Download </button>
-       <button id="toggleBackground" class="button secondary"> Toggle Background </button>
-       <button id="toggleCensorship" class="button"> Toggle Censorship </button>
-       <button id="toggleCensorshipStyle" class="button"> Toggle Censorship Style </button>
-      </div>
-      <div class="cell shrink">
-       <div class="switch large">
-        <input class="switch-input" id="scaleToggle" type="checkbox" name="scale-toggle" />
-        <label class="switch-paddle" for="scaleToggle">
-         <span class="switch-active" aria-hidden="true">2x</span>
-         <span class="switch-inactive" aria-hidden="true">1x</span>
-        </label>
-       </div>
-      </div>
-     </div>
-     <div id="output" class="output">
-      <div class="normal-content">Visible Content</div>
-      <div class="censored-content pixelated">Censored Content</div>
      </div>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.8.1/js/foundation.min.js"></script>
