@@ -220,6 +220,19 @@
     function formatLine(line) {
         const lowerLine = line.toLowerCase();
 
+        if (line === "********** EMERGENCY CALL **********") {
+        return '<span class="blue">' + line + '</span>';
+    }
+
+    const emergencyCallPattern = /^(Log Number|Phone Number|Location|Situation):\s*(.*)$/;
+
+    const match = line.match(emergencyCallPattern);
+
+    if (match) {
+        const key = match[1];
+        const value = match[2];
+        return '<span class="blue">' + key + ': </span><span class="white">' + value + '</span>';
+    }
         if (/^\*\* \[PRISON PA\].*\*\*$/.test(line)) {
             return formatPrisonPA(line);
         }
@@ -260,6 +273,7 @@
         if (/\[.*? intercom\]/i.test(lowerLine)) return formatIntercom(line);
         if (lowerLine.startsWith("you placed")) return wrapSpan("orange", line);
         if (lowerLine.includes("from the property")) return wrapSpan("death", line);
+        if (lowerLine.startsWith("you dropped")) return wrapSpan("death", line);
         if (lowerLine.startsWith("use /phonecursor")) return formatPhoneCursor(line);
         if (lowerLine.includes("has shown you their")) return formatShown(line);
         if (
