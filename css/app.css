@@ -175,6 +175,10 @@ html::-webkit-scrollbar {
 	color: #33C1C9;
 }
 
+.toyou {
+	color: #ff00bc;
+}
+
 .output {
 	line-height: 0;
 	-webkit-font-smoothing: none !important;

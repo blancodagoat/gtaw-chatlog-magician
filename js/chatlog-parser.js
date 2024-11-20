@@ -13,7 +13,6 @@
     $toggleCensorshipBtn.click(toggleCensorship);
     $toggleCensorshipStyleBtn.click(toggleCensorshipStyle);
 
-    // Add listener for lineLengthInput within the existing ready function
     $("#lineLengthInput").on("input", processOutput);
 
     $("#characterNameInput").on("input", debounce(applyFilter, 300));
@@ -86,7 +85,7 @@
         const chatText = $textarea.val();
         const chatLines = chatText.split("\n")
                                   .map(removeTimestamps)
-                                  .map(replaceDashes); // Apply dash replacement
+                                  .map(replaceDashes);
         let fragment = document.createDocumentFragment();
 
         chatLines.forEach((line) => {
@@ -95,9 +94,8 @@
 
             let formattedLine = formatLineWithFilter(line);
 
-            if (applyCensorship) {
-                formattedLine = applyCensorshipToLine(formattedLine, line);
-            }
+            // Apply user-based censorship
+            formattedLine = applyUserCensorship(formattedLine);
 
             div.innerHTML = addLineBreaksAndHandleSpans(formattedLine);
             fragment.appendChild(div);
@@ -112,57 +110,8 @@
         cleanUp();
     }
 
-    function applyCensorshipToLine(formattedLine, originalLine) {
-        const exclusionPatterns = [
-            /\[S:\s*\d+\s*\|\s*CH:.*\]/,
-            /\[\d{2}\/[A-Z]{3}\/\d{4}\]/,
-            /intercom/i
-        ];
-
-        if (exclusionPatterns.some((pattern) => pattern.test(originalLine))) {
-            return formattedLine;
-        }
-
-        const censorshipRules = [{
-                regex: /(?<!K)\$\d+(?:,\d{3})*\.\d{1,3}/g,
-                replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
-            },
-            {
-                regex: /(?<!K)\[\$\d+(?:,\d{3})*\.\d{1,3}\]/g,
-                replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
-            },
-            {
-                regex: /(?<!K)\$\d+(?:,\d{3})*(?:\.\d{1,3})?/g,
-                replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
-            },
-            {
-                regex: /(?<!K)\(\d+(g)?\)/g,
-                replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
-            },
-            {
-                regex: /(?<!K)(?<!<span class="me">[^<]*\s)\d+(?=\s[a-zA-Z]+\b)/g,
-                replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
-            },
-            {
-                regex: /(?<!K)#\d+/g,
-                replacement: (match) => `<span class="${censorshipStyle}">${match}</span>`
-            },
-            {
-                regex: /(?<!K)\[#\d+\]/g,
-                replacement: (match) => `<span class="${censorshipStyle}">[#${match.match(/#\d+/)[0].slice(1)}]</span>`
-            },
-            {
-                regex: /(?<!K)(?=.*<span class="blue">)x(\d+)/g,
-                replacement: (_match, p1) => `x<span class="${censorshipStyle}">${p1}</span>`
-            }
-        ];
-
-        let censoredLine = formattedLine;
-        censorshipRules.forEach(rule => {
-            censoredLine = censoredLine.replace(rule.regex, rule.replacement);
-        });
-
-        return censoredLine;
+    function applyUserCensorship(line) {
+        return line.replace(/÷(.*?)÷/g, (match, p1) => `<span class="${censorshipStyle}">${p1}</span>`);
     }
 
     function removeTimestamps(line) {
@@ -220,9 +169,29 @@
     function formatLine(line) {
         const lowerLine = line.toLowerCase();
 
+        if (line.includes("Equipped Weapons")) {
+            return wrapSpan("green", line);
+        }
+
+        const corpseDamagePattern = /^(.+?) \((ID)\) damages:/;
+        const corpseDamageMatch = line.match(corpseDamagePattern);
+        if (corpseDamageMatch) {
+            const namePart = corpseDamageMatch[1];
+            const restOfLine = line.slice(namePart.length);
+            return `<span class="blue">${namePart}</span><span class="white">${restOfLine}</span>`;
+        }
+
+        const youBeenShotPattern = /You've been shot in the (.+?) with a (.+?) for (\d+) damage\. \(\(Health : (\d+)\)\)/;
+
+        const youBeenShotMatch = line.match(youBeenShotPattern);
+        if (youBeenShotMatch) {
+            const [_, text, text2, numbers, numbers2] = youBeenShotMatch;
+            return `<span class="death">You've been shot</span> <span class="white"> in the </span> <span class="death">${text}</span> <span class="white"> with a </span> <span class="death">${text2}</span> <span class="white"> for </span> <span class="death">${numbers}</span> <span class="white"> damage. ((Health : </span> <span class="death">${numbers2}</span> <span class="white">))</span>`;
+        }
+
         if (line === "********** EMERGENCY CALL **********") {
-        return '<span class="blue">' + line + '</span>';
-    }
+            return '<span class="blue">' + line + '</span>';
+        }
 
     const emergencyCallPattern = /^(Log Number|Phone Number|Location|Situation):\s*(.*)$/;
 
@@ -258,7 +227,9 @@
         if (line.startsWith("*")) return wrapSpan("me", line);
         if (line.startsWith(">")) return wrapSpan("ame", line);
         if (lowerLine.includes("(phone) *")) return wrapSpan("me", line);
-        if (lowerLine.includes("whispers:")) return handleWhispers(line);
+        if (/^[A-Z][a-z]+\s[A-Z][a-z]+\swhispers( to \d+ people)?/i.test(line)) {
+            return handleWhispers(line);
+        }        
         if (lowerLine.includes("says (phone):")) return handleCellphone(line);
         if (
             lowerLine.includes("(goods)") ||
@@ -309,10 +280,19 @@
     }
 
     function handleWhispers(line) {
-        return line.startsWith("(Car)") ?
-            wrapSpan("yellow", line) :
-            wrapSpan("whisper", line);
-    }
+        if (line.startsWith("(Car)")) {
+            return wrapSpan("yellow", line);
+        }
+    
+        const groupWhisperPattern = /^[A-Z][a-z]+\s[A-Z][a-z]+\swhispers to \d+\speople/i;
+        const match = line.match(groupWhisperPattern);
+        if (match) {
+            const splitIndex = match.index + match[0].length;
+            return `<span class="orange">${line.slice(0, splitIndex)}</span><span class="whisper">${line.slice(splitIndex)}</span>`;
+        }
+    
+        return wrapSpan("whisper", line);
+    }    
 
     function handleCellphone(line) {
         return line.startsWith("!") ?
@@ -389,23 +369,19 @@
 
             return '<span class="yellow">(' + parenthetical + ')</span> <span class="white">Incoming call from </span><span class="yellow">' + caller + '</span><span class="white">. Use ' + pickupCommand + ' to answer or ' + hangupCommand + ' to decline.</span>';
         } else {
-            // If it doesn't match, just remove square brackets and wrap in white
             return '<span class="white">' + line + '</span>';
         }
     }
 
     function colorInfoLine(line) {
-        // Check if line matches [INFO]: [date] message
         const datePattern = /\[INFO\]:\s*\[\d{2}\/[A-Z]{3}\/\d{4}\]\s.+/;
         if (datePattern.test(line)) {
             return applyDatePattern(line);
         }
 
-        // Remove any square brackets except [INFO]
         line = line.replace(/\[(?!INFO\])|\](?!)/g, '');
         line = line.replace('[INFO]', '<span class="green">[INFO]</span>');
 
-        // Now, check for different patterns
         if (line.includes('You have received a contact')) {
             if (line.includes('/acceptnumber')) {
                 return applyPhoneRequestFormatting(line);
@@ -417,7 +393,6 @@
         } else if (line.includes('You have shared')) {
             return applyContactSharedFormatting(line);
         } else {
-            // The rest is white
             return '<span class="white">' + line + '</span>';
         }
     }
@@ -430,7 +405,6 @@
     }
 
     function applyPhoneRequestFormatting(line) {
-        // Pattern: [INFO] You have received a contact ([anything here], [numbers here]) from [anything here]. Use /acceptnumber to accept it.
         const pattern = /\[INFO\] You have received a contact \((.+), ([^\)]+)\) from (.+)\. Use (\/acceptnumber) to accept it\./;
 
         const match = line.match(pattern);
@@ -443,13 +417,11 @@
 
             return '<span class="green">[INFO]</span> <span class="white">You have received a contact (' + contactName + ', ' + numbers + ') from ' + sender + '. Use ' + acceptCommand + ' to accept it.</span>';
         } else {
-            // If no match, just return line
             return line;
         }
     }
 
     function applyContactShareFormatting(line) {
-        // Pattern: [INFO] You have received a contact ([anything here], [numbers here]) from [anything here]. Use /acceptcontact to accept it.
         const pattern = /\[INFO\] You have received a contact \((.+), ([^\)]+)\) from (.+)\. Use (\/acceptcontact) to accept it\./;
 
         const match = line.match(pattern);
@@ -462,13 +434,11 @@
 
             return '<span class="green">[INFO]</span> <span class="white">You have received a contact (' + contactName + ', ' + numbers + ') from ' + sender + '. Use ' + acceptCommand + ' to accept it.</span>';
         } else {
-            // If no match, just return line
             return line;
         }
     }
 
     function applyNumberShareFormatting(line) {
-        // Pattern: [INFO] You have shared your number with [anything here] under the name [anything here].
         const pattern = /\[INFO\] You have shared your number with (.+) under the name (.+)\./;
 
         const match = line.match(pattern);
@@ -484,7 +454,6 @@
     }
 
     function applyContactSharedFormatting(line) {
-        // Pattern: [INFO] You have shared [anything here] ([numbers here]) with [anything here].
         const pattern = /\[INFO\] You have shared (.+) \(([^\)]+)\) with (.+)\./;
 
         const match = line.match(pattern);
