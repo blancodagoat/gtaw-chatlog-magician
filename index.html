@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/foundation.min.css" />
   <link rel="stylesheet" href="css/app.css" />
   <link rel="icon" href="favicon.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
    label {
     display: none;
@@ -69,6 +70,13 @@
                     <button id="downloadOutputTransparent" class="button success"> Download </button>
                     <button id="toggleBackground" class="button secondary"> Toggle Background </button>
                     <button id="toggleCensorshipStyle" class="button"> Toggle Censorship Style </button>
+                    <button class="info-bracket" aria-label="More information about text formatting">
+                     <i class="fas fa-info-circle info-icon" aria-hidden="true"></i>
+                     Tooltip
+                     <span class="tooltip-text" role="tooltip">Highlight Phone Lines: Start a line with "!" to color it yellow.<br>
+                       Censor: Wrap text with "÷" to censor it.
+                     </span>
+                   </button>
                  </div>
                  <div class="cell shrink">
                     <div class="switch large">
