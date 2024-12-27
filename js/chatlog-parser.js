@@ -1,4 +1,4 @@
-﻿$(document).ready(function() {
+$(document).ready(function() {
     let applyBackground = false;
     let applyCensorship = false;
     let censorshipStyle = 'pixelated';
@@ -119,6 +119,11 @@
     }
 
     function formatLineWithFilter(line) {
+        // Check for car whispers first
+        if (line.startsWith("(Car)")) {
+            return wrapSpan("yellow", line);
+        }
+
         const lowerLine = line.toLowerCase();
         const toSectionPattern = /\(to [^)]+\)/i;
         const lineWithoutToSection = line.replace(toSectionPattern, "");
@@ -171,6 +176,10 @@
 
         if (line.includes("Equipped Weapons")) {
             return wrapSpan("green", line);
+        }
+
+        if (lowerLine.includes("left in jail")) {
+            return formatJailTime(line);
         }
 
         const corpseDamagePattern = /^(.+?) \((ID)\) damages:/;
@@ -227,7 +236,7 @@
         if (line.startsWith("*")) return wrapSpan("me", line);
         if (line.startsWith(">")) return wrapSpan("ame", line);
         if (lowerLine.includes("(phone) *")) return wrapSpan("me", line);
-        if (/^[A-Z][a-z]+\s[A-Z][a-z]+\swhispers( to \d+ people)?/i.test(line)) {
+        if (lowerLine.includes("whispers") || line.startsWith("(Car)")) {
             return handleWhispers(line);
         }        
         if (lowerLine.includes("says (phone):")) return handleCellphone(line);
@@ -273,6 +282,15 @@
             return formatCashTap(line);
         }
         return replaceColorCodes(line);
+    }
+
+    function formatJailTime(line) {
+        const pattern = /(You have) (.*?) (left in jail\.)/;
+        const match = line.match(pattern);
+        if (match) {
+            return `<span class="white">${match[1]}</span> <span class="green">${match[2]}</span> <span class="white">${match[3]}</span>`;
+        }
+        return line;
     }
 
     function wrapSpan(className, content) {
