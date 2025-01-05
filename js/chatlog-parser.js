@@ -178,6 +178,10 @@ $(document).ready(function() {
             return wrapSpan("green", line);
         }
 
+        if (lowerLine.startsWith("you've used")) {
+            return wrapSpan("green", line);
+        }
+
         if (lowerLine.includes("left in jail")) {
             return formatJailTime(line);
         }
