@@ -97,6 +97,11 @@ $(document).ready(function() {
             // Apply user-based censorship
             formattedLine = applyUserCensorship(formattedLine);
 
+            // Color [!] after all other formatting
+            if (line.includes("[!]")) {
+                formattedLine = formattedLine.replace(/\[!\]/g, '<span class="toyou">[!]</span>');
+            }
+
             div.innerHTML = addLineBreaksAndHandleSpans(formattedLine);
             fragment.appendChild(div);
 
@@ -115,7 +120,7 @@ $(document).ready(function() {
     }
 
     function removeTimestamps(line) {
-        return line.replace(/\[\d{2}:\d{2}:\d{2}\] /g, "");
+        return line.replace(/\[\d{2}:\d{2}:\d{2}\] /g, "").trim();
     }
 
     function formatLineWithFilter(line) {
@@ -164,21 +169,27 @@ $(document).ready(function() {
                 wrapSpan("lightgrey", line);
         }
 
-        return formatLine(line);
-    }
-
-    function isRadioLine(line) {
-        return /\[S: \d+ \| CH: .+\]/.test(line);
-    }
-
-    function formatLine(line) {
-        const lowerLine = line.toLowerCase();
-
-        if (line.includes("Equipped Weapons")) {
+        if (lowerLine.startsWith("you were frisked by")) {
             return wrapSpan("green", line);
         }
 
-        if (lowerLine.startsWith("you've used")) {
+        if (line.match(/\|------ .+'s Items \d{2}\/[A-Z]{3}\/\d{4} - \d{2}:\d{2}:\d{2} ------\|/)) {
+            return wrapSpan("green", line);
+        }
+
+        if (line.match(/^(?:\[\d{2}:\d{2}:\d{2}\]\s+)?\d+: .+/)) {
+            // Skip phone number items, let formatLine handle them
+            if (line.includes("PH:")) {
+                return formatLine(line);
+            }
+            return wrapSpan("yellow", line);
+        }
+
+        if (lowerLine.startsWith("total weight:")) {
+            return wrapSpan("yellow", line);
+        }
+
+        if (lowerLine.startsWith("money on hand:")) {
             return wrapSpan("green", line);
         }
 
@@ -206,15 +217,15 @@ $(document).ready(function() {
             return '<span class="blue">' + line + '</span>';
         }
 
-    const emergencyCallPattern = /^(Log Number|Phone Number|Location|Situation):\s*(.*)$/;
+        const emergencyCallPattern = /^(Log Number|Phone Number|Location|Situation):\s*(.*)$/;
 
-    const match = line.match(emergencyCallPattern);
+        const match = line.match(emergencyCallPattern);
 
-    if (match) {
-        const key = match[1];
-        const value = match[2];
-        return '<span class="blue">' + key + ': </span><span class="white">' + value + '</span>';
-    }
+        if (match) {
+            const key = match[1];
+            const value = match[2];
+            return '<span class="blue">' + key + ': </span><span class="white">' + value + '</span>';
+        }
         if (/^\*\* \[PRISON PA\].*\*\*$/.test(line)) {
             return formatPrisonPA(line);
         }
@@ -285,6 +296,67 @@ $(document).ready(function() {
         if (line.includes("[CASHTAP]")) {
             return formatCashTap(line);
         }
+        return formatLine(line);
+    }
+
+    function isRadioLine(line) {
+        return /\[S: \d+ \| CH: .+\]/.test(line);
+    }
+
+    function formatLine(line) {
+        const lowerLine = line.toLowerCase();
+
+        if (line.includes("Equipped Weapons")) {
+            return wrapSpan("green", line);
+        }
+
+        if (lowerLine.startsWith("you've used")) {
+            return wrapSpan("green", line);
+        }
+
+        if (lowerLine.includes("was seized by")) {
+            return wrapSpan("death", line);
+        }
+
+        if (lowerLine.startsWith("you were frisked by")) {
+            return wrapSpan("green", line);
+        }
+
+        // Inventory header pattern
+        if (line.match(/\|------ .+'s Items \d{2}\/[A-Z]{3}\/\d{4} - \d{2}:\d{2}:\d{2} ------\|/)) {
+            return wrapSpan("green", line);
+        }
+
+        // Equipped weapons header pattern
+        if (line.match(/\|------ .+'s Equipped Weapons ------\|/)) {
+            return wrapSpan("green", line);
+        }
+
+        // Inventory item with phone number
+        const phoneMatch = line.trim().match(/^(\d+: .+? x\d+ \(.+?\) -) (PH: \d+)$/);
+        if (phoneMatch) {
+            const [_, itemPart, phonePart] = phoneMatch;
+            return wrapSpan("yellow", itemPart) + " " + wrapSpan("green", phonePart);
+        }
+
+        // Regular inventory item (with or without timestamp)
+        if (line.match(/^(?:\[\d{2}:\d{2}:\d{2}\]\s+)?\d+: .+/)) {
+            return wrapSpan("yellow", line);
+        }
+
+        // Total weight line
+        if (lowerLine.startsWith("total weight:")) {
+            return wrapSpan("yellow", line);
+        }
+
+        if (lowerLine.startsWith("money on hand:")) {
+            return wrapSpan("green", line);
+        }
+
+        if (lowerLine.includes("left in jail")) {
+            return formatJailTime(line);
+        }
+
         return replaceColorCodes(line);
     }
 
