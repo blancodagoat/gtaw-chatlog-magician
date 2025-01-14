@@ -173,6 +173,12 @@ $(document).ready(function() {
             return wrapSpan("green", line);
         }
 
+        // [CASHTAP] messages
+        if (line.startsWith("[CASHTAP]")) {
+            const parts = line.split("[CASHTAP]");
+            return wrapSpan("green", "[CASHTAP]") + wrapSpan("white", parts[1]);
+        }
+
         if (line.match(/\|------ .+'s Items \d{2}\/[A-Z]{3}\/\d{4} - \d{2}:\d{2}:\d{2} ------\|/)) {
             return wrapSpan("green", line);
         }
