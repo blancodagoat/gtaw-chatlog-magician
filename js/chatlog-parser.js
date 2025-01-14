@@ -173,6 +173,30 @@ $(document).ready(function() {
             return wrapSpan("green", line);
         }
 
+        // Description styling
+        if (line.match(/^___Description of .+___$/)) {
+            return wrapSpan("blue", line);
+        }
+
+        if (line.startsWith("Age range:")) {
+            const parts = line.split("Age range:");
+            return wrapSpan("blue", "Age range:") + wrapSpan("white", parts[1]);
+        }
+
+        if (line.startsWith("->")) {
+            const parts = line.split("->");
+            return wrapSpan("blue", "->") + wrapSpan("white", parts[1]);
+        }
+
+        if (line.startsWith("[INFO]")) {
+            const parts = line.split("[INFO]");
+            return wrapSpan("blue", "[INFO]") + wrapSpan("white", parts[1]);
+        }
+
+        if (line.match(/^___Tattoos description of .+___$/)) {
+            return wrapSpan("blue", line);
+        }
+
         // [CASHTAP] messages
         if (line.startsWith("[CASHTAP]")) {
             const parts = line.split("[CASHTAP]");
@@ -261,11 +285,7 @@ $(document).ready(function() {
             return handleWhispers(line);
         }        
         if (lowerLine.includes("says (phone):")) return handleCellphone(line);
-        if (
-            lowerLine.includes("(goods)") ||
-            lowerLine.match(/(.+?)\s+x(\d+)\s+\((\d+g)\)/)
-        )
-            return handleGoods(line);
+        if (/\[[^\]]+ -> [^\]]+\]/.test(line)) return wrapSpan("depColor", line);
         if (lowerLine.includes("[megaphone]:")) return wrapSpan("yellow", line);
         if (lowerLine.startsWith("info:")) return formatInfo(line);
         if (lowerLine.includes("you have received $")) return colorMoneyLine(line);
@@ -302,6 +322,11 @@ $(document).ready(function() {
         if (line.includes("[CASHTAP]")) {
             return formatCashTap(line);
         }
+        if (
+            lowerLine.includes("(goods)") ||
+            lowerLine.match(/(.+?)\s+x(\d+)\s+\((\d+g)\)/)
+        )
+            return handleGoods(line);
         return formatLine(line);
     }
 
