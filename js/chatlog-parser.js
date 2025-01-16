@@ -314,6 +314,20 @@ $(document).ready(function() {
         if (lowerLine.includes("you have shown your inventory")) return wrapSpan("green", line);
         if (lowerLine.includes("you are not masked anymore")) return wrapSpan("death", line);
         if (lowerLine.includes("you're being robbed, use /arob")) return formatRobbery(line);
+
+        // Faction messages
+        if (line.includes("You have received an invitation to join the")) {
+            const parts = line.split("join the ");
+            const factionPart = parts[1].split(",")[0];
+            return parts[0] + "join the " + wrapSpan("yellow", factionPart) + ", type /faccept to confirm";
+        }
+        
+        if (line.includes("You're now a member of")) {
+            const parts = line.split("member of ");
+            const factionPart = parts[1].split(" you")[0];
+            return parts[0] + "member of " + wrapSpan("yellow", factionPart) + " you may need to /switchfactions to set it as your active faction!";
+        }
+
         if (lowerLine.startsWith("you've cut")) return formatDrugCut(line);
         if (lowerLine.includes("[property robbery]")) return formatPropertyRobbery(line);
         if (/You've just taken .+?! You will feel the effects of the drug soon\./.test(line)) {
