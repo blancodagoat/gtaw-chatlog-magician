@@ -287,7 +287,12 @@ $(document).ready(function() {
         if (lowerLine.includes("says (phone):")) return handleCellphone(line);
         if (/\[[^\]]+ -> [^\]]+\]/.test(line)) return wrapSpan("depColor", line);
         if (lowerLine.includes("[megaphone]:")) return wrapSpan("yellow", line);
-        if (lowerLine.startsWith("info:")) return formatInfo(line);
+        if (lowerLine.startsWith("info:")) {
+            if (line.includes("card reader") || line.includes("card payment") || line.includes("swiped your card")) {
+                return formatCardReader(line);
+            }
+            return formatInfo(line);
+        }
         if (lowerLine.includes("you have received $")) return colorMoneyLine(line);
         if (lowerLine.includes("[drug lab]")) return formatDrugLab();
         if (lowerLine.includes("[character kill]")) return formatCharacterKill(line);
@@ -753,6 +758,47 @@ $(document).ready(function() {
             );
         }
         return line;
+    }
+
+    function formatCardReader(line) {
+        const [prefix, rest] = line.split(":");
+        const moneyMatch = rest.match(/\$\d+/);
+        const money = moneyMatch ? moneyMatch[0] : "";
+        
+        if (line.includes("offers you a card reader")) {
+            // Info:Evelyn Schmidt offers you a card reader for the business Evelyn's Elegance Emporio, the display reads $35000!
+            const nameEnd = rest.indexOf(" offers");
+            const name = rest.substring(0, nameEnd);
+            
+            return wrapSpan("orange", "Info:") + wrapSpan("yellow", name) + rest.substring(nameEnd, rest.lastIndexOf(money)) + wrapSpan("green", money) + "!";
+        }
+        
+        if (line.includes("swiped your card through the reader")) {
+            // Info: You swiped your card through the reader of Evelyn's Elegance Emporio for an amount of $35000!
+            const businessStart = rest.indexOf("reader of ") + "reader of ".length;
+            const businessEnd = rest.indexOf(" for an amount");
+            const business = rest.substring(businessStart, businessEnd);
+            
+            return wrapSpan("orange", "Info:") + rest.substring(0, businessStart) + wrapSpan("yellow", business) + " for an amount of " + wrapSpan("green", money) + "!";
+        }
+        
+        if (line.includes("offered your card reader to")) {
+            // Info: You offered your card reader to Ryan Bellmont for an amount of $24440. Wait for them to accept!
+            const nameStart = rest.indexOf("reader to ") + "reader to ".length;
+            const nameEnd = rest.indexOf(" for an amount");
+            const name = rest.substring(nameStart, nameEnd);
+            
+            return wrapSpan("orange", "Info:") + rest.substring(0, nameStart) + wrapSpan("yellow", name) + " for an amount of " + wrapSpan("green", money) + ". Wait for them to accept!";
+        }
+        
+        if (line.includes("accepted the card payment of")) {
+            // Info: You accepted the card payment of Ryan Bellmont for an amount of $24440!
+            const nameStart = rest.indexOf("payment of ") + "payment of ".length;
+            const nameEnd = rest.indexOf(" for an amount");
+            const name = rest.substring(nameStart, nameEnd);
+            
+            return wrapSpan("orange", "Info:") + rest.substring(0, nameStart) + wrapSpan("yellow", name) + " for an amount of " + wrapSpan("green", money) + "!";
+        }
     }
 
     function addLineBreaksAndHandleSpans(text) {
