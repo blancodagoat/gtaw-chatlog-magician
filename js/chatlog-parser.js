@@ -124,6 +124,28 @@ $(document).ready(function() {
     }
 
     function formatLineWithFilter(line) {
+        // Handle attempt messages first (before any other patterns)
+        if (line.includes("'s attempt has")) {
+            if (line.includes("succeeded")) {
+                const parts = line.match(/^(\* .+?'s attempt has )(succeeded\. )(\(\()(\d+%)(\)\))$/);
+                if (parts) {
+                    const [_, prefix, successWithDot, openParen, percent, closeParen] = parts;
+                    return wrapSpan("me", prefix) + 
+                           wrapSpan("green", successWithDot) + 
+                           wrapSpan("white", openParen + percent + closeParen);
+                }
+            }
+            if (line.includes("failed")) {
+                const parts = line.match(/^(\* .+?'s attempt has )(failed\. )(\(\()(\d+%)(\)\))$/);
+                if (parts) {
+                    const [_, prefix, failWithDot, openParen, percent, closeParen] = parts;
+                    return wrapSpan("me", prefix) + 
+                           wrapSpan("death", failWithDot) + 
+                           wrapSpan("white", openParen + percent + closeParen);
+                }
+            }
+        }
+
         // Check for car whispers first
         if (line.startsWith("(Car)")) {
             return wrapSpan("yellow", line);
@@ -287,6 +309,36 @@ $(document).ready(function() {
         if (lowerLine.includes("says (phone):")) return handleCellphone(line);
         if (/\[[^\]]+ -> [^\]]+\]/.test(line)) return wrapSpan("depColor", line);
         if (lowerLine.includes("[megaphone]:")) return wrapSpan("yellow", line);
+
+        // Handle microphone messages
+        if (line.includes("[Microphone]:")) {
+            return wrapSpan("yellow", line);
+        }
+
+        // Handle injuries header
+        if (line === "Injuries:") {
+            return wrapSpan("blue", line);
+        }
+
+        // Handle street names
+        if (line.includes("[STREET]")) {
+            if (line.includes(" / ")) {
+                // Handle intersection of two streets
+                const parts = line.match(/\[STREET\] Street name: (.+?) \/ (.+?) \| Zone: ([^.]+)(\.)/);
+                if (parts) {
+                    const [_, street1, street2, zone, dot] = parts;
+                    return `${wrapSpan("blue", "[STREET]")} Street name: ${wrapSpan("orange", street1)} / ${wrapSpan("orange", street2)} | Zone: ${wrapSpan("orange", zone)}${dot}`;
+                }
+            } else {
+                // Handle single street
+                const parts = line.match(/\[STREET\] Street name: (.+?) \| Zone: ([^.]+)(\.)/);
+                if (parts) {
+                    const [_, street, zone, dot] = parts;
+                    return `${wrapSpan("blue", "[STREET]")} Street name: ${wrapSpan("orange", street)} | Zone: ${wrapSpan("orange", zone)}${dot}`;
+                }
+            }
+        }
+
         if (lowerLine.startsWith("info:")) {
             if (line.includes("card reader") || line.includes("card payment") || line.includes("swiped your card")) {
                 return formatCardReader(line);
@@ -452,11 +504,13 @@ $(document).ready(function() {
     }
 
     function handleTransaction(line) {
-        return (
-            '<span class="green">' +
-            line.replace(/(\$\d+(?:,\d{3})*(?:\.\d{1,3})?)/g, '<span class="green">$1</span>') +
-            "</span>"
-        );
+        // If it's a date format, remove it and add dot
+        if (line.includes("/")) {
+            line = line.replace(/\s*\(\d{2}\/[A-Z]{3}\/\d{4}\s+-\s+\d{2}:\d{2}:\d{2}\)\.?/, "");
+            return wrapSpan("green", line + ".");
+        }
+        // Otherwise just return the line as is (it already has a dot)
+        return wrapSpan("green", line);
     }
 
     function formatInfo(line) {
