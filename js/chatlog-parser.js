@@ -234,6 +234,10 @@ $(document).ready(function() {
             if (line.includes("PH:")) {
                 return formatLine(line);
             }
+            // Handle money items
+            if (line.includes("Money ($")) {
+                return formatLine(line);
+            }
             return wrapSpan("yellow", line);
         }
 
@@ -412,6 +416,15 @@ $(document).ready(function() {
             return wrapSpan("green", line);
         }
 
+        // Handle money items first
+        if (line.includes("Money ($")) {
+            const moneyMatch = line.match(/^(\d+: Money \()(\$\d+(?:,\d{3})*)(\) \(\d+g\))$/);
+            if (moneyMatch) {
+                const [_, prefix, amount, suffix] = moneyMatch;
+                return wrapSpan("yellow", prefix + wrapSpan("green", amount) + suffix);
+            }
+        }
+
         if (lowerLine.startsWith("you've used")) {
             return wrapSpan("green", line);
         }
@@ -443,6 +456,18 @@ $(document).ready(function() {
 
         // Regular inventory item (with or without timestamp)
         if (line.match(/^(?:\[\d{2}:\d{2}:\d{2}\]\s+)?\d+: .+/)) {
+            // Skip phone number items, let formatLine handle them
+            if (line.includes("PH:")) {
+                return formatLine(line);
+            }
+            // Handle money items
+            if (line.includes("Money ($")) {
+                const moneyMatch = line.match(/^(\d+: Money \()(\$\d+(?:,\d{3})*)(\) \(\d+g\))$/);
+                if (moneyMatch) {
+                    const [_, prefix, amount, suffix] = moneyMatch;
+                    return wrapSpan("yellow", prefix + wrapSpan("green", amount) + suffix);
+                }
+            }
             return wrapSpan("yellow", line);
         }
 
