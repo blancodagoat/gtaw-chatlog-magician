@@ -146,6 +146,40 @@ $(document).ready(function() {
             }
         }
 
+        // Handle [INFO] date messages before other patterns
+        if (line.startsWith("[INFO]:") && line.includes("[") && line.includes("/")) {
+            const match = line.match(/^(\[INFO\]:)\s*(\[\d{2}\/[A-Z]{3}\/\d{4}\])\s*(.+)$/);
+            if (match) {
+                const [_, info, date, message] = match;
+                return wrapSpan("blue", info) + " " + wrapSpan("orange", date) + " " + wrapSpan("white", message);
+            }
+        }
+
+        // Handle property money collection/addition
+        if (line.startsWith("You collected") || line.startsWith("You added")) {
+            const match = line.match(/^(You (?:collected|added) )(\$\d+(?:,\d{3})*)((?:\s+from|\s+in) the property\.)$/);
+            if (match) {
+                const [_, prefix, amount, suffix] = match;
+                return wrapSpan("white", prefix) + wrapSpan("green", amount) + wrapSpan("white", suffix);
+            }
+        }
+
+        // Handle bank withdrawals (with dot)
+        if (line.startsWith("You have withdrawn")) {
+            const match = line.match(/^You have withdrawn \$\d+(?:,\d{3})*\.?$/);
+            if (match) {
+                return wrapSpan("green", line.endsWith(".") ? line : line + ".");
+            }
+        }
+
+        // Handle bank deposits (add missing dot)
+        if (line.startsWith("You have deposited")) {
+            const match = line.match(/^You have deposited \$\d+(?:,\d{3})*\.?$/);
+            if (match) {
+                return wrapSpan("green", line.endsWith(".") ? line : line + ".");
+            }
+        }
+
         // Check for car whispers first
         if (line.startsWith("(Car)")) {
             return wrapSpan("yellow", line);
@@ -310,7 +344,9 @@ $(document).ready(function() {
         if (lowerLine.includes("whispers") || line.startsWith("(Car)")) {
             return handleWhispers(line);
         }        
-        if (lowerLine.includes("says (phone):")) return handleCellphone(line);
+        if (lowerLine.includes("says (phone):") || lowerLine.includes("says (loudspeaker):")) {
+            return handleCellphone(line);
+        }
         if (/\[[^\]]+ -> [^\]]+\]/.test(line)) return wrapSpan("depColor", line);
         if (lowerLine.includes("[megaphone]:")) return wrapSpan("yellow", line);
 
@@ -516,9 +552,9 @@ $(document).ready(function() {
     }    
 
     function handleCellphone(line) {
-        return line.startsWith("!") ?
-            wrapSpan('yellow', line.slice(1)) :
-            wrapSpan("white", line);
+        const hasExclamation = line.startsWith("!");
+        const cleanLine = hasExclamation ? line.slice(1) : line;
+        return wrapSpan(hasExclamation ? "yellow" : "white", cleanLine);
     }
 
     function handleGoods(line) {
@@ -597,13 +633,9 @@ $(document).ready(function() {
     }
 
     function colorInfoLine(line) {
-        const datePattern = /\[INFO\]:\s*\[\d{2}\/[A-Z]{3}\/\d{4}\]\s.+/;
-        if (datePattern.test(line)) {
-            return applyDatePattern(line);
-        }
-
-        line = line.replace(/\[(?!INFO\])|\](?!)/g, '');
-        line = line.replace('[INFO]', '<span class="green">[INFO]</span>');
+        // For non-date [INFO] messages
+        line = line.replace(/\[(?!INFO\])|(?<!INFO)\]/g, '');
+        line = line.replace('[INFO]', '<span class="blue">[INFO]</span>');
 
         if (line.includes('You have received a contact')) {
             if (line.includes('/acceptnumber')) {
@@ -615,16 +647,9 @@ $(document).ready(function() {
             return applyNumberShareFormatting(line);
         } else if (line.includes('You have shared')) {
             return applyContactSharedFormatting(line);
-        } else {
-            return '<span class="white">' + line + '</span>';
         }
-    }
-
-    function applyDatePattern(line) {
-        return line.replace(
-            /\[INFO\]:\s*(\[\d{2}\/[A-Z]{3}\/\d{4}\])\s(.+)/,
-            '<span class="blue">[INFO]:</span> <span class="orange">$1</span> <span class="white">$2</span>'
-        );
+        
+        return '<span class="white">' + line + '</span>';
     }
 
     function applyPhoneRequestFormatting(line) {
@@ -638,7 +663,7 @@ $(document).ready(function() {
             const sender = match[3];
             const acceptCommand = match[4];
 
-            return '<span class="green">[INFO]</span> <span class="white">You have received a contact (' + contactName + ', ' + numbers + ') from ' + sender + '. Use ' + acceptCommand + ' to accept it.</span>';
+            return '<span class="blue">[INFO]</span> <span class="white">You have received a contact (' + contactName + ', ' + numbers + ') from ' + sender + '. Use ' + acceptCommand + ' to accept it.</span>';
         } else {
             return line;
         }
@@ -655,7 +680,7 @@ $(document).ready(function() {
             const sender = match[3];
             const acceptCommand = match[4];
 
-            return '<span class="green">[INFO]</span> <span class="white">You have received a contact (' + contactName + ', ' + numbers + ') from ' + sender + '. Use ' + acceptCommand + ' to accept it.</span>';
+            return '<span class="blue">[INFO]</span> <span class="white">You have received a contact (' + contactName + ', ' + numbers + ') from ' + sender + '. Use ' + acceptCommand + ' to accept it.</span>';
         } else {
             return line;
         }
@@ -670,7 +695,7 @@ $(document).ready(function() {
             const receiver = match[1];
             const name = match[2];
 
-            return '<span class="green">[INFO]</span> <span class="white">You have shared your number with ' + receiver + ' under the name ' + name + '.</span>';
+            return '<span class="blue">[INFO]</span> <span class="white">You have shared your number with ' + receiver + ' under the name ' + name + '.</span>';
         } else {
             return line;
         }
@@ -686,7 +711,7 @@ $(document).ready(function() {
             const numbers = match[2];
             const receiver = match[3];
 
-            return '<span class="green">[INFO]</span> <span class="white">You have shared ' + contactName + ' (' + numbers + ') with ' + receiver + '.</span>';
+            return '<span class="blue">[INFO]</span> <span class="white">You have shared ' + contactName + ' (' + numbers + ') with ' + receiver + '.</span>';
         } else {
             return line;
         }
