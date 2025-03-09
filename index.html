@@ -9,10 +9,13 @@
   <meta name="description" content="Chatlog Magician for GTA World" />
   <meta name="keywords" content="GTAW, GTAWorld, GTA World, RAGE MP, chatlog magician, chatlog, magician" />
   <title>Chatlog Magician</title>
-  <link rel="stylesheet" href="css/foundation.min.css" />
+  <script src="js/error-handler.js"></script>
+  <script src="js/cross-origin-fix.js"></script>
+  <link rel="stylesheet" href="css/foundation.fixed.css" />
   <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/modern.css" />
+  <link rel="stylesheet" href="css/fontawesome.min.css" />
   <link rel="icon" href="favicon.png" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
    label {
     display: none;
@@ -100,126 +103,10 @@
      <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.8.1/js/foundation.min.js"></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/3.4.4/dom-to-image-more.min.js"></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-     <script>
-      $(document).foundation();
-     </script>
-     <script>
-      let scaleEnabled = false;
-      $(document).ready(function() {
-       function updateFontSize() {
-        let fontSize = $('#font-label').val() + 'px';
-        $('#output').css('font-size', fontSize);
-       }
-       updateFontSize();
-       $('#font-label').on('input', updateFontSize);
-       $("#scaleToggle").change(function() {
-        scaleEnabled = $(this).is(":checked");
-       });
-      });
-
-      function trimCanvas(canvas) {
-       const ctx = canvas.getContext("2d");
-       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-       const pixels = imgData.data;
-       let top = null,
-        bottom = null,
-        left = null,
-        right = null;
-       for (let y = 0; y < canvas.height; y++) {
-        for (let x = 0; x < canvas.width; x++) {
-         let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-         if (alpha > 0) {
-          top = y;
-          break;
-         }
-        }
-        if (top !== null) break;
-       }
-       for (let y = canvas.height - 1; y >= 0; y--) {
-        for (let x = 0; x < canvas.width; x++) {
-         let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-         if (alpha > 0) {
-          bottom = y;
-          break;
-         }
-        }
-        if (bottom !== null) break;
-       }
-       for (let x = 0; x < canvas.width; x++) {
-        for (let y = 0; y < canvas.height; y++) {
-         let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-         if (alpha > 0) {
-          left = x;
-          break;
-         }
-        }
-        if (left !== null) break;
-       }
-       for (let x = canvas.width - 1; x >= 0; x--) {
-        for (let y = 0; y < canvas.height; y++) {
-         let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-         if (alpha > 0) {
-          right = x;
-          break;
-         }
-        }
-        if (right !== null) break;
-       }
-       if (top !== null && bottom !== null && left !== null && right !== null) {
-        let trimmedCanvas = document.createElement("canvas");
-        trimmedCanvas.width = right - left + 1;
-        trimmedCanvas.height = bottom - top + 1;
-        trimmedCanvas.getContext("2d").putImageData(ctx.getImageData(left, top, trimmedCanvas.width, trimmedCanvas.height), 0, 0);
-        return trimmedCanvas;
-       } else {
-        return canvas;
-       }
-      }
-      $("#downloadOutputTransparent").click(function() {
-       let scale = scaleEnabled ? 2 : 1;
-       let output = $("#output");
-       $(".censored-content").addClass("pixelated");
-       let height = (output.prop('scrollHeight') + 100) * scale;
-       let width = output.width() * scale;
-       let originalPadding = output.css('padding-bottom');
-       output.css('padding-bottom', '100px');
-       domtoimage.toBlob(output[0], {
-        width: width,
-        height: height,
-        style: {
-         transform: `scale(${scale})`,
-         transformOrigin: "top left",
-        }
-       }).then(function(blob) {
-        output.css('padding-bottom', originalPadding);
-        let img = new Image();
-        img.src = URL.createObjectURL(blob);
-        img.onload = function() {
-         let canvas = document.createElement("canvas");
-         canvas.width = img.width;
-         canvas.height = img.height;
-         let ctx = canvas.getContext("2d");
-         ctx.drawImage(img, 0, 0);
-         let trimmedCanvas = trimCanvas(canvas);
-         trimmedCanvas.toBlob(function(trimmedBlob) {
-          window.saveAs(trimmedBlob, new Date().toLocaleString().replaceAll(",", "_").replaceAll(" ", "_").replaceAll("/", "-").replace("__", "_").replaceAll(":", "-") + "_chatlog.png");
-          $(".censored-content").removeClass("pixelated");
-         });
-        };
-       });
-      });
-      $("#toggleBackground").click(function() {
-       $("#output").toggleClass("background-active");
-      });
-      const textarea = document.querySelector('.textarea-input');
-      textarea.addEventListener('input', function() {
-       this.style.height = 'auto';
-       this.style.height = (this.scrollHeight) + 'px';
-      });
-     </script>
      <script src="js/parse-text.js"></script>
      <script src="js/chat.js"></script>
      <script src="js/color-picker.js"></script>
      <script src="js/chatlog-parser.js"></script>
- </body>
+     <script src="js/app.js"></script>
+  </body>
 </html>

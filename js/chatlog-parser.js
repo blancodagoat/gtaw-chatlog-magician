@@ -1,24 +1,37 @@
 $(document).ready(function() {
+    /**
+     * Chatlog Magician - Parser Module
+     * Handles the parsing and formatting of chat logs
+     */
+
+    // State variables
     let applyBackground = false;
     let applyCensorship = false;
     let censorshipStyle = 'pixelated';
     let characterName = "";
+    
+    // Cache DOM elements
     const $textarea = $("#chatlogInput");
     const $output = $("#output");
     const $toggleBackgroundBtn = $("#toggleBackground");
     const $toggleCensorshipBtn = $("#toggleCensorship");
     const $toggleCensorshipStyleBtn = $("#toggleCensorshipStyle");
     const $censorCharButton = $("#censorCharButton");
+    const $lineLengthInput = $("#lineLengthInput");
+    const $characterNameInput = $("#characterNameInput");
 
+    // Initialize event listeners
     $toggleBackgroundBtn.click(toggleBackground);
     $toggleCensorshipBtn.click(toggleCensorship);
     $toggleCensorshipStyleBtn.click(toggleCensorshipStyle);
     $censorCharButton.click(copyCensorChar);
+    $lineLengthInput.on("input", processOutput);
+    $characterNameInput.on("input", debounce(applyFilter, 300));
+    $textarea.off("input").on("input", throttle(processOutput, 200));
 
-    $("#lineLengthInput").on("input", processOutput);
-
-    $("#characterNameInput").on("input", debounce(applyFilter, 300));
-
+    /**
+     * Toggles the background of the output
+     */
     function toggleBackground() {
         applyBackground = !applyBackground;
         $output.toggleClass("background-active", applyBackground);
@@ -30,6 +43,9 @@ $(document).ready(function() {
         processOutput();
     }
 
+    /**
+     * Toggles censorship on/off
+     */
     function toggleCensorship() {
         applyCensorship = !applyCensorship;
         $toggleCensorshipBtn
@@ -38,17 +54,29 @@ $(document).ready(function() {
         processOutput();
     }
 
+    /**
+     * Toggles between censorship styles (pixelated/hidden)
+     */
     function toggleCensorshipStyle() {
         censorshipStyle = (censorshipStyle === 'pixelated') ? 'hidden' : 'pixelated';
         $toggleCensorshipStyleBtn.text(`Censor Style: ${censorshipStyle.charAt(0).toUpperCase() + censorshipStyle.slice(1)}`);
         processOutput();
     }
 
+    /**
+     * Applies character name filter
+     */
     function applyFilter() {
-        characterName = $("#characterNameInput").val().toLowerCase();
+        characterName = $characterNameInput.val().toLowerCase();
         processOutput();
     }
 
+    /**
+     * Debounce function to limit the rate at which a function can fire
+     * @param {Function} func - The function to debounce
+     * @param {number} wait - The debounce delay in milliseconds
+     * @returns {Function} - Debounced function
+     */
     function debounce(func, wait) {
         let timeout;
         return function(...args) {
@@ -57,6 +85,12 @@ $(document).ready(function() {
         };
     }
 
+    /**
+     * Throttle function to limit the rate at which a function can fire
+     * @param {Function} func - The function to throttle
+     * @param {number} limit - The throttle limit in milliseconds
+     * @returns {Function} - Throttled function
+     */
     function throttle(func, limit) {
         let lastFunc, lastRan;
         return function() {
@@ -77,18 +111,26 @@ $(document).ready(function() {
         };
     }
 
-    $textarea.off("input").on("input", throttle(processOutput, 200));
-
+    /**
+     * Replaces dashes with em dashes
+     * @param {string} text - The text to process
+     * @returns {string} - Processed text
+     */
     function replaceDashes(text) {
         return text.replace(/(\.{2,3}-|-\.{2,3})/g, '—');
     }
 
+    /**
+     * Main function to process and format the chat log
+     */
     function processOutput() {
         const chatText = $textarea.val();
         const chatLines = chatText.split("\n")
                                   .map(removeTimestamps)
                                   .map(replaceDashes);
-        let fragment = document.createDocumentFragment();
+        
+        // Use DocumentFragment for better performance
+        const fragment = document.createDocumentFragment();
 
         chatLines.forEach((line) => {
             const div = document.createElement("div");
@@ -112,19 +154,35 @@ $(document).ready(function() {
             fragment.appendChild(clearDiv);
         });
 
+        // Update DOM once with all changes
         $output.html('');
         $output.append(fragment);
         cleanUp();
     }
 
+    /**
+     * Applies user-defined censorship to text
+     * @param {string} line - The line to censor
+     * @returns {string} - Censored line
+     */
     function applyUserCensorship(line) {
         return line.replace(/÷(.*?)÷/g, (match, p1) => `<span class="${censorshipStyle}">${p1}</span>`);
     }
 
+    /**
+     * Removes timestamps from lines
+     * @param {string} line - The line to process
+     * @returns {string} - Line without timestamps
+     */
     function removeTimestamps(line) {
         return line.replace(/\[\d{2}:\d{2}:\d{2}\] /g, "").trim();
     }
 
+    /**
+     * Formats a line with filters applied
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatLineWithFilter(line) {
         // Handle attempt messages first (before any other patterns)
         if (line.includes("'s attempt has")) {
@@ -196,11 +254,17 @@ $(document).ready(function() {
         const toSectionPattern = /\(to [^)]+\)/i;
         const lineWithoutToSection = line.replace(toSectionPattern, "");
 
+        // Check if the line is someone speaking to the character
+        const speakingToPattern = new RegExp(`says \\(to ${characterName}\\):`, 'i');
+        const isSpeakingToCharacter = characterName && speakingToPattern.test(line);
+
         if (isRadioLine(line)) {
             if (!characterName) {
                 return wrapSpan("radioColor", line);
             }
-            return lineWithoutToSection.toLowerCase().includes(characterName) ?
+            // Check if line starts with character name
+            const startsWithCharName = new RegExp(`^${characterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(line);
+            return startsWithCharName ?
                 wrapSpan("radioColor", line) :
                 wrapSpan("radioColor2", line);
         }
@@ -209,7 +273,10 @@ $(document).ready(function() {
             if (!characterName) {
                 return wrapSpan("darkgrey", line);
             }
-            return lineWithoutToSection.toLowerCase().includes(characterName) ?
+            
+            // Check if line starts with character name
+            const startsWithCharName = new RegExp(`^${characterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(line);
+            return startsWithCharName ?
                 wrapSpan("grey", line) :
                 wrapSpan("darkgrey", line);
         }
@@ -218,7 +285,10 @@ $(document).ready(function() {
             if (!characterName) {
                 return wrapSpan("grey", line);
             }
-            return lineWithoutToSection.toLowerCase().includes(characterName) ?
+            
+            // Check if line starts with character name
+            const startsWithCharName = new RegExp(`^${characterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(line);
+            return startsWithCharName ?
                 wrapSpan("lightgrey", line) :
                 wrapSpan("grey", line);
         }
@@ -227,12 +297,16 @@ $(document).ready(function() {
             if (!characterName) {
                 return wrapSpan("white", line);
             }
-            return lineWithoutToSection.toLowerCase().includes(characterName) ?
+            
+            // Check if line starts with character name (speaking)
+            const startsWithCharName = new RegExp(`^${characterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(line);
+            
+            return startsWithCharName ?
                 wrapSpan("white", line) :
                 wrapSpan("lightgrey", line);
         }
 
-        if (lowerLine.startsWith("you were frisked by")) {
+        if (line.startsWith("you were frisked by")) {
             return wrapSpan("green", line);
         }
 
@@ -448,10 +522,20 @@ $(document).ready(function() {
         return formatLine(line);
     }
 
+    /**
+     * Checks if a line is a radio line
+     * @param {string} line - The line to check
+     * @returns {boolean} - True if the line is a radio line, false otherwise
+     */
     function isRadioLine(line) {
         return /\[S: \d+ \| CH: .+\]/.test(line);
     }
 
+    /**
+     * Formats a line
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatLine(line) {
         const lowerLine = line.toLowerCase();
 
@@ -530,6 +614,11 @@ $(document).ready(function() {
         return replaceColorCodes(line);
     }
 
+    /**
+     * Formats jail time
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatJailTime(line) {
         const pattern = /(You have) (.*?) (left in jail\.)/;
         const match = line.match(pattern);
@@ -539,10 +628,21 @@ $(document).ready(function() {
         return line;
     }
 
+    /**
+     * Wraps a span around a piece of text
+     * @param {string} className - The class name for the span
+     * @param {string} content - The content to wrap
+     * @returns {string} - Wrapped content
+     */
     function wrapSpan(className, content) {
         return `<span class="${className}">${content}</span>`;
     }
 
+    /**
+     * Handles whispers
+     * @param {string} line - The line to handle
+     * @returns {string} - Handled line
+     */
     function handleWhispers(line) {
         if (line.startsWith("(Car)")) {
             return wrapSpan("yellow", line);
@@ -558,12 +658,22 @@ $(document).ready(function() {
         return wrapSpan("whisper", line);
     }    
 
+    /**
+     * Handles cellphone lines
+     * @param {string} line - The line to handle
+     * @returns {string} - Handled line
+     */
     function handleCellphone(line) {
         const hasExclamation = line.startsWith("!");
         const cleanLine = hasExclamation ? line.slice(1) : line;
         return wrapSpan(hasExclamation ? "yellow" : "white", cleanLine);
     }
 
+    /**
+     * Handles goods
+     * @param {string} line - The line to handle
+     * @returns {string} - Handled line
+     */
     function handleGoods(line) {
         return wrapSpan(
             "yellow",
@@ -571,6 +681,11 @@ $(document).ready(function() {
         );
     }
 
+    /**
+     * Handles transactions
+     * @param {string} line - The line to handle
+     * @returns {string} - Handled line
+     */
     function handleTransaction(line) {
         // If it's a date format, remove it and add dot
         if (line.includes("/")) {
@@ -581,6 +696,11 @@ $(document).ready(function() {
         return wrapSpan("green", line);
     }
 
+    /**
+     * Formats info lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatInfo(line) {
         const moneyMatch = line.match(/\$(\d+)/);
         const itemMatch = line.match(/took\s(.+?)\s\((\d+)\)\sfrom\s(the\s.+)\.$/i);
@@ -603,6 +723,11 @@ $(document).ready(function() {
         return line;
     }
 
+    /**
+     * Formats SMS messages
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatSmsMessage(line) {
         // Remove any square brackets
         line = line.replace(/[\[\]]/g, '');
@@ -610,6 +735,11 @@ $(document).ready(function() {
         return wrapSpan('yellow', line);
     }
 
+    /**
+     * Formats phone set lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatPhoneSet(line) {
         // Remove any square brackets except for [INFO]
         line = line.replace(/\[(?!INFO\])|\](?!)/g, '');
@@ -621,6 +751,11 @@ $(document).ready(function() {
         return infoTag + ' <span class="white">' + restOfLine + '</span>';
     }
 
+    /**
+     * Formats incoming call lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatIncomingCall(line) {
         // Remove any square brackets
         line = line.replace(/[\[\]]/g, '');
@@ -639,6 +774,11 @@ $(document).ready(function() {
         }
     }
 
+    /**
+     * Formats info lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function colorInfoLine(line) {
         // For non-date [INFO] messages
         line = line.replace(/\[(?!INFO\])|(?<!INFO)\]/g, '');
@@ -659,6 +799,11 @@ $(document).ready(function() {
         return '<span class="white">' + line + '</span>';
     }
 
+    /**
+     * Applies phone request formatting
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function applyPhoneRequestFormatting(line) {
         const pattern = /\[INFO\] You have received a contact \((.+), ([^\)]+)\) from (.+)\. Use (\/acceptnumber) to accept it\./;
 
@@ -676,6 +821,11 @@ $(document).ready(function() {
         }
     }
 
+    /**
+     * Applies contact share formatting
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function applyContactShareFormatting(line) {
         const pattern = /\[INFO\] You have received a contact \((.+), ([^\)]+)\) from (.+)\. Use (\/acceptcontact) to accept it\./;
 
@@ -693,6 +843,11 @@ $(document).ready(function() {
         }
     }
 
+    /**
+     * Applies number share formatting
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function applyNumberShareFormatting(line) {
         const pattern = /\[INFO\] You have shared your number with (.+) under the name (.+)\./;
 
@@ -708,6 +863,11 @@ $(document).ready(function() {
         }
     }
 
+    /**
+     * Applies contact shared formatting
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function applyContactSharedFormatting(line) {
         const pattern = /\[INFO\] You have shared (.+) \(([^\)]+)\) with (.+)\./;
 
@@ -724,6 +884,11 @@ $(document).ready(function() {
         }
     }
 
+    /**
+     * Formats vessel traffic lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatVesselTraffic(line) {
         const vesselTrafficPattern = /\*\*\s*\[CH: VTS - Vessel Traffic Service\]/;
 
@@ -734,6 +899,11 @@ $(document).ready(function() {
         return line;
     }
 
+    /**
+     * Formats intercom lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatIntercom(line) {
         return line.replace(
             /\[(.*?) intercom\]: (.*)/i,
@@ -741,10 +911,20 @@ $(document).ready(function() {
         );
     }
 
+    /**
+     * Formats phone cursor lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatPhoneCursor(line) {
         return '<span class="white">Use <span class="yellow">/phonecursor (/pc)</span> to activate the cursor to use the phone.</span>';
     }
 
+    /**
+     * Formats shown lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatShown(line) {
         return `<span class="green">${line.replace(
             /their (.+)\./,
@@ -752,6 +932,11 @@ $(document).ready(function() {
         )}</span>`;
     }
 
+    /**
+     * Replaces color codes
+     * @param {string} str - The string to replace color codes in
+     * @returns {string} - String with color codes replaced
+     */
     function replaceColorCodes(str) {
         return str
             .replace(
@@ -761,6 +946,11 @@ $(document).ready(function() {
             .replace(/\{\/([A-Fa-f0-9]{6})\}/g, "</span>");
     }
 
+    /**
+     * Colors money lines
+     * @param {string} line - The line to color
+     * @returns {string} - Colored line
+     */
     function colorMoneyLine(line) {
         return line
             .replace(
@@ -773,6 +963,11 @@ $(document).ready(function() {
             );
     }
 
+    /**
+     * Colors location lines
+     * @param {string} line - The line to color
+     * @returns {string} - Colored line
+     */
     function colorLocationLine(line) {
         return line.replace(
             /(You received a location from) (#\d+)(. Use )(\/removelocation)( to delete the marker\.)/,
@@ -784,6 +979,11 @@ $(document).ready(function() {
         );
     }
 
+    /**
+     * Formats robbery lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatRobbery(line) {
         return line
             .replace(/\/arob/, '<span class="blue">/arob</span>')
@@ -791,10 +991,19 @@ $(document).ready(function() {
             .replace(/You're being robbed, use (.+?) to show your inventory/, '<span class="white">You\'re being robbed, use </span><span class="blue">$1</span><span class="white"> to show your inventory</span>');
     }
 
+    /**
+     * Formats drug lab lines
+     * @returns {string} - Formatted line
+     */
     function formatDrugLab() {
         return '<span class="orange">[DRUG LAB]</span> <span class="white">Drug production has started.</span>';
     }
 
+    /**
+     * Formats character kill lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatCharacterKill(line) {
         return (
             '<span class="blue">[Character kill]</span> <span class="death">' +
@@ -803,6 +1012,11 @@ $(document).ready(function() {
         );
     }
 
+    /**
+     * Formats drug cut lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatDrugCut(line) {
         const drugCutPattern = /You've cut (.+?) x(\d+) into x(\d+)\./i;
         const match = line.match(drugCutPattern);
@@ -823,6 +1037,11 @@ $(document).ready(function() {
         return line;
     }
 
+    /**
+     * Formats property robbery lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatPropertyRobbery(line) {
         const robberyPattern = /\[PROPERTY ROBBERY\](.*?)(\$[\d,]+)(.*)/;
         const match = line.match(robberyPattern);
@@ -838,6 +1057,11 @@ $(document).ready(function() {
         return line;
     }
 
+    /**
+     * Formats drug effect lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatDrugEffect(line) {
         const pattern = /You've just taken (.+?)! You will feel the effects of the drug soon\./;
         const match = line.match(pattern);
@@ -850,6 +1074,11 @@ $(document).ready(function() {
         return line;
     }
 
+    /**
+     * Formats prison PA lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatPrisonPA(line) {
         const pattern = /^\*\* \[PRISON PA\].*\*\*$/;
         if (pattern.test(line)) {
@@ -858,6 +1087,11 @@ $(document).ready(function() {
         return line;
     }
 
+    /**
+     * Formats cash tap lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatCashTap(line) {
         if (line.includes("[CASHTAP]")) {
             return line.replace(
@@ -871,6 +1105,11 @@ $(document).ready(function() {
         return line;
     }
 
+    /**
+     * Formats card reader lines
+     * @param {string} line - The line to format
+     * @returns {string} - Formatted line
+     */
     function formatCardReader(line) {
         const [prefix, rest] = line.split(":");
         const moneyMatch = rest.match(/\$\d+/);
@@ -912,6 +1151,11 @@ $(document).ready(function() {
         }
     }
 
+    /**
+     * Adds line breaks and handles spans
+     * @param {string} text - The text to process
+     * @returns {string} - Processed text
+     */
     function addLineBreaksAndHandleSpans(text) {
         const maxLineLength = document.getElementById("lineLengthInput").value;
         let result = "";
@@ -954,6 +1198,9 @@ $(document).ready(function() {
         return result;
     }
 
+    /**
+     * Cleans up the output
+     */
     function cleanUp() {
         $output.find(".generated").each(function() {
             let html = $(this).html();
@@ -965,6 +1212,9 @@ $(document).ready(function() {
         applyStyles();
     }
 
+    /**
+     * Applies styles to the output
+     */
     function applyStyles() {
         $(".generated:first").css({
             "margin-top": "0",
@@ -981,42 +1231,51 @@ $(document).ready(function() {
         }
     }
 
+    /**
+     * Copies the censor character to clipboard
+     * Uses the improved copyToClipboard function from app.js
+     */
     function copyCensorChar() {
-        const censorChar = "÷";
-        navigator.clipboard.writeText(censorChar)
-            .then(() => {
-                const $btn = $(this);
-                const originalBg = $btn.css("background-color");
-                const originalText = $btn.text();
-                
-                $btn.css("background-color", "#a8f0c6").text("Copied!");
-                
-                setTimeout(() => {
-                    $btn.css("background-color", originalBg).text(originalText);
-                }, 800);
-            })
-            .catch(err => {
-                console.error('Failed to copy: ', err);
-                // Fallback for older browsers
+        // Use the improved copyToClipboard function from app.js
+        if (typeof copyToClipboard === 'function') {
+            copyToClipboard("÷", this);
+        } else {
+            // Fallback if copyToClipboard is not available
+            const censorChar = "÷";
+            try {
+                // Create a temporary textarea element
                 const textarea = document.createElement('textarea');
                 textarea.value = censorChar;
+                
+                // Make it invisible but part of the document
                 textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
                 document.body.appendChild(textarea);
+                
+                // Select and copy
+                textarea.focus();
                 textarea.select();
-                document.execCommand('copy');
+                
+                const successful = document.execCommand('copy');
                 document.body.removeChild(textarea);
                 
-                const $btn = $(this);
-                const originalBg = $btn.css("background-color");
-                const originalText = $btn.text();
-                
-                $btn.css("background-color", "#a8f0c6").text("Copied!");
-                
-                setTimeout(() => {
-                    $btn.css("background-color", originalBg).text(originalText);
-                }, 800);
-            });
+                if (successful) {
+                    const $btn = $(this);
+                    const originalBg = $btn.css("background-color");
+                    const originalText = $btn.text();
+                    
+                    $btn.css("background-color", "#a8f0c6").text("Copied!");
+                    
+                    setTimeout(() => {
+                        $btn.css("background-color", originalBg).text(originalText);
+                    }, 800);
+                }
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+            }
+        }
     }
 
+    // Initialize
     processOutput();
 });
