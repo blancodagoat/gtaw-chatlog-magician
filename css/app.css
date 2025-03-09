@@ -457,3 +457,41 @@ html::-webkit-scrollbar {
 .info-bracket:hover .tooltip-text {
     display: block;
 }
+
+.censor-char-container {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 0.25rem;
+}
+
+.censor-char-display {
+  width: 2.5rem;
+  height: 2.4rem;
+  text-align: center;
+  font-size: 1.2rem;
+  border: 1px solid #cacaca;
+  border-radius: 3px;
+  background-color: #e6e6e6;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  margin: 0;
+  font-weight: bold;
+  vertical-align: middle;
+  line-height: 1.25;
+  display: inline-block;
+}
+
+.censor-char-display:hover {
+  background-color: #d0d0d0;
+}
+
+.censor-char-display:focus {
+  outline: none;
+}
+
+.censor-char-button {
+  padding: 0.4em 0.5em;
+  font-weight: bold;
+  font-size: 1.2rem;
+  line-height: 1;
+}

@@ -8,10 +8,12 @@ $(document).ready(function() {
     const $toggleBackgroundBtn = $("#toggleBackground");
     const $toggleCensorshipBtn = $("#toggleCensorship");
     const $toggleCensorshipStyleBtn = $("#toggleCensorshipStyle");
+    const $censorCharButton = $("#censorCharButton");
 
     $toggleBackgroundBtn.click(toggleBackground);
     $toggleCensorshipBtn.click(toggleCensorship);
     $toggleCensorshipStyleBtn.click(toggleCensorshipStyle);
+    $censorCharButton.click(copyCensorChar);
 
     $("#lineLengthInput").on("input", processOutput);
 
@@ -162,6 +164,11 @@ $(document).ready(function() {
                 const [_, prefix, amount, suffix] = match;
                 return wrapSpan("white", prefix) + wrapSpan("green", amount) + wrapSpan("white", suffix);
             }
+        }
+
+        // Handle interview lines
+        if (line.startsWith("[INTERVIEW]")) {
+            return wrapSpan("green", line);
         }
 
         // Handle bank withdrawals (with dot)
@@ -972,6 +979,43 @@ $(document).ready(function() {
         if (applyBackground) {
             $(".generated").css("background-color", "#000000");
         }
+    }
+
+    function copyCensorChar() {
+        const censorChar = "÷";
+        navigator.clipboard.writeText(censorChar)
+            .then(() => {
+                const $btn = $(this);
+                const originalBg = $btn.css("background-color");
+                const originalText = $btn.text();
+                
+                $btn.css("background-color", "#a8f0c6").text("Copied!");
+                
+                setTimeout(() => {
+                    $btn.css("background-color", originalBg).text(originalText);
+                }, 800);
+            })
+            .catch(err => {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = censorChar;
+                textarea.style.position = 'fixed';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                const $btn = $(this);
+                const originalBg = $btn.css("background-color");
+                const originalText = $btn.text();
+                
+                $btn.css("background-color", "#a8f0c6").text("Copied!");
+                
+                setTimeout(() => {
+                    $btn.css("background-color", originalBg).text(originalText);
+                }, 800);
+            });
     }
 
     processOutput();
