@@ -9,6 +9,10 @@ $(document).ready(function() {
     let applyCensorship = false;
     let censorshipStyle = 'pixelated';
     let characterName = "";
+    let selectedElements = []; // Array for selected elements
+    let coloringMode = false;
+    let isDragging = false; // For drag selection
+    let dragStartElement = null; // Starting element for drag
     
     // Cache DOM elements
     const $textarea = $("#chatlogInput");
@@ -19,6 +23,8 @@ $(document).ready(function() {
     const $censorCharButton = $("#censorCharButton");
     const $lineLengthInput = $("#lineLengthInput");
     const $characterNameInput = $("#characterNameInput");
+    const $toggleColorPaletteBtn = $("#toggleColorPalette");
+    let $colorPalette = $("#colorPalette");
 
     // Initialize event listeners
     $toggleBackgroundBtn.click(toggleBackground);
@@ -28,7 +34,17 @@ $(document).ready(function() {
     $lineLengthInput.on("input", processOutput);
     $characterNameInput.on("input", debounce(applyFilter, 300));
     $textarea.off("input").on("input", throttle(processOutput, 200));
-
+    $toggleColorPaletteBtn.click(toggleColoringMode);
+    $colorPalette.on("click", ".color-item", applyColorToSelection);
+    
+    // Event delegation for clicking on colorable elements only (not all spans)
+    $output.on("click", ".colorable", handleTextElementClick);
+    
+    // Add drag selection events for colorable elements only
+    $output.on("mousedown", ".colorable", handleDragStart);
+    $output.on("mouseup", ".colorable", handleDragEnd);
+    $output.on("mouseover", ".colorable", handleDragOver);
+    
     /**
      * Toggles the background of the output
      */
@@ -158,6 +174,77 @@ $(document).ready(function() {
         $output.html('');
         $output.append(fragment);
         cleanUp();
+        
+        // After the output is rendered, add span wrappers for more granular coloring
+        makeTextColorable();
+    }
+    
+    /**
+     * Makes the text colorable by adding span wrappers to text nodes
+     * Processes text nodes within spans for more granular coloring
+     */
+    function makeTextColorable() {
+        // Process all text nodes in the output area
+        const textNodes = [];
+        const walker = document.createTreeWalker(
+            $output[0],
+            NodeFilter.SHOW_TEXT,
+            { acceptNode: node => node.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT },
+            false
+        );
+        
+        // Collect all text nodes
+        let node;
+        while (node = walker.nextNode()) {
+            // Only process text nodes that have content and aren't just whitespace
+            if (node.textContent.trim().length > 0) {
+                textNodes.push(node);
+            }
+        }
+        
+        // Process the collected text nodes
+        textNodes.forEach(textNode => {
+            // Don't process very short text nodes (usually just spaces)
+            if (textNode.textContent.trim().length <= 1) return;
+            
+            // Get the parent node
+            const parent = textNode.parentNode;
+            
+            // Skip if parent already has colorable children or is a script/style
+            if (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') return;
+            if (parent.querySelector('.colorable')) return;
+            
+            // Get the original text
+            const text = textNode.textContent;
+            
+            // Create a temporary container
+            const temp = document.createElement('div');
+            
+            // Split the text into words and spaces
+            const fragments = text.split(/(\s+)/g).filter(fragment => fragment);
+            
+            // Create HTML with spans around each word
+            const html = fragments.map(fragment => {
+                // Skip spaces (just return them as-is)
+                if (/^\s+$/.test(fragment)) return fragment;
+                
+                return `<span class="colorable">${fragment}</span>`;
+            }).join('');
+            
+            // Set the HTML
+            temp.innerHTML = html;
+            
+            // Create a document fragment to hold the new nodes
+            const fragment = document.createDocumentFragment();
+            while (temp.firstChild) {
+                fragment.appendChild(temp.firstChild);
+            }
+            
+            // Replace the text node with our new span-wrapped text
+            parent.replaceChild(fragment, textNode);
+        });
+        
+        console.log("Made text colorable - words wrapped: " + $output.find('.colorable').length);
     }
 
     /**
@@ -184,6 +271,38 @@ $(document).ready(function() {
      * @returns {string} - Formatted line
      */
     function formatLineWithFilter(line) {
+        // Convert to lowercase for case-insensitive comparisons
+        const lowerLine = line.toLowerCase();
+        
+        // First check if we need to apply special formatting
+        const formattedLine = applySpecialFormatting(line, lowerLine);
+        if (formattedLine) {
+            return formattedLine;
+        }
+        
+        // Apply character name filtering only if we didn't apply special formatting
+        if (characterName && characterName.trim() !== "") {
+            if (!line.toLowerCase().includes(characterName.toLowerCase())) {
+                // Dim lines that don't contain the character name
+                if (isRadioLine(line)) return wrapSpan("radio-line-dim", line);
+                return wrapSpan("dim", line);
+            } else {
+                // Highlight lines that contain the character name
+                return wrapSpan("character", line);
+            }
+        }
+        
+        // If no character filter or no match with special formatting, use regular formatting
+        return formatLine(line);
+    }
+    
+    /**
+     * Applies special formatting for specific line types
+     * @param {string} line - The original line
+     * @param {string} lowerLine - Lowercase version of the line
+     * @returns {string|null} - Formatted line or null if no special format applies
+     */
+    function applySpecialFormatting(line, lowerLine) {
         // Handle attempt messages first (before any other patterns)
         if (line.includes("'s attempt has")) {
             if (line.includes("succeeded")) {
@@ -206,7 +325,7 @@ $(document).ready(function() {
             }
         }
 
-        // Handle [INFO] date messages before other patterns
+        // Handle [INFO] date messages
         if (line.startsWith("[INFO]:") && line.includes("[") && line.includes("/")) {
             const match = line.match(/^(\[INFO\]:)\s*(\[\d{2}\/[A-Z]{3}\/\d{4}\])\s*(.+)$/);
             if (match) {
@@ -245,19 +364,7 @@ $(document).ready(function() {
             }
         }
 
-        // Check for car whispers first
-        if (line.startsWith("(Car)")) {
-            return wrapSpan("yellow", line);
-        }
-
-        const lowerLine = line.toLowerCase();
-        const toSectionPattern = /\(to [^)]+\)/i;
-        const lineWithoutToSection = line.replace(toSectionPattern, "");
-
-        // Check if the line is someone speaking to the character
-        const speakingToPattern = new RegExp(`says \\(to ${characterName}\\):`, 'i');
-        const isSpeakingToCharacter = characterName && speakingToPattern.test(line);
-
+        // Handle radio lines
         if (isRadioLine(line)) {
             if (!characterName) {
                 return wrapSpan("radioColor", line);
@@ -269,16 +376,16 @@ $(document).ready(function() {
                 wrapSpan("radioColor2", line);
         }
 
+        // Check for various special message types
         if (lowerLine.includes("says [lower]")) {
             if (!characterName) {
                 return wrapSpan("darkgrey", line);
             }
-            
-            // Check if line starts with character name
-            const startsWithCharName = new RegExp(`^${characterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(line);
-            return startsWithCharName ?
-                wrapSpan("grey", line) :
-                wrapSpan("darkgrey", line);
+            const speakingToPattern = new RegExp(`says \\[lower\\] \\(to ${characterName}\\):`, 'i');
+            const isSpeakingToCharacter = characterName && speakingToPattern.test(line);
+            return isSpeakingToCharacter ?
+                wrapSpan("darkgrey", line) :
+                wrapSpan("darkgrey2", line);
         }
 
         if (lowerLine.includes("says [low]")) {
@@ -293,7 +400,7 @@ $(document).ready(function() {
                 wrapSpan("grey", line);
         }
 
-        if (lowerLine.includes("says:") || lowerLine.includes("shouts:")) {
+        if (lowerLine.includes("shouts:")) {
             if (!characterName) {
                 return wrapSpan("white", line);
             }
@@ -351,7 +458,11 @@ $(document).ready(function() {
             }
             // Handle money items
             if (line.includes("Money ($")) {
-                return formatLine(line);
+                const moneyMatch = line.match(/^(\d+: Money \()(\$\d+(?:,\d{3})*)(\) \(\d+g\))$/);
+                if (moneyMatch) {
+                    const [_, prefix, amount, suffix] = moneyMatch;
+                    return wrapSpan("yellow", prefix) + wrapSpan("green", amount) + wrapSpan("yellow", suffix);
+                }
             }
             return wrapSpan("yellow", line);
         }
@@ -377,7 +488,6 @@ $(document).ready(function() {
         }
 
         const youBeenShotPattern = /You've been shot in the (.+?) with a (.+?) for (\d+) damage\. \(\(Health : (\d+)\)\)/;
-
         const youBeenShotMatch = line.match(youBeenShotPattern);
         if (youBeenShotMatch) {
             const [_, text, text2, numbers, numbers2] = youBeenShotMatch;
@@ -388,59 +498,67 @@ $(document).ready(function() {
             return '<span class="blue">' + line + '</span>';
         }
 
-        const emergencyCallPattern = /^(Log Number|Phone Number|Location|Situation):\s*(.*)$/;
-
-        const match = line.match(emergencyCallPattern);
-
-        if (match) {
-            const key = match[1];
-            const value = match[2];
-            return '<span class="blue">' + key + ': </span><span class="white">' + value + '</span>';
+        if (line.includes("[POLICE MDC]")) {
+            return formatPoliceMDC(line);
         }
-        if (/^\*\* \[PRISON PA\].*\*\*$/.test(line)) {
-            return formatPrisonPA(line);
-        }
+
+        // Check for SMS message
         if (/\([^\)]+\) Message from [^:]+: .+/.test(line)) {
             return formatSmsMessage(line);
         }
+        
         if (lowerLine.includes("you've set your main phone to")) return formatPhoneSet(line);
+        
         if (/\([^\)]+\) Incoming call from .+/.test(line)) {
             return formatIncomingCall(line);
         }
+        
         if (lowerLine === 'your call has been picked up.') {
             return wrapSpan('yellow', line);
         }
+        
         if (lowerLine === 'you have hung up the call.') {
             return wrapSpan('white', line);
         }
+        
         if (lowerLine === 'the other party has declined the call.') {
             return wrapSpan('white', line);
         }
+        
         if (lowerLine.startsWith("[info]")) return colorInfoLine(line);
+        
         if (lowerLine.includes("[ch: vts - vessel traffic service]")) return formatVesselTraffic(line);
+        
         if (/\[[^\]]+ -> [^\]]+\]/.test(line)) return wrapSpan("depColor", line);
+        
         if (line.startsWith("*")) return wrapSpan("me", line);
+        
         if (line.startsWith(">")) return wrapSpan("ame", line);
+        
         if (lowerLine.includes("(phone) *")) return wrapSpan("me", line);
+        
         if (lowerLine.includes("whispers") || line.startsWith("(Car)")) {
             return handleWhispers(line);
         }        
+        
         if (lowerLine.includes("says (phone):") || lowerLine.includes("says (loudspeaker):")) {
             return handleCellphone(line);
         }
+        
         if (/\[[^\]]+ -> [^\]]+\]/.test(line)) return wrapSpan("depColor", line);
+        
         if (lowerLine.includes("[megaphone]:")) return wrapSpan("yellow", line);
-
+        
         // Handle microphone messages
         if (line.includes("[Microphone]:")) {
             return wrapSpan("yellow", line);
         }
-
+        
         // Handle injuries header
         if (line === "Injuries:") {
             return wrapSpan("blue", line);
         }
-
+        
         // Handle street names
         if (line.includes("[STREET]")) {
             if (line.includes(" / ")) {
@@ -459,40 +577,52 @@ $(document).ready(function() {
                 }
             }
         }
-
+        
         if (lowerLine.startsWith("info:")) {
             if (line.includes("card reader") || line.includes("card payment") || line.includes("swiped your card")) {
                 return formatCardReader(line);
             }
             return formatInfo(line);
         }
+        
         if (lowerLine.includes("you have received $")) return colorMoneyLine(line);
+        
         if (lowerLine.includes("[drug lab]")) return formatDrugLab();
+        
         if (lowerLine.includes("[character kill]")) return formatCharacterKill(line);
+        
         if (/\[.*? intercom\]/i.test(lowerLine)) return formatIntercom(line);
+        
         if (lowerLine.startsWith("you placed")) return wrapSpan("orange", line);
+        
         if (lowerLine.includes("from the property")) return wrapSpan("death", line);
+        
         if (lowerLine.startsWith("you dropped")) return wrapSpan("death", line);
+        
         if (lowerLine.startsWith("use /phonecursor")) return formatPhoneCursor(line);
+        
         if (lowerLine.includes("has shown you their")) return formatShown(line);
-        if (
-            lowerLine.includes("you have successfully sent your current location")
-        )
+        
+        if (lowerLine.includes("you have successfully sent your current location")) 
             return wrapSpan("green", line);
+            
         if (lowerLine.includes("you received a location from"))
             return colorLocationLine(line);
-        if (
-            lowerLine.includes("you gave") ||
+            
+        if (lowerLine.includes("you gave") ||
             lowerLine.includes("paid you") ||
             lowerLine.includes("you paid") ||
-            lowerLine.includes("you received")
-        )
+            lowerLine.includes("you received"))
             return handleTransaction(line);
+            
         if (lowerLine.includes("you are now masked")) return wrapSpan("green", line);
+        
         if (lowerLine.includes("you have shown your inventory")) return wrapSpan("green", line);
+        
         if (lowerLine.includes("you are not masked anymore")) return wrapSpan("death", line);
+        
         if (lowerLine.includes("you're being robbed, use /arob")) return formatRobbery(line);
-
+        
         // Faction messages
         if (line.includes("You have received an invitation to join the")) {
             const parts = line.split("join the ");
@@ -505,30 +635,60 @@ $(document).ready(function() {
             const factionPart = parts[1].split(" you")[0];
             return parts[0] + "member of " + wrapSpan("yellow", factionPart) + " you may need to /switchfactions to set it as your active faction!";
         }
-
+        
         if (lowerLine.startsWith("you've cut")) return formatDrugCut(line);
+        
         if (lowerLine.includes("[property robbery]")) return formatPropertyRobbery(line);
+        
         if (/You've just taken .+?! You will feel the effects of the drug soon\./.test(line)) {
             return formatDrugEffect(line);
         }
+        
         if (line.includes("[CASHTAP]")) {
             return formatCashTap(line);
         }
-        if (
-            lowerLine.includes("(goods)") ||
-            lowerLine.match(/(.+?)\s+x(\d+)\s+\((\d+g)\)/)
-        )
+        
+        if (lowerLine.includes("(goods)") || line.match(/(.+?)\s+x(\d+)\s+\((\d+g)\)/)) 
             return handleGoods(line);
-        return formatLine(line);
-    }
-
-    /**
-     * Checks if a line is a radio line
-     * @param {string} line - The line to check
-     * @returns {boolean} - True if the line is a radio line, false otherwise
-     */
-    function isRadioLine(line) {
-        return /\[S: \d+ \| CH: .+\]/.test(line);
+        
+        // Add normal says handling
+        if (lowerLine.includes("says:") && !lowerLine.includes("[low]") && !lowerLine.includes("[lower]") && !lowerLine.includes("whispers") && !lowerLine.includes("(phone)") && !lowerLine.includes("(loudspeaker)")) {
+            if (!characterName) {
+                return wrapSpan("white", line);
+            }
+            const toSectionPattern = /\(to [^)]+\)/i;
+            const lineWithoutToSection = line.replace(toSectionPattern, "");
+            const speakingToPattern = new RegExp(`says \\(to ${characterName}\\):`, 'i');
+            const isSpeakingToCharacter = characterName && speakingToPattern.test(line);
+            
+            // Check if line starts with character name
+            const startsWithCharName = new RegExp(`^${characterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(line);
+            
+            if (isSpeakingToCharacter) {
+                return wrapSpan("character", line);
+            } else if (startsWithCharName) {
+                return wrapSpan("white", line);
+            } else {
+                return wrapSpan("lightgrey", line);
+            }
+        }
+        
+        // Prison PA system
+        if (/^\*\* \[PRISON PA\].*\*\*$/.test(line)) {
+            return formatPrisonPA(line);
+        }
+        
+        // Emergency call pattern
+        const emergencyCallPattern = /^(Log Number|Phone Number|Location|Situation):\s*(.*)$/;
+        const emergencyMatch = line.match(emergencyCallPattern);
+        if (emergencyMatch) {
+            const key = emergencyMatch[1];
+            const value = emergencyMatch[2];
+            return '<span class="blue">' + key + ': </span><span class="white">' + value + '</span>';
+        }
+        
+        // If no special formatting applies, return null to continue with character filtering
+        return null;
     }
 
     /**
@@ -548,10 +708,10 @@ $(document).ready(function() {
             const moneyMatch = line.match(/^(\d+: Money \()(\$\d+(?:,\d{3})*)(\) \(\d+g\))$/);
             if (moneyMatch) {
                 const [_, prefix, amount, suffix] = moneyMatch;
-                return wrapSpan("yellow", prefix + wrapSpan("green", amount) + suffix);
+                return wrapSpan("yellow", prefix) + wrapSpan("green", amount) + wrapSpan("yellow", suffix);
             }
         }
-
+        
         if (lowerLine.startsWith("you've used")) {
             return wrapSpan("green", line);
         }
@@ -592,7 +752,7 @@ $(document).ready(function() {
                 const moneyMatch = line.match(/^(\d+: Money \()(\$\d+(?:,\d{3})*)(\) \(\d+g\))$/);
                 if (moneyMatch) {
                     const [_, prefix, amount, suffix] = moneyMatch;
-                    return wrapSpan("yellow", prefix + wrapSpan("green", amount) + suffix);
+                    return wrapSpan("yellow", prefix) + wrapSpan("green", amount) + wrapSpan("yellow", suffix);
                 }
             }
             return wrapSpan("yellow", line);
@@ -636,6 +796,15 @@ $(document).ready(function() {
      */
     function wrapSpan(className, content) {
         return `<span class="${className}">${content}</span>`;
+    }
+
+    /**
+     * Checks if a line is a radio line
+     * @param {string} line - The line to check
+     * @returns {boolean} - True if the line is a radio line, false otherwise
+     */
+    function isRadioLine(line) {
+        return /\[S: \d+ \| CH: .+\]/.test(line);
     }
 
     /**
@@ -1199,6 +1368,246 @@ $(document).ready(function() {
     }
 
     /**
+     * Clears all current selections
+     */
+    function clearAllSelections() {
+        if (selectedElements.length > 0) {
+            selectedElements.forEach(element => {
+                $(element).removeClass("selected-for-coloring");
+            });
+            selectedElements = [];
+        }
+    }
+
+    /**
+     * Toggles coloring mode on/off
+     */
+    function toggleColoringMode() {
+        coloringMode = !coloringMode;
+        $toggleColorPaletteBtn.toggleClass("btn-dark", coloringMode);
+        
+        if (coloringMode) {
+            $output.addClass("coloring-mode");
+            
+            // Reset any previous selections
+            clearAllSelections();
+            isDragging = false;
+            dragStartElement = null;
+            
+            // First make sure the color palette is visible 
+            $colorPalette.show();
+            
+            // Then show instructions for the user
+            alert("Click on text to select it. Use Ctrl+click for multiple selections or drag to select multiple items. Click 'Color Text' button again to exit coloring mode.");
+            
+            // Ensure text is colorable by reapplying makeTextColorable after a slight delay
+            setTimeout(function() {
+                // Re-make text colorable in case it wasn't done before
+                makeTextColorable();
+                console.log("Coloring mode activated - elements colorable: " + $output.find('.colorable').length);
+                // Position the color palette properly
+                updateColorPalettePosition();
+            }, 100);
+            
+            // Prevent the palette from being closed when clicking on text
+            $(document).off('click.closePalette');
+        } else {
+            $output.removeClass("coloring-mode");
+            $colorPalette.hide();
+            
+            // Reset any active selections when exiting coloring mode
+            clearAllSelections();
+            isDragging = false;
+            dragStartElement = null;
+            
+            // Re-enable closing the palette when clicking outside
+            setupClosePaletteHandler();
+        }
+    }
+    
+    /**
+     * Sets up the handler to close the color palette when clicking outside
+     */
+    function setupClosePaletteHandler() {
+        $(document).off('click.closePalette').on('click.closePalette', function(e) {
+            if (!coloringMode) return;
+            if (!$(e.target).closest('#colorPalette, #toggleColorPalette').length) {
+                // Only close if not in coloring mode and clicking outside the palette
+                if (!coloringMode) {
+                    $colorPalette.hide();
+                }
+            }
+        });
+    }
+    
+    // Initialize the close palette handler
+    setupClosePaletteHandler();
+    
+    /**
+     * Handles click events on text elements when in coloring mode
+     * @param {Event} e - The click event
+     */
+    function handleTextElementClick(e) {
+        // Only process clicks when in coloring mode
+        if (!coloringMode) return;
+        
+        console.log('Click on element:', e.currentTarget.textContent);
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const clickedElement = e.currentTarget;
+        
+        // Handle Ctrl+click for individual selection/deselection
+        if (e.ctrlKey) {
+            // If element is already selected, deselect it
+            const index = selectedElements.indexOf(clickedElement);
+            if (index > -1) {
+                selectedElements.splice(index, 1);
+                $(clickedElement).removeClass("selected-for-coloring");
+            } else {
+                // Otherwise add to selection
+                selectedElements.push(clickedElement);
+                $(clickedElement).addClass("selected-for-coloring");
+            }
+        } 
+        // Regular click (no modifiers)
+        else {
+            // Clear previous selections
+            clearAllSelections();
+            
+            // Select the clicked element
+            selectedElements.push(clickedElement);
+            $(clickedElement).addClass("selected-for-coloring");
+        }
+    }
+    
+    /**
+     * Handles the start of a drag selection
+     * @param {Event} e - The mousedown event
+     */
+    function handleDragStart(e) {
+        // Only process in coloring mode
+        if (!coloringMode) return;
+        
+        console.log('Drag start on element:', e.currentTarget.textContent);
+        
+        // Start drag operation
+        isDragging = true;
+        dragStartElement = e.currentTarget;
+        
+        // If not holding ctrl, clear previous selections
+        if (!e.ctrlKey) {
+            clearAllSelections();
+        }
+        
+        // Add the start element to selection
+        if (!selectedElements.includes(dragStartElement)) {
+            selectedElements.push(dragStartElement);
+            $(dragStartElement).addClass("selected-for-coloring");
+        }
+        
+        // Prevent default browser text selection
+        e.preventDefault();
+    }
+    
+    /**
+     * Handles mouseover during drag selection
+     * @param {Event} e - The mouseover event
+     */
+    function handleDragOver(e) {
+        // Only process if we're dragging in coloring mode
+        if (!isDragging || !coloringMode) return;
+        
+        const currentElement = e.currentTarget;
+        
+        // Add to selection if not already selected
+        if (!selectedElements.includes(currentElement)) {
+            selectedElements.push(currentElement);
+            $(currentElement).addClass("selected-for-coloring");
+        }
+    }
+    
+    /**
+     * Handles the end of a drag selection
+     * @param {Event} e - The mouseup event
+     */
+    function handleDragEnd(e) {
+        // End drag operation
+        if (isDragging && coloringMode) {
+            console.log('Drag ended, selected elements:', selectedElements.length);
+            isDragging = false;
+            dragStartElement = null;
+        }
+    }
+    
+    /**
+     * Gets all colorable spans between two elements
+     * @param {Element} startEl - The starting element
+     * @param {Element} endEl - The ending element
+     * @returns {Array} - Array of elements between start and end
+     */
+    function getElementsBetween(startEl, endEl) {
+        // Get all colorable spans
+        const allSpans = $output.find('span.colorable').toArray();
+        
+        // Find the indices of our start and end elements
+        const startIndex = allSpans.indexOf(startEl);
+        const endIndex = allSpans.indexOf(endEl);
+        
+        // If either element isn't found, return empty array
+        if (startIndex === -1 || endIndex === -1) return [];
+        
+        // Get elements between start and end (inclusive)
+        const start = Math.min(startIndex, endIndex);
+        const end = Math.max(startIndex, endIndex);
+        
+        return allSpans.slice(start, end + 1);
+    }
+    
+    /**
+     * Applies the selected color to the selected text elements
+     * @param {Event} e - The click event
+     */
+    function applyColorToSelection(e) {
+        e.preventDefault();
+        
+        // Ensure we have elements selected and we're in coloring mode
+        if (selectedElements.length === 0 || !coloringMode) {
+            if (coloringMode) {
+                alert('Please click on some text in the output area first.');
+            }
+            return;
+        }
+        
+        // Get the color class from the clicked color item
+        const colorClass = $(e.currentTarget).data('color');
+        
+        // Apply color to all selected elements
+        selectedElements.forEach(element => {
+            // Get all the current classes
+            const currentClasses = element.className.split(/\s+/);
+            
+            // Remove any color classes (matching those in our palette)
+            $(".color-item").each(function() {
+                const classToRemove = $(this).data('color');
+                if (currentClasses.includes(classToRemove)) {
+                    $(element).removeClass(classToRemove);
+                }
+            });
+            
+            // Add the new color class
+            $(element).addClass(colorClass);
+            
+            // Remove selection visual
+            $(element).removeClass("selected-for-coloring");
+        });
+        
+        // Clear all selections after applying colors
+        selectedElements = [];
+    }
+
+    /**
      * Cleans up the output
      */
     function cleanUp() {
@@ -1276,6 +1685,70 @@ $(document).ready(function() {
         }
     }
 
-    // Initialize
-    processOutput();
+    /**
+     * Updates the color palette position to ensure it's always visible
+     */
+    function updateColorPalettePosition() {
+        const windowHeight = $(window).height();
+        const paletteHeight = $colorPalette.outerHeight();
+        
+        // Make sure the palette stays within the viewport
+        if (paletteHeight + 20 > windowHeight) {
+            $colorPalette.css({
+                'max-height': (windowHeight - 40) + 'px',
+                'bottom': '20px'
+            });
+        } else {
+            $colorPalette.css({
+                'bottom': '20px'
+            });
+        }
+    }
+    
+    // When the window is resized, update the palette position
+    $(window).on('resize', updateColorPalettePosition);
+
+    /**
+     * Creates the color palette
+     */
+    function createColorPalette() {
+        if ($colorPalette.length === 0) {
+            // Create the color palette if it doesn't exist
+            const $palette = $('<div id="colorPalette" class="color-palette"></div>');
+            const $header = $('<div class="color-palette-header">Select a color</div>');
+            const $items = $('<div class="color-palette-items"></div>');
+            
+            // Add color options
+            const colors = [
+                { name: "Red", class: "red" },
+                { name: "Orange", class: "orange" },
+                { name: "Yellow", class: "yellow" },
+                { name: "Green", class: "green" },
+                { name: "Blue", class: "blue" },
+                { name: "Purple", class: "me" },
+                { name: "Pink", class: "pink" },
+                { name: "Cyan", class: "cyan" },
+                { name: "White", class: "white" },
+                { name: "Gray", class: "gray" }
+            ];
+            
+            colors.forEach(color => {
+                const $item = $(`<div class="color-item" data-color="${color.class}">${color.name}</div>`);
+                $items.append($item);
+            });
+            
+            $palette.append($header);
+            $palette.append($items);
+            $('body').append($palette);
+            
+            // Initially hide the palette
+            $palette.hide();
+        }
+    }
+
+    // Initialize when the document is ready
+    processOutput(); // Initial processing
+    
+    // Create and show the color palette
+    createColorPalette();
 });
