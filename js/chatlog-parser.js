@@ -265,6 +265,13 @@ $(document).ready(function() {
         return line.replace(/\[\d{2}:\d{2}:\d{2}\] /g, "").trim();
     }
 
+    /** 
+    * Removes "CHAT LOG:" that is pre-embedded in every log file you download for every "/ame". 
+    */
+    function removeChatLog(line) {
+        return text.replace(/^CHAT LOG:.*$/gm, '');
+    }
+
     /**
      * Formats a line with filters applied
      * @param {string} line - The line to format
