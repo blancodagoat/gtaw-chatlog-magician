@@ -253,7 +253,8 @@ $(document).ready(function() {
      * @returns {string} - Censored line
      */
     function applyUserCensorship(line) {
-        return line.replace(/÷(.*?)÷/g, (match, p1) => `<span class="${censorshipStyle}">${p1}</span>`);
+        // Mark censored content with a special class to preserve colorability
+        return line.replace(/÷(.*?)÷/g, (match, p1) => `<span class="${censorshipStyle} censored-content" data-original="${p1}">${p1}</span>`);
     }
 
     /**
@@ -303,6 +304,35 @@ $(document).ready(function() {
      * @returns {string|null} - Formatted line or null if no special format applies
      */
     function applySpecialFormatting(line, lowerLine) {
+        // Handle lockdown alert messages
+        if (line.startsWith("[ALERT] Lockdown activated!")) {
+            return wrapSpan("blue", line);
+        }
+        
+        // Handle seized items
+        if (line.startsWith("You seized")) {
+            const match = line.match(/^(You seized )(.+?)( from )(.+)$/);
+            if (match) {
+                const [_, prefix, item, from, name] = match;
+                return wrapSpan("green", line);
+            }
+        }
+        
+        // Handle Prison PA messages - make sure they are blue, not purple (me class)
+        if (/^\*\* \[PRISON PA\].*\*\*$/.test(line)) {
+            return wrapSpan("blue", line);
+        }
+        
+        // Handle /ame lines that have CHAT LOG prefix (with or without timestamp)
+        // Example 1: [20:22:47] CHAT LOG: > Angel Nunez does some math in his mind.
+        // Example 2: CHAT LOG: > Angel Nunez does some math in his mind.
+        if (/(?:^\[\d{2}:\d{2}:\d{2}\] )?CHAT LOG: > .+/.test(line)) {
+            // First remove any timestamp
+            let cleanMessage = line.replace(/^\[\d{2}:\d{2}:\d{2}\] /, "");
+            // Then remove the CHAT LOG: prefix
+            cleanMessage = cleanMessage.replace(/^CHAT LOG: /, "");
+            return wrapSpan("ame", cleanMessage);
+        }
         // Handle attempt messages first (before any other patterns)
         if (line.includes("'s attempt has")) {
             if (line.includes("succeeded")) {
