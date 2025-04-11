@@ -1,5 +1,5 @@
 <h1 id="chatlog-magician-for-gta-world">Chatlog Magician for GTA World</h1>
-<p>This is a <strong>remake</strong> of the <a href="https://github.com/ulasbayraktar/chatlog-magician">original Chatlog Magician</a> project, which converts SA-MP logs into images, making screenshot editing easier. It is fully compatible with SA-MP.</p>
+<p>This is a <strong>remake</strong> of the <a href="https://github.com/ulasbayraktar/chatlog-magician">original Chatlog Magician</a> project, which converts SA-MP logs into images, making screenshot editing easier.</p>
 <h2 id="features">Features</h2>
 <ul>
 <li><strong>Modern Design</strong>: Uses Foundation Framework with enhanced styling and visual feedback</li>
