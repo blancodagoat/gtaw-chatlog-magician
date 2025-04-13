@@ -16,10 +16,6 @@
   <link rel="stylesheet" href="css/modern.css" />
   <link rel="stylesheet" href="css/fontawesome.min.css" />
   <link rel="icon" href="favicon.png" />
-  <script>
-   window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
- </script>
- <script defer src="/_vercel/speed-insights/script.js"></script>
   <style>
    label {
     display: none;
@@ -126,14 +122,29 @@
            </div>
         </div>
      </div>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.8.1/js/foundation.min.js"></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/3.4.4/dom-to-image-more.min.js"></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-     <script src="js/parse-text.js"></script>
-     <script src="js/chat.js"></script>
-     <script src="js/color-picker.js"></script>
-     <script src="js/chatlog-parser.js"></script>
-     <script src="js/app.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/4.0.0-beta.2/jquery.min.js" defer></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.9.0/js/foundation.min.js" defer></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/3.5.0/dom-to-image-more.min.js" defer></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
+     <script src="js/parse-text.js" defer></script>
+     <script src="js/chat.js" defer></script>
+     <script src="js/color-picker.js" defer></script>
+     <script src="js/chatlog-parser.js" defer></script>
+     <script src="js/app.js" defer></script>
   </body>
+  <!-- Always visible history tab -->
+  <div class="history-tab" onclick="toggleHistoryPanel()">
+    <i class="fas fa-history"></i>
+  </div>
+  
+  <!-- Toggleable history panel -->
+  <div id="historyPanel" class="history-panel">
+    <div class="history-content">
+      <div class="history-header">
+        <h3>Chatlog History</h3>
+        <button class="close-btn" onclick="toggleHistoryPanel()">&times;</button>
+      </div>
+      <div class="history-items"></div>
+    </div>
+  </div>
 </html>

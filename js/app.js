@@ -114,6 +114,12 @@ function generateFilename() {
  * Handles the download of the output as an image
  */
 function downloadOutputImage() {
+  const text = $('#chatlogInput').val().trim();
+  if (text) {
+    saveToHistory(text);
+    refreshHistoryPanel();
+  }
+  
   const scale = scaleEnabled ? 2 : 1;
   const output = $("#output");
   $(".censored-content").addClass("pixelated");
@@ -370,16 +376,125 @@ function initTooltips() {
   );
 }
 
+// Chatlog history functions
+function saveToHistory(text) {
+  try {
+    if (!text.trim()) return;
+    
+    let history = [];
+    try {
+      history = JSON.parse(localStorage.getItem('chatlogHistory') || '[]');
+    } catch (e) {
+      console.error('Error reading history:', e);
+    }
+    
+    history = history.filter(item => item !== text);
+    history.unshift(text);
+    
+    if (history.length > 20) {
+      history = history.slice(0, 20);
+    }
+    
+    try {
+      localStorage.setItem('chatlogHistory', JSON.stringify(history));
+    } catch (e) {
+      console.error('Error saving history:', e);
+    }
+  } catch (e) {
+    console.error('Error in saveToHistory:', e);
+  }
+}
+
+function loadHistory() {
+  return JSON.parse(localStorage.getItem('chatlogHistory') || '[]');
+}
+
+// Toggle history panel
+function toggleHistoryPanel() {
+  const panel = document.getElementById('historyPanel');
+  panel.classList.toggle('open');
+}
+
+// Refresh history panel content
+function refreshHistoryPanel() {
+  const itemsContainer = $('.history-items');
+  itemsContainer.empty();
+  
+  const history = loadHistory();
+  
+  if (history.length === 0) {
+    itemsContainer.append('<div class="history-item">No history yet</div>');
+  } else {
+    history.forEach((text, index) => {
+      const preview = text.length > 50 ? text.substring(0, 50) + '...' : text;
+      itemsContainer.append(
+        `<div class="history-item" data-index="${index}">
+          <div class="history-preview">${escapeHtml(preview)}</div>
+          <small>Click to load</small>
+        </div>`
+      );
+    });
+  }
+}
+
+// Basic HTML escaping
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // Document ready function
 $(document).ready(function() {
+  // Load saved values from localStorage or use defaults
+  $('#font-label').val(localStorage.getItem('chatlogFontSize') || 12);
+  $('#lineLengthInput').val(localStorage.getItem('chatlogLineLength') || 77);
+  $('#characterNameInput').val(localStorage.getItem('chatlogCharacterName') || '');
+  
   // Initialize font size
   updateFontSize();
   
   // Initialize tooltips
   initTooltips();
   
+  // Initialize history panel
+  refreshHistoryPanel();
+  
+  // Panel will be initialized by CSS
+  function toggleHistoryPanel() {
+    const panel = document.getElementById('historyPanel');
+    panel.classList.toggle('open');
+  }
+  
   // Event listeners
-  $('#font-label').on('input', updateFontSize);
+  $('#font-label').on('input', function() {
+    localStorage.setItem('chatlogFontSize', $(this).val());
+    updateFontSize();
+  });
+  
+  $('#lineLengthInput').on('input', function() {
+    localStorage.setItem('chatlogLineLength', $(this).val());
+  });
+  
+  $('#characterNameInput').on('input', function() {
+    localStorage.setItem('chatlogCharacterName', $(this).val());
+  });
+  
+  // Save chatlog to history when changed
+  $('#chatlogInput').on('input', function() {
+    const text = $(this).val().trim();
+    if (text) {
+      saveToHistory(text);
+    }
+  });
+  
+  // Save chatlog to history when processed
+  $(document).on('chatlogProcessed', function(event, text) {
+    saveToHistory(text);
+  });
   
   $("#scaleToggle").change(function() {
     scaleEnabled = $(this).is(":checked");
@@ -410,4 +525,26 @@ $(document).ready(function() {
     function() { $(this).css('transform', 'translateY(-2px)'); },
     function() { $(this).css('transform', 'translateY(0)'); }
   );
+  
+  // Toggle history panel on input focus
+  $('#chatlogInput').on('focus', function() {
+    toggleHistoryPanel();
+  });
+  
+  // Hide dropdown when clicking outside
+  $(document).on('click', function(e) {
+    if (!$(e.target).closest('#historyPanel, #chatlogInput').length) {
+      $('#historyPanel').hide();
+    }
+  });
+  
+  // Handle history item selection
+  $(document).on('click', '.history-item', function() {
+    const index = $(this).data('index');
+    const history = loadHistory();
+    if (history[index]) {
+      $('#chatlogInput').val(history[index]).trigger('input');
+      $('#historyPanel').hide();
+    }
+  });
 });
