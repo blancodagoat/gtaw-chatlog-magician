@@ -449,6 +449,79 @@ function escapeHtml(unsafe) {
 
 // Document ready function
 $(document).ready(function() {
+  // --- Character Name List Logic ---
+  function getCharacterList() {
+    return JSON.parse(localStorage.getItem('characterNameList') || '[]');
+  }
+  function saveCharacterList(list) {
+    localStorage.setItem('characterNameList', JSON.stringify(list));
+  }
+  function renderCharacterDropdown() {
+    const dropdown = $('#characterNameDropdown');
+    const list = getCharacterList();
+    if (list.length === 0) {
+      dropdown.html('<div style="padding: 8px; color: #888;">No characters saved</div>');
+      return;
+    }
+    dropdown.html(list.map(name =>
+      `<div class="character-dropdown-item" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; cursor: pointer;">
+        <span class="character-name-select">${$('<div>').text(name).html()}</span>
+        <button class="remove-character-btn" data-name="${$('<div>').text(name).html()}" style="background: none; border: none; color: #c00; font-size: 16px; cursor: pointer;">&times;</button>
+      </div>`
+    ).join(''));
+  }
+  // Add character
+  $('#addCharacterBtn').on('click', function() {
+    const val = $('#characterNameInput').val().trim();
+    if (!val) return;
+    let list = getCharacterList();
+    if (!list.includes(val)) {
+      list.push(val);
+      saveCharacterList(list);
+      renderCharacterDropdown();
+    }
+    $('#characterNameInput').val('');
+  });
+  // Show/hide dropdown
+  $('#showCharacterListBtn').on('click', function(e) {
+    e.stopPropagation();
+    const dropdown = $('#characterNameDropdown');
+    if (dropdown.is(':visible')) {
+      dropdown.hide();
+    } else {
+      renderCharacterDropdown();
+      dropdown.show();
+    }
+  });
+  // Select from dropdown
+  $(document).on('click', '.character-name-select', function() {
+    const name = $(this).text();
+    $('#characterNameInput').val(name);
+    $('#characterNameDropdown').hide();
+    localStorage.setItem('chatlogCharacterName', name);
+    if (typeof applyFilter === 'function') applyFilter();
+  });
+  // Remove character
+  $(document).on('click', '.remove-character-btn', function(e) {
+    e.stopPropagation();
+    const name = $(this).data('name');
+    let list = getCharacterList().filter(n => n !== name);
+    saveCharacterList(list);
+    renderCharacterDropdown();
+  });
+  // Hide dropdown when clicking outside
+  $(document).on('click', function(e) {
+    if (!$(e.target).closest('.input-group').length) {
+      $('#characterNameDropdown').hide();
+    }
+  });
+  // Hide dropdown on Escape
+  $('#characterNameInput').on('keydown', function(e) {
+    if (e.key === 'Escape') {
+      $('#characterNameDropdown').hide();
+    }
+  });
+  // --- End Character Name List Logic ---
   // Load saved values from localStorage or use defaults
   $('#font-label').val(localStorage.getItem('chatlogFontSize') || 12);
   $('#lineLengthInput').val(localStorage.getItem('chatlogLineLength') || 77);
@@ -481,6 +554,7 @@ $(document).ready(function() {
   
   $('#characterNameInput').on('input', function() {
     localStorage.setItem('chatlogCharacterName', $(this).val());
+    if (typeof applyFilter === 'function') applyFilter();
   });
   
   // Save chatlog to history when changed

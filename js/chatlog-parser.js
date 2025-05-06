@@ -8,7 +8,8 @@ $(document).ready(function() {
     let applyBackground = false;
     let applyCensorship = false;
     let censorshipStyle = 'pixelated';
-    let characterName = "";
+    // Remove global characterName variable
+// let characterName = "";
     let selectedElements = []; // Array for selected elements
     let coloringMode = false;
     let isDragging = false; // For drag selection
@@ -32,7 +33,7 @@ $(document).ready(function() {
     $toggleCensorshipStyleBtn.click(toggleCensorshipStyle);
     $censorCharButton.click(copyCensorChar);
     $lineLengthInput.on("input", processOutput);
-    $characterNameInput.on("input", debounce(applyFilter, 300));
+    $characterNameInput.on("input", applyFilter);
     $textarea.off("input").on("input", throttle(processOutput, 200));
     $toggleColorPaletteBtn.click(toggleColoringMode);
     $colorPalette.on("click", ".color-item", applyColorToSelection);
@@ -83,9 +84,8 @@ $(document).ready(function() {
      * Applies character name filter
      */
     function applyFilter() {
-        characterName = $characterNameInput.val().toLowerCase();
-        processOutput();
-    }
+    processOutput();
+} // Always get value live in filter logic    }
 
     /**
      * Debounce function to limit the rate at which a function can fire
@@ -282,8 +282,9 @@ $(document).ready(function() {
         }
         
         // Apply character name filtering only if we didn't apply special formatting
-        if (characterName && characterName.trim() !== "") {
-            if (!line.toLowerCase().includes(characterName.toLowerCase())) {
+        const currentCharacterName = $("#characterNameInput").val().toLowerCase();
+        if (currentCharacterName && currentCharacterName.trim() !== "") {
+            if (!line.toLowerCase().includes(currentCharacterName)) {
                 // Dim lines that don't contain the character name
                 if (isRadioLine(line)) return wrapSpan("radio-line-dim", line);
                 return wrapSpan("dim", line);
@@ -396,14 +397,13 @@ $(document).ready(function() {
 
         // Handle radio lines
         if (isRadioLine(line)) {
-            if (!characterName) {
+            const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
+            if (!currentCharacterName) {
                 return wrapSpan("radioColor", line);
             }
-            // Check if line starts with character name
-            const startsWithCharName = new RegExp(`^${characterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(line);
-            return startsWithCharName ?
-                wrapSpan("radioColor", line) :
-                wrapSpan("radioColor2", line);
+            return lowerLine.includes(currentCharacterName)
+                ? wrapSpan("radioColor", line)
+                : wrapSpan("radioColor2", line);
         }
 
         // Check for various special message types
@@ -418,29 +418,24 @@ $(document).ready(function() {
                 wrapSpan("darkgrey2", line);
         }
 
-        if (lowerLine.includes("says [low]")) {
-            if (!characterName) {
+        if (lowerLine.includes("says [low]:")) {
+            const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
+            if (!currentCharacterName) {
                 return wrapSpan("grey", line);
             }
-            
-            // Check if line starts with character name
-            const startsWithCharName = new RegExp(`^${characterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(line);
-            return startsWithCharName ?
-                wrapSpan("lightgrey", line) :
-                wrapSpan("grey", line);
+            return lowerLine.includes(currentCharacterName)
+                ? wrapSpan("lightgrey", line)
+                : wrapSpan("grey", line);
         }
 
-        if (lowerLine.includes("shouts:")) {
-            if (!characterName) {
+        if (lowerLine.includes("says:") || lowerLine.includes("shouts:")) {
+            const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
+            if (!currentCharacterName) {
                 return wrapSpan("white", line);
             }
-            
-            // Check if line starts with character name (speaking)
-            const startsWithCharName = new RegExp(`^${characterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(line);
-            
-            return startsWithCharName ?
-                wrapSpan("white", line) :
-                wrapSpan("lightgrey", line);
+            return lowerLine.includes(currentCharacterName)
+                ? wrapSpan("white", line)
+                : wrapSpan("lightgrey", line);
         }
 
         if (line.startsWith("you were frisked by")) {

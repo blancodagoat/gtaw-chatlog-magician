@@ -64,12 +64,14 @@
                  </div>
                  <div class="cell small-8 medium-8">
                     <label for="characterNameInput">Character Name Filter:</label>
-                    <div class="input-group">
-                       <input type="text" id="characterNameInput" placeholder="Enter character name" />
-                       <div class="input-group-button">
-                          <button class="button small" onclick="applyFilter()">Apply</button>
-                       </div>
-                    </div>
+                    <div class="input-group" style="position: relative;">
+  <input type="text" id="characterNameInput" placeholder="Enter character name" autocomplete="off" />
+  <div class="input-group-button" style="display: flex; gap: 4px;">
+    <button class="button small" id="addCharacterBtn" type="button">Add</button>
+    <button class="button small" id="showCharacterListBtn" type="button">&#9660;</button>
+  </div>
+  <div id="characterNameDropdown" class="character-dropdown" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: #222; color: #fff; border: 1px solid #444; z-index: 1000; max-height: 150px; overflow-y: auto;"></div>
+</div>
                  </div>
               </div>
               <label for="chatlogInput">Chat Log:</label>
