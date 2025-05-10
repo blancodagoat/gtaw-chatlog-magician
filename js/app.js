@@ -600,10 +600,10 @@ $(document).ready(function() {
     function() { $(this).css('transform', 'translateY(0)'); }
   );
   
-  // Toggle history panel on input focus
-  $('#chatlogInput').on('focus', function() {
-    toggleHistoryPanel();
-  });
+  // (Removed) Toggle history panel on input focus
+  // $('#chatlogInput').on('focus', function() {
+  //   toggleHistoryPanel();
+  // });
   
   // Hide dropdown when clicking outside
   $(document).on('click', function(e) {
