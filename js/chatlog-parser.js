@@ -408,14 +408,7 @@ $(document).ready(function() {
 
         // Check for various special message types
         if (lowerLine.includes("says [lower]")) {
-            if (!characterName) {
-                return wrapSpan("darkgrey", line);
-            }
-            const speakingToPattern = new RegExp(`says \\[lower\\] \\(to ${characterName}\\):`, 'i');
-            const isSpeakingToCharacter = characterName && speakingToPattern.test(line);
-            return isSpeakingToCharacter ?
-                wrapSpan("darkgrey", line) :
-                wrapSpan("darkgrey2", line);
+            return wrapSpan("darkgrey", line);
         }
 
         if (lowerLine.includes("says [low]:")) {
@@ -427,7 +420,6 @@ $(document).ready(function() {
                 ? wrapSpan("lightgrey", line)
                 : wrapSpan("grey", line);
         }
-
         if (lowerLine.includes("says:") || lowerLine.includes("shouts:")) {
             const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
             if (!currentCharacterName) {
