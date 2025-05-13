@@ -1,118 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
- <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="author" content="asapdev" />
-  <meta name="modified by" content="blanco" />
-  <meta name="description" content="Chatlog Magician for GTA World" />
-  <meta name="keywords" content="GTAW, GTAWorld, GTA World, RAGE MP, chatlog magician, chatlog, magician" />
-  <title>Chatlog Magician</title>
-  <script src="js/error-handler.js"></script>
-  <script src="js/cross-origin-fix.js"></script>
-  <link rel="stylesheet" href="css/foundation.fixed.css" />
-  <link rel="stylesheet" href="css/app.css" />
-  <link rel="stylesheet" href="css/modern.css" />
-  <link rel="stylesheet" href="css/fontawesome.min.css" />
-  <link rel="icon" href="favicon.png" />
-  <style>
-   label {
-    display: none;
-   }
-
-   ::-webkit-input-placeholder {
-    color: black;
-   }
-
-   :-ms-input-placeholder {
-    color: black;
-   }
-
-   ::placeholder {
-    color: black;
-   }
-
-   #chatlogInput::placeholder {
-    color: transparent;
-   }
-  </style>
-  <style>
-    #bmc-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      /* Optionally adjust width/height if needed */
-      /* width: 200px; */
-      /* height: auto; */
-    }
-  </style>
- </head>
- <body>
-    <div class="grid-container">
-        <div class="grid-x grid-margin-x">
-           <div class="cell small-12">
-              <div class="grid-x grid-margin-x align-middle">
-                 <div class="cell small-4 medium-2">
-                    <label for="font-label">Font Size:</label>
-                    <input name="font-label" id="font-label" type="number" min="10" max="64" value="12" />
-                 </div>
-                 <div class="cell small-4 medium-2">
-                    <label for="lineLengthInput">Line Length:</label>
-                    <input type="number" id="lineLengthInput" min="50" max="150" value="77">
-                 </div>
-                 <div class="cell small-8 medium-8">
-                    <label for="characterNameInput">Character Name Filter:</label>
-                    <div class="input-group" style="position: relative;">
-  <input type="text" id="characterNameInput" placeholder="Enter character name" autocomplete="off" />
-  <div class="input-group-button" style="display: flex; gap: 4px;">
-    <button class="button small" id="addCharacterBtn" type="button">Add</button>
-    <button class="button small" id="showCharacterListBtn" type="button">&#9660;</button>
-  </div>
-  <div id="characterNameDropdown" class="character-dropdown" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: #222; color: #fff; border: 1px solid #444; z-index: 1000; max-height: 150px; overflow-y: auto;"></div>
-</div>
-                 </div>
-              </div>
-              <label for="chatlogInput">Chat Log:</label>
-              <div class="textarea-container">
-                 <textarea id="chatlogInput" class="form-control textarea-input" rows="15" placeholder="Enter your chat log here..."></textarea>
-                 <div class="logo-overlay">
-                    <img src="logo.png" alt="Logo" loading="lazy" />
-                 </div>
-              </div>
-              <div class="grid-x grid-margin-x align-middle">
-                 <div class="cell auto">
-                    <button id="downloadOutputTransparent" class="button success"> Download </button>
-                    <button id="toggleBackground" class="button secondary"> Toggle Background </button>
-                    <button id="toggleCensorshipStyle" class="button"> Toggle Censorship Style </button>
-                    <button id="censorCharButton" class="button secondary censor-char-button">÷</button>
-                    <button id="toggleColorPalette" class="button secondary"> Color Text </button>
-                    <button class="info-bracket" aria-label="More information about text formatting">
+   <head>
+      <meta charset="utf-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta name="author" content="asapdev" />
+      <meta name="modified by" content="blanco" />
+      <meta name="description" content="Chatlog Magician for GTA World" />
+      <meta name="keywords" content="GTAW, GTAWorld, GTA World, RAGE MP, chatlog magician, chatlog, magician" />
+      <title>Chatlog Magician</title>
+      <script src="js/error-handler.js"></script>
+      <script src="js/cross-origin-fix.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+      <link rel="stylesheet" href="css/foundation.fixed.css" />
+      <link rel="stylesheet" href="css/app.css" />
+      <link rel="stylesheet" href="css/modern.css" />
+      <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/js/all.min.js"></script>
+      <link href=" https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/fontawesome.min.css " rel="stylesheet">
+      <link rel="icon" href="favicon.png" />
+      <style>
+         label {
+         display: none;
+         }
+         ::-webkit-input-placeholder {
+         color: black;
+         }
+         :-ms-input-placeholder {
+         color: black;
+         }
+         ::placeholder {
+         color: black;
+         }
+         #chatlogInput::placeholder {
+         color: transparent;
+         }
+      </style>
+      <style>
+         #bmc-container {
+         position: fixed;
+         top: 20px;
+         right: 20px;
+         z-index: 9999;
+         }
+      </style>
+   </head>
+   <body>
+      <div class="grid-container">
+         <div class="grid-x grid-margin-x">
+            <div class="cell small-12">
+               <div class="grid-x grid-margin-x align-middle">
+                  <div class="cell small-4 medium-2">
+                     <label for="font-label">Font Size:</label>
+                     <input name="font-label" id="font-label" type="number" min="10" max="64" value="12" />
+                  </div>
+                  <div class="cell small-4 medium-2">
+                     <label for="lineLengthInput">Line Length:</label>
+                     <input type="number" id="lineLengthInput" min="50" max="150" value="77">
+                  </div>
+                  <div class="cell small-8 medium-8">
+                     <label for="characterNameInput">Character Name Filter:</label>
+                     <div class="input-group" style="position: relative;">
+                        <input type="text" id="characterNameInput" placeholder="Enter character name" autocomplete="off" />
+                        <div class="input-group-button" style="display: flex; gap: 4px;">
+                           <button class="button small" id="addCharacterBtn" type="button">Add</button>
+                           <button class="button small" id="showCharacterListBtn" type="button">&#9660;</button>
+                        </div>
+                        <div id="characterNameDropdown" class="character-dropdown" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: #222; color: #fff; border: 1px solid #444; z-index: 1000; max-height: 150px; overflow-y: auto;"></div>
+                     </div>
+                  </div>
+               </div>
+               <label for="chatlogInput">Chat Log:</label>
+               <div class="textarea-container">
+                  <textarea id="chatlogInput" class="form-control textarea-input" rows="15" placeholder="Enter your chat log here..."></textarea>
+                  <div class="logo-overlay">
+                     <img src="logo.png" alt="Logo" loading="lazy" />
+                  </div>
+               </div>
+               <div class="grid-x grid-margin-x align-middle">
+                  <div class="cell auto">
+                     <div id="canvasToggleButton" style="
+                        display: inline-flex;
+                        align-items: center;
+                        padding: 0.7rem 1.2rem;
+                        background-color: #111;
+                        color: white;
+                        border-radius: 0.5rem;
+                        font-size: 0.9rem;
+                        font-weight: 500;
+                        line-height: 1;
+                        cursor: pointer;
+                        transform: translateY(-2px);
+                        ">
+                        <input type="checkbox" id="canvasModeToggle" name="canvas-mode-toggle" style="width: 20px; height: 20px;">
+                        <span id="canvasModeLabel">Normal</span>
+                     </div>
+                     <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                          var toggle = document.getElementById('canvasModeToggle');
+                          var label = document.getElementById('canvasModeLabel');
+                          function updateLabel() {
+                            label.textContent = toggle.checked ? 'Canvas' : 'Normal';
+                          }
+                          toggle.addEventListener('change', updateLabel);
+                          updateLabel();
+                        });
+                     </script>
+                     <button id="downloadOutputTransparent" class="button success">Download</button>
+                     <button id="toggleBackground" class="button secondary">Toggle Background</button>
+                     <button id="toggleCensorshipStyle" class="button">Toggle Censorship Style</button>
+                     <button id="censorCharButton" class="button secondary censor-char-button">÷</button>
+                     <button id="toggleColorPalette" class="button secondary">Color Text</button>
+                     <button class="info-bracket" aria-label="More information about text formatting">
                      <i class="fas fa-info-circle info-icon" aria-hidden="true"></i>
                      Tooltip
-                     <span class="tooltip-text" role="tooltip">Highlight Phone Lines: Start a line with "!" to color it yellow.<br>
-                       Censor: Wrap text with "÷" to censor it. Click the ÷ button to copy the character.<br>
-                       Color Text: Select text in the output, click "Color Text" and choose a color.
+                     <span class="tooltip-text" role="tooltip">
+                     Highlight Phone Lines: Start a line with "!" to color it yellow.<br>
+                     Censor: Wrap text with "÷" to censor it. Click the ÷ button to copy the character.<br>
+                     Color Text: Select text in the output, click "Color Text" and choose a color.
                      </span>
-                   </button>
-                 </div>
-                 <div class="cell shrink">
-                    <div class="switch large">
-                       <input class="switch-input" id="scaleToggle" type="checkbox" name="scale-toggle" />
-                       <label class="switch-paddle" for="scaleToggle">
-                          <span class="switch-active" aria-hidden="true">2x</span>
-                          <span class="switch-inactive" aria-hidden="true">1x</span>
-                       </label>
-                    </div>
-                 </div>
-              </div>
-              <div id="output" class="output">
-
-              </div>
-              <div id="colorPalette" class="color-palette" style="display: none;">
-                <div class="color-palette-header">Select a color</div>
-                <div class="color-palette-items">
+                     </button>
+                  </div>
+               </div>
+            </div>
+            <div id="canvasModeContainer" class="canvas-mode-container" style="display:none; margin-bottom: 1.5rem;">
+               <div class="grid-x grid-margin-x align-middle">
+                  <div class="cell small-12 medium-8">
+                     <div class="grid-x grid-margin-x" style="margin-bottom: 0.5rem;">
+                        <div class="cell small-6">
+                           <label for="canvasWidthInput">Canvas Width (px):</label>
+                           <input type="number" id="canvasWidthInput" min="1" value="800" class="input-group-field" />
+                        </div>
+                        <div class="cell small-6">
+                           <label for="canvasHeightInput">Canvas Height (px):</label>
+                           <input type="number" id="canvasHeightInput" min="1" value="600" class="input-group-field" />
+                        </div>
+                     </div>
+                     <div id="canvasImageDrop" class="canvas-image-drop">
+                        <input type="file" id="canvasImageInput" accept="image/*" style="display:none;" />
+                        <button id="canvasImageUploadBtn" class="button primary">Upload Screenshot</button>
+                        <span class="canvas-image-drop-text">or drag & drop image here</span>
+                     </div>
+                     <div id="canvasImageWrapper" class="canvas-image-wrapper">
+                        <canvas id="canvasImage" style="max-width:100%; max-height:60vh; display:none;"></canvas>
+                        <div id="canvasChatOverlay" class="canvas-chat-overlay"></div>
+                     </div>
+                  </div>
+                  <div class="cell small-12 medium-4">
+                     <div class="canvas-controls">
+                        <label>Chat Position Preset:</label>
+                        <div class="button-group">
+                           <button class="button small chat-pos-btn" data-pos="top-left">Top-Left</button>
+                           <button class="button small chat-pos-btn" data-pos="top-center">Top-Center</button>
+                           <button class="button small chat-pos-btn" data-pos="bottom-left">Bottom-Left</button>
+                           <button class="button small chat-pos-btn" data-pos="bottom-center">Bottom-Center</button>
+                        </div>
+                        <label style="margin-top:1rem;">Chat Padding (px):</label>
+                        <div class="grid-x grid-margin-x">
+                           <div class="cell small-6">
+                              <input type="number" id="canvasPaddingH" min="0" value="24" class="input-group-field" placeholder="Horizontal" />
+                              <label for="canvasPaddingH">Horizontal</label>
+                           </div>
+                           <div class="cell small-6">
+                              <input type="number" id="canvasPaddingV" min="0" value="24" class="input-group-field" placeholder="Vertical" />
+                              <label for="canvasPaddingV">Vertical</label>
+                           </div>
+                        </div>
+                        <label style="margin-top:1rem;">Zoom & Pan:</label>
+                        <div style="margin-bottom:0.5rem; color:#bbb; font-size:0.95em;">
+                           <span>Zoom: Mouse wheel &nbsp;|&nbsp; Pan: Click & drag</span>
+                        </div>
+                        <button class="button success" id="canvasExportBtn" style="margin-top:1rem;">Export Image</button>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div id="output" class="output">
+            </div>
+            <div id="colorPalette" class="color-palette" style="display: none;">
+               <div class="color-palette-header">Select a color</div>
+               <div class="color-palette-items">
                   <div class="color-item me" data-color="me">Me</div>
                   <div class="color-item ame" data-color="ame">Ame</div>
                   <div class="color-item darkgrey" data-color="darkgrey">Dark Grey</div>
@@ -129,37 +195,35 @@
                   <div class="color-item depColor" data-color="depColor">Dep</div>
                   <div class="color-item vesseltraffic" data-color="vesseltraffic">Vessel</div>
                   <div class="color-item toyou" data-color="toyou">To You</div>
-                </div>
-              </div>
-           </div>
-        </div>
-     </div>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/4.0.0-beta.2/jquery.min.js" defer></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.9.0/js/foundation.min.js" defer></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/3.5.0/dom-to-image-more.min.js" defer></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
-     <script src="js/parse-text.js" defer></script>
-     <script src="js/chat.js" defer></script>
-     <script src="js/color-picker.js" defer></script>
-     <script src="js/chatlog-parser.js" defer></script>
-     <script src="js/app.js" defer></script>
-     <div id="bmc-container">
-       <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="blancodagoat" data-color="#000000" data-emoji="🍕"  data-font="Cookie" data-text="Buy me a pizza" data-outline-color="#ffffff" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
-     </div>
-  </body>
-  <!-- Always visible history tab -->
-  <div class="history-tab" onclick="toggleHistoryPanel()">
-    <i class="fas fa-history"></i>
-  </div>
-  
-  <!-- Toggleable history panel -->
-  <div id="historyPanel" class="history-panel">
-    <div class="history-content">
-      <div class="history-header">
-        <h3>Chatlog History</h3>
-        <button class="close-btn" onclick="toggleHistoryPanel()">&times;</button>
+               </div>
+            </div>
+         </div>
       </div>
-      <div class="history-items"></div>
-    </div>
-  </div>
+      </div>
+      <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/foundation-sites@6.9.0/dist/js/foundation.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@3.6.0/dist/dom-to-image-more.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+      <script src="js/parse-text.js"></script>
+      <script src="js/chat.js"></script>
+      <script src="js/color-picker.js"></script>
+      <script src="js/chatlog-parser.js"></script>
+      <script src="js/app.js"></script>
+      <div id="bmc-container">
+         <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="blancodagoat" data-color="#000000" data-emoji="🍕"  data-font="Cookie" data-text="Buy me a pizza" data-outline-color="#ffffff" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
+      </div>
+   </body>
+   <div class="history-tab" onclick="toggleHistoryPanel()" title="Show History" style="display: flex; align-items: center; justify-content: center;">
+      <i class="fa-solid fa-clock-rotate-left" style="font-size:1.7em;"></i>
+   </div>
+   <div id="historyPanel" class="history-panel">
+      <div class="history-content">
+         <div class="history-header" style="padding: 4px 8px; font-size: 1.05em; font-weight: 500; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 4px;">
+            <span style="flex:1;">History</span>
+            <button class="clear-history-btn" id="clearHistoryBtn" title="Clear History" style="font-size:1.1em; padding:2px 6px;">🗑️</button>
+            <button class="close-btn" onclick="toggleHistoryPanel()" style="font-size:1.1em; padding:2px 8px;">&times;</button>
+         </div>
+         <div class="history-items"></div>
+      </div>
+   </div>
 </html>
