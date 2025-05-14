@@ -20,8 +20,8 @@ function trimCanvas(canvas) {
 
     for (let y = 0; y < canvas.height; y++) {
         for (let x = 0; x < canvas.width; x++) {
-            let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-            if (alpha > 0) {
+            const alpha = pixels[(y * canvas.width + x) * 4 + 3];
+            if (alpha > 10) { 
                 top = y;
                 break;
             }
@@ -31,8 +31,8 @@ function trimCanvas(canvas) {
 
     for (let y = canvas.height - 1; y >= 0; y--) {
         for (let x = 0; x < canvas.width; x++) {
-            let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-            if (alpha > 0) {
+            const alpha = pixels[(y * canvas.width + x) * 4 + 3];
+            if (alpha > 10) {
                 bottom = y;
                 break;
             }
@@ -42,8 +42,8 @@ function trimCanvas(canvas) {
 
     for (let x = 0; x < canvas.width; x++) {
         for (let y = 0; y < canvas.height; y++) {
-            let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-            if (alpha > 0) {
+            const alpha = pixels[(y * canvas.width + x) * 4 + 3];
+            if (alpha > 10) {
                 left = x;
                 break;
             }
@@ -53,8 +53,8 @@ function trimCanvas(canvas) {
 
     for (let x = canvas.width - 1; x >= 0; x--) {
         for (let y = 0; y < canvas.height; y++) {
-            let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-            if (alpha > 0) {
+            const alpha = pixels[(y * canvas.width + x) * 4 + 3];
+            if (alpha > 10) {
                 right = x;
                 break;
             }
@@ -62,7 +62,13 @@ function trimCanvas(canvas) {
         if (right !== null) break;
     }
 
+    const padding = 20;
     if (top !== null && bottom !== null && left !== null && right !== null) {
+        top = Math.max(0, top - padding);
+        bottom = Math.min(canvas.height - 1, bottom + padding);
+        left = Math.max(0, left - padding);
+        right = Math.min(canvas.width - 1, right + padding);
+
         let trimmedCanvas = document.createElement("canvas");
         trimmedCanvas.width = right - left + 1;
         trimmedCanvas.height = bottom - top + 1;
@@ -99,22 +105,53 @@ function downloadOutputImage() {
 
     showLoadingIndicator();
 
-    const contentHeight = output[0].scrollHeight;
+    const outputNode = output[0];
+    const contentContainer = outputNode.cloneNode(true);
+
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '-9999px';
+    wrapper.style.backgroundColor = 'transparent';
+    wrapper.style.padding = '0';
+    wrapper.style.margin = '0';
+
+    wrapper.style.width = output.outerWidth() + 'px';
+
+    wrapper.style.fontSize = output.css('fontSize');
+    wrapper.style.fontFamily = output.css('fontFamily');
+    wrapper.style.lineHeight = output.css('lineHeight');
+    wrapper.style.color = output.css('color');
+    wrapper.style.textShadow = output.css('textShadow');
+    wrapper.style.letterSpacing = output.css('letterSpacing');
+    wrapper.style.fontWeight = output.css('fontWeight');
+
+    wrapper.appendChild(contentContainer);
+    document.body.appendChild(wrapper);
+
+    $(contentContainer).find('.censored-content').each(function() {
+        $(this).css({
+            'background-color': 'black',
+            'color': 'black',
+            'text-shadow': 'none',
+            'display': 'inline'
+        });
+    });
+
+    const contentHeight = wrapper.scrollHeight;
     const height = contentHeight * scale;
-    const width = output[0].scrollWidth * scale;
-    const originalPadding = output.css('padding-bottom');
+    const width = wrapper.scrollWidth * scale;
 
-    output.css('padding-bottom', '100px');
-
-    domtoimage.toBlob(output[0], {
+    domtoimage.toBlob(wrapper, {
         width: width,
         height: height,
         style: {
             transform: `scale(${scale})`,
             transformOrigin: "top left",
-        }
+        },
+        bgcolor: null,
+        quality: 1
     }).then(function (blob) {
-        output.css('padding-bottom', originalPadding);
         const img = new Image();
         img.src = URL.createObjectURL(blob);
         img.onload = function () {
@@ -127,14 +164,33 @@ function downloadOutputImage() {
             trimmedCanvas.toBlob(function (trimmedBlob) {
                 window.saveAs(trimmedBlob, generateFilename());
                 $(".censored-content").removeClass("pixelated");
+                document.body.removeChild(wrapper);
                 hideLoadingIndicator();
             });
         };
     }).catch(function (error) {
         console.error("Error generating image:", error);
-        alert("There was an error generating the image. Please try again.");
-        $(".censored-content").removeClass("pixelated");
-        hideLoadingIndicator();
+
+        html2canvas(wrapper, {
+            scale: scale,
+            backgroundColor: null,
+            logging: false,
+            useCORS: true,
+            allowTaint: true
+        }).then(canvas => {
+            canvas.toBlob(function(blob) {
+                window.saveAs(blob, generateFilename());
+                $(".censored-content").removeClass("pixelated");
+                document.body.removeChild(wrapper);
+                hideLoadingIndicator();
+            });
+        }).catch(function(fallbackError) {
+            console.error("Fallback error:", fallbackError);
+            alert("There was an error generating the image. Please try again.");
+            $(".censored-content").removeClass("pixelated");
+            document.body.removeChild(wrapper);
+            hideLoadingIndicator();
+        });
     });
 }
 
