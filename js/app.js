@@ -804,41 +804,63 @@ $(document).ready(function () {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, exportCanvas.width, exportCanvas.height);
         if (window.domtoimage && window.domtoimage.toBlob) {
-            document.fonts.ready.then(() => {
-                window.domtoimage.toBlob(overlay, {
-                    width: overlay.offsetWidth * dpr,
-                    height: overlay.offsetHeight * dpr,
-                    style: {
-                        transform: 'scale(' + dpr + ')',
-                        transformOrigin: 'top left',
-                    },
-                    filter: () => true,
-                    bgcolor: null,
-                    quality: 1
-                }).then(blob => {
-                    const img = new window.Image();
-                    img.onload = function () {
-                        const wrapperRect = wrapper.getBoundingClientRect();
-                        const overlayRect = overlay.getBoundingClientRect();
-                        const domRect = canvas.getBoundingClientRect();
-                        const scaleX = canvas.width / domRect.width;
-                        const scaleY = canvas.height / domRect.height;
-                        const offsetX = (overlayRect.left - wrapperRect.left) * scaleX;
-                        const offsetY = (overlayRect.top - wrapperRect.top) * scaleY;
-                        const overlayW = overlay.offsetWidth * scaleX;
-                        const overlayH = overlay.offsetHeight * scaleY;
-                        ctx.drawImage(img, offsetX * dpr, offsetY * dpr, overlayW * dpr, overlayH * dpr);
-                        exportCanvas.toBlob(function (finalBlob) {
-                            saveAs(finalBlob, generateFilename());
-                        });
-                    };
-                    img.src = URL.createObjectURL(blob);
-                });
+            // Create a temporary container for the overlay with proper width
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px';
+            tempContainer.style.top = '-9999px';
+            tempContainer.style.width = (overlay.offsetWidth + 40) + 'px'; // Add padding
+            tempContainer.style.fontSize = overlay.style.fontSize;
+            tempContainer.style.fontFamily = window.getComputedStyle(overlay).fontFamily;
+            tempContainer.style.lineHeight = '1.3';
+            tempContainer.style.color = window.getComputedStyle(overlay).color;
+            tempContainer.style.textShadow = window.getComputedStyle(overlay).textShadow;
+            tempContainer.style.letterSpacing = window.getComputedStyle(overlay).letterSpacing;
+            tempContainer.style.fontWeight = window.getComputedStyle(overlay).fontWeight;
+            tempContainer.style.whiteSpace = 'pre-line';
+            tempContainer.innerHTML = overlay.innerHTML;
+            document.body.appendChild(tempContainer);
+
+            // Calculate the actual height needed for the content
+            const contentHeight = tempContainer.scrollHeight;
+            const contentWidth = tempContainer.scrollWidth;
+
+            window.domtoimage.toBlob(tempContainer, {
+                width: contentWidth * dpr,
+                height: contentHeight * dpr,
+                style: {
+                    transform: 'scale(' + dpr + ')',
+                    transformOrigin: 'top left',
+                },
+                filter: () => true,
+                bgcolor: null,
+                quality: 1
+            }).then(blob => {
+                const img = new window.Image();
+                img.onload = function () {
+                    const wrapperRect = wrapper.getBoundingClientRect();
+                    const overlayRect = overlay.getBoundingClientRect();
+                    const domRect = canvas.getBoundingClientRect();
+                    const scaleX = canvas.width / domRect.width;
+                    const scaleY = canvas.height / domRect.height;
+                    const offsetX = (overlayRect.left - wrapperRect.left) * scaleX;
+                    const offsetY = (overlayRect.top - wrapperRect.top) * scaleY;
+                    
+                    // Calculate the correct dimensions while maintaining aspect ratio
+                    const aspectRatio = img.width / img.height;
+                    const overlayW = overlay.offsetWidth * scaleX;
+                    const overlayH = overlayW / aspectRatio;
+                    
+                    ctx.drawImage(img, offsetX * dpr, offsetY * dpr, overlayW * dpr, overlayH * dpr);
+                    exportCanvas.toBlob(function (finalBlob) {
+                        saveAs(finalBlob, generateFilename());
+                        document.body.removeChild(tempContainer);
+                    });
+                };
+                img.src = URL.createObjectURL(blob);
             });
-            return;
         } else {
             alert('html2canvas is required for screenshot export. Please include html2canvas.js');
-            return;
         }
     });
 
