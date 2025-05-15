@@ -420,6 +420,23 @@ $(document).ready(function() {
                 ? wrapSpan("lightgrey", line)
                 : wrapSpan("grey", line);
         }
+
+        // Handle phone low messages
+        if (line.startsWith("!")) {
+            if (line.includes("says [low] (phone):")) {
+                return wrapSpan("yellow", line.slice(1));
+            }
+        }
+        // Handle 'says [low] (phone):'
+        if (line.includes("says [low] (phone):")) {
+            const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
+            if (currentCharacterName && line.toLowerCase().includes(currentCharacterName)) {
+                return wrapSpan("lightgrey", line);
+            } else {
+                return wrapSpan("grey", line);
+            }
+        }
+
         if (lowerLine.includes("says:") || lowerLine.includes("shouts:")) {
             const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
             if (!currentCharacterName) {
