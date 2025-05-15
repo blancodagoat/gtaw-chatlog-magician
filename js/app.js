@@ -120,15 +120,14 @@ function downloadOutputImage() {
     refreshHistoryPanel();
   }
   
-  const scale = scaleEnabled ? 2 : 1;
   const output = $("#output");
   $(".censored-content").addClass("pixelated");
   
   // Show loading indicator
   showLoadingIndicator();
   
-  const height = (output.prop('scrollHeight') + 100) * scale;
-  const width = output.width() * scale;
+  const height = output.prop('scrollHeight') + 100;
+  const width = output.width();
   const originalPadding = output.css('padding-bottom');
   
   // Add extra padding to ensure content is fully captured
@@ -138,7 +137,7 @@ function downloadOutputImage() {
     width: width,
     height: height,
     style: {
-      transform: `scale(${scale})`,
+      transform: 'scale(1)',
       transformOrigin: "top left",
     }
   }).then(function(blob) {
@@ -379,26 +378,47 @@ function initTooltips() {
 // Chatlog history functions
 function saveToHistory(text) {
   try {
-    if (!text.trim()) return;
+    if (!text || !text.trim()) return;
     
     let history = [];
     try {
-      history = JSON.parse(localStorage.getItem('chatlogHistory') || '[]');
+      const storedHistory = localStorage.getItem('chatlogHistory');
+      if (storedHistory) {
+        history = JSON.parse(storedHistory);
+        if (!Array.isArray(history)) {
+          console.warn('Invalid history format, resetting...');
+          history = [];
+        }
+      }
     } catch (e) {
       console.error('Error reading history:', e);
+      history = [];
     }
     
+    // Remove duplicates and add new item
     history = history.filter(item => item !== text);
     history.unshift(text);
     
-    if (history.length > 20) {
-      history = history.slice(0, 20);
+    // Limit history size and clean up old items
+    const MAX_HISTORY = 20;
+    if (history.length > MAX_HISTORY) {
+      history = history.slice(0, MAX_HISTORY);
     }
     
     try {
       localStorage.setItem('chatlogHistory', JSON.stringify(history));
     } catch (e) {
-      console.error('Error saving history:', e);
+      if (e.name === 'QuotaExceededError') {
+        // If storage is full, remove oldest items
+        history = history.slice(0, Math.floor(MAX_HISTORY / 2));
+        try {
+          localStorage.setItem('chatlogHistory', JSON.stringify(history));
+        } catch (e2) {
+          console.error('Failed to save history after cleanup:', e2);
+        }
+      } else {
+        console.error('Error saving history:', e);
+      }
     }
   } catch (e) {
     console.error('Error in saveToHistory:', e);
@@ -406,34 +426,100 @@ function saveToHistory(text) {
 }
 
 function loadHistory() {
-  return JSON.parse(localStorage.getItem('chatlogHistory') || '[]');
+  try {
+    const history = JSON.parse(localStorage.getItem('chatlogHistory') || '[]');
+    return Array.isArray(history) ? history : [];
+  } catch (e) {
+    console.error('Error loading history:', e);
+    return [];
+  }
 }
 
 // Toggle history panel
 function toggleHistoryPanel() {
   const panel = document.getElementById('historyPanel');
+  const isOpen = panel.classList.contains('open');
+  
   panel.classList.toggle('open');
+  panel.setAttribute('aria-hidden', !isOpen);
+  
+  // Update tab button state
+  const tab = document.querySelector('.history-tab');
+  tab.setAttribute('aria-expanded', !isOpen);
+  tab.setAttribute('aria-label', isOpen ? 'Open chat history' : 'Close chat history');
+  
+  // Toggle Buy Me a Coffee button visibility
+  const bmcContainer = document.querySelector('.bmc-btn-container');
+  if (bmcContainer) {
+    bmcContainer.style.display = !isOpen ? 'none' : 'block';
+  }
+  
+  // Focus management
+  if (!isOpen) {
+    // When opening, focus the first history item
+    const firstItem = panel.querySelector('.history-item');
+    if (firstItem) firstItem.focus();
+  }
+}
+
+// Clear all history
+function clearHistory() {
+  if (confirm('Are you sure you want to clear all chat history?')) {
+    localStorage.removeItem('chatlogHistory');
+    refreshHistoryPanel();
+  }
 }
 
 // Refresh history panel content
 function refreshHistoryPanel() {
-  const itemsContainer = $('.history-items');
-  itemsContainer.empty();
+  const $historyItems = $('.history-items');
+  const $loading = $('<div class="history-loading">Loading history...</div>');
+  const $empty = $('<div class="history-empty">No history items</div>');
   
-  const history = loadHistory();
+  // Show loading state
+  $historyItems.empty().append($loading.addClass('active'));
   
-  if (history.length === 0) {
-    itemsContainer.append('<div class="history-item">No history yet</div>');
-  } else {
-    history.forEach((text, index) => {
-      const preview = text.length > 50 ? text.substring(0, 50) + '...' : text;
-      itemsContainer.append(
-        `<div class="history-item" data-index="${index}">
-          <div class="history-preview">${escapeHtml(preview)}</div>
-          <small>Click to load</small>
-        </div>`
-      );
+  try {
+    const history = loadHistory();
+    
+    if (history.length === 0) {
+      $loading.removeClass('active');
+      $historyItems.append($empty.addClass('active'));
+      return;
+    }
+    
+    // Create history items
+    const $items = history.map((text, index) => {
+      const $item = $('<div class="history-item" role="button" tabindex="0" aria-label="Load chatlog from history"></div>');
+      $item.data('index', index);
+      
+      // Create container for the full text
+      const $textContainer = $('<div class="history-item-text"></div>');
+      
+      // Split text into lines and create formatted content
+      const lines = text.split('\n');
+      const formattedLines = lines.map(line => {
+        // Apply the same formatting as the main chatlog
+        if (typeof processLine === 'function') {
+          return processLine(line);
+        }
+        return line;
+      });
+      
+      $textContainer.html(formattedLines.join('<br>'));
+      $item.append($textContainer);
+      
+      return $item;
     });
+    
+    // Update panel
+    $loading.removeClass('active');
+    $historyItems.append($items);
+    
+  } catch (e) {
+    console.error('Error refreshing history panel:', e);
+    $loading.removeClass('active');
+    $historyItems.append($('<div class="history-error">Error loading history</div>'));
   }
 }
 
@@ -559,19 +645,13 @@ $(document).ready(function() {
   
   // Save chatlog to history when changed
   $('#chatlogInput').on('input', function() {
+    // Remove automatic history saving on input
     const text = $(this).val().trim();
-    if (text) {
-      saveToHistory(text);
-    }
   });
   
   // Save chatlog to history when processed
   $(document).on('chatlogProcessed', function(event, text) {
-    saveToHistory(text);
-  });
-  
-  $("#scaleToggle").change(function() {
-    scaleEnabled = $(this).is(":checked");
+    // Remove automatic history saving on processing
   });
   
   $("#downloadOutputTransparent").click(downloadOutputImage);
@@ -621,4 +701,9 @@ $(document).ready(function() {
       $('#historyPanel').hide();
     }
   });
+  
+  // Add clear history button to header
+  $('.history-header').append(
+    $('<button class="clear-history-btn" onclick="clearHistory()" aria-label="Clear all history">Clear All</button>')
+  );
 });

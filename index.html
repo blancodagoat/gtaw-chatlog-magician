@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="css/app.css" />
   <link rel="stylesheet" href="css/modern.css" />
   <link rel="stylesheet" href="css/fontawesome.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="icon" href="favicon.png" />
   <style>
    label {
@@ -97,15 +98,6 @@
                      </span>
                    </button>
                  </div>
-                 <div class="cell shrink">
-                    <div class="switch large">
-                       <input class="switch-input" id="scaleToggle" type="checkbox" name="scale-toggle" />
-                       <label class="switch-paddle" for="scaleToggle">
-                          <span class="switch-active" aria-hidden="true">2x</span>
-                          <span class="switch-inactive" aria-hidden="true">1x</span>
-                       </label>
-                    </div>
-                 </div>
               </div>
               <div id="output" class="output">
 
@@ -148,18 +140,29 @@
      </div>
   </body>
   <!-- Always visible history tab -->
-  <div class="history-tab" onclick="toggleHistoryPanel()">
-    <i class="fas fa-history"></i>
+  <div class="history-tab" 
+       onclick="toggleHistoryPanel()" 
+       role="button" 
+       tabindex="0" 
+       aria-label="Open chat history" 
+       aria-expanded="false">
+    <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
   </div>
   
   <!-- Toggleable history panel -->
-  <div id="historyPanel" class="history-panel">
+  <div id="historyPanel" 
+       class="history-panel" 
+       role="dialog" 
+       aria-label="Chat history" 
+       aria-hidden="true">
     <div class="history-content">
       <div class="history-header">
         <h3>Chatlog History</h3>
-        <button class="close-btn" onclick="toggleHistoryPanel()">&times;</button>
+        <button class="close-btn" 
+                onclick="toggleHistoryPanel()" 
+                aria-label="Close history panel">&times;</button>
       </div>
-      <div class="history-items"></div>
+      <div class="history-items" role="list"></div>
     </div>
   </div>
 </html>
