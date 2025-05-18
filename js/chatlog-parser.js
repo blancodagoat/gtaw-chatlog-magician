@@ -421,6 +421,21 @@ $(document).ready(function() {
                 : wrapSpan("grey", line);
         }
 
+        // Handle [low] messages in the "to" section
+        if (lowerLine.includes("says [low] (to")) {
+            const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
+            if (!currentCharacterName) {
+                return wrapSpan("grey", line);
+            }
+            // Check if the character name appears before "says"
+            const saysIndex = lowerLine.indexOf("says");
+            const nameBeforeSays = lowerLine.substring(0, saysIndex);
+            if (nameBeforeSays.includes(currentCharacterName)) {
+                return wrapSpan("lightgrey", line);
+            }
+            return wrapSpan("grey", line);
+        }
+
         // Handle phone low messages
         if (line.startsWith("!")) {
             if (line.includes("says [low] (phone):")) {
