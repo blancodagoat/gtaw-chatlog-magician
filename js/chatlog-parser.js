@@ -27,8 +27,6 @@ $(document).ready(function() {
     $lineLengthInput.on("input", processOutput);
     $characterNameInput.on("input", applyFilter);
     $textarea.off("input").on("input", throttle(processOutput, 200));
-    $toggleColorPaletteBtn.click(toggleColoringMode);
-    $colorPalette.on("click", ".color-item", applyColorToSelection);
 
     $output.on("click", ".colorable", handleTextElementClick);
 
@@ -1136,56 +1134,6 @@ $(document).ready(function() {
         }
     }
 
-    function toggleColoringMode() {
-        coloringMode = !coloringMode;
-        $toggleColorPaletteBtn.toggleClass("btn-dark", coloringMode);
-
-        if (coloringMode) {
-            $output.addClass("coloring-mode");
-
-            clearAllSelections();
-            isDragging = false;
-            dragStartElement = null;
-
-            $colorPalette.show();
-
-            alert("Click on text to select it. Use Ctrl+click for multiple selections or drag to select multiple items. Click 'Color Text' button again to exit coloring mode.");
-
-            setTimeout(function() {
-
-                makeTextColorable();
-                console.log("Coloring mode activated - elements colorable: " + $output.find('.colorable').length);
-
-                updateColorPalettePosition();
-            }, 100);
-
-            $(document).off('click.closePalette');
-        } else {
-            $output.removeClass("coloring-mode");
-            $colorPalette.hide();
-
-            clearAllSelections();
-            isDragging = false;
-            dragStartElement = null;
-
-            setupClosePaletteHandler();
-        }
-    }
-
-    function setupClosePaletteHandler() {
-        $(document).off('click.closePalette').on('click.closePalette', function(e) {
-            if (!coloringMode) return;
-            if (!$(e.target).closest('#colorPalette, #toggleColorPalette').length) {
-
-                if (!coloringMode) {
-                    $colorPalette.hide();
-                }
-            }
-        });
-    }
-
-    setupClosePaletteHandler();
-
     function handleTextElementClick(e) {
 
         if (!coloringMode) return;
@@ -1373,58 +1321,5 @@ $(document).ready(function() {
         }
     }
 
-    function updateColorPalettePosition() {
-        const windowHeight = $(window).height();
-        const paletteHeight = $colorPalette.outerHeight();
-
-        if (paletteHeight + 20 > windowHeight) {
-            $colorPalette.css({
-                'max-height': (windowHeight - 40) + 'px',
-                'bottom': '20px'
-            });
-        } else {
-            $colorPalette.css({
-                'bottom': '20px'
-            });
-        }
-    }
-
-    $(window).on('resize', updateColorPalettePosition);
-
-    function createColorPalette() {
-        if ($colorPalette.length === 0) {
-
-            const $palette = $('<div id="colorPalette" class="color-palette"></div>');
-            const $header = $('<div class="color-palette-header">Select a color</div>');
-            const $items = $('<div class="color-palette-items"></div>');
-
-            const colors = [
-                { name: "Red", class: "red" },
-                { name: "Orange", class: "orange" },
-                { name: "Yellow", class: "yellow" },
-                { name: "Green", class: "green" },
-                { name: "Blue", class: "blue" },
-                { name: "Purple", class: "me" },
-                { name: "Pink", class: "pink" },
-                { name: "Cyan", class: "cyan" },
-                { name: "White", class: "white" },
-                { name: "Gray", class: "gray" }
-            ];
-
-            colors.forEach(color => {
-                const $item = $(`<div class="color-item" data-color="${color.class}">${color.name}</div>`);
-                $items.append($item);
-            });
-
-            $palette.append($header);
-            $palette.append($items);
-            $('body').append($palette);
-
-            $palette.hide();
-        }
-    }
-
     processOutput(); 
-
-    createColorPalette();
 });

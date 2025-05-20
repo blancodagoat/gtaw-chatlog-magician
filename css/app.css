@@ -806,3 +806,150 @@ html::-webkit-scrollbar {
 ::-webkit-scrollbar-thumb:hover {
 	background: rgba(255, 165, 0, 0.3);
 }
+
+/* Changelog styles */
+.changelog-tab {
+	position: fixed;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 40px;
+	height: 80px;
+	background: rgba(45, 45, 45, 0.95);
+	color: white;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 0 8px 8px 0;
+	cursor: pointer;
+	z-index: 1001;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-left: none;
+}
+
+.changelog-tab:hover {
+	background: rgba(60, 60, 60, 0.95);
+	width: 45px;
+	box-shadow: 4px 0 15px rgba(255, 165, 0, 0.15);
+}
+
+.changelog-tab:focus {
+	outline: 2px solid #fff;
+	outline-offset: 2px;
+}
+
+.changelog-tab i {
+	font-size: 20px;
+}
+
+.changelog-panel {
+	position: fixed;
+	top: 0;
+	left: -350px;
+	width: 350px;
+	height: 100vh;
+	background: rgba(45, 45, 45, 0.95);
+	box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
+	transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	z-index: 1000;
+	display: block !important;
+	border-right: 1px solid rgba(255, 255, 255, 0.1);
+	overflow-y: auto;
+}
+
+.changelog-panel.open {
+	left: 0;
+}
+
+.changelog-header {
+	padding: 15px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background: rgba(45, 45, 45, 0.95);
+	color: white;
+}
+
+.changelog-header h3 {
+	margin: 0;
+	margin-right: 10px;
+	font-size: 16px;
+	font-weight: 500;
+}
+
+.changelog-items {
+	flex: 1;
+	overflow-y: auto;
+	padding: 10px;
+}
+
+.changelog-item {
+	padding: 15px;
+	margin-bottom: 15px;
+	border: 1px solid #34495e;
+	border-radius: 4px;
+	background: #2c3e50;
+	transition: all 0.2s ease;
+}
+
+.changelog-item:hover {
+	background-color: #34495e;
+	border-color: #3498db;
+}
+
+.changelog-date {
+	color: #3498db;
+	font-size: 14px;
+	font-weight: 500;
+	margin-bottom: 8px;
+}
+
+.changelog-content {
+	color: #ecf0f1;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.changelog-content ul {
+	margin: 0;
+	padding-left: 20px;
+}
+
+.changelog-content li {
+	margin-bottom: 5px;
+}
+
+.changelog-content li:last-child {
+	margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+	.changelog-panel {
+		width: 300px;
+		left: -300px;
+	}
+
+	.changelog-tab {
+		width: 35px;
+		height: 70px;
+	}
+
+	.changelog-tab:hover {
+		width: 40px;
+	}
+
+	.changelog-header h3 {
+		font-size: 15px;
+	}
+
+	.changelog-date {
+		font-size: 13px;
+	}
+
+	.changelog-content {
+		font-size: 12px;
+	}
+}

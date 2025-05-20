@@ -1,0 +1,184 @@
+const CHANGELOG_ENTRIES = [
+    {
+        date: '2025-05-20',
+        changes: [
+            'Reimplemented and modularized the coloring function for better maintainability',
+            'Fixed various coloring issues and edge cases',
+            'Added changelog panel with click-away functionality',
+            'Improved changelog organization and readability',
+            'Added comprehensive update history from September 2024'
+        ]
+    },
+    {
+        date: '2025-05-15',
+        changes: [
+            'Added logic to color lines containing says [low] (phone)',
+            'Improved image export logic to preserve structure and styles',
+            'Fixed styling issues in exported images'
+        ]
+    },
+    {
+        date: '2025-05-07',
+        changes: [
+            'Added alternate character name support',
+            'Removed Apply button, character name now auto-applies on selection'
+        ]
+    },
+    {
+        date: '2025-04-14',
+        changes: [
+            'Added history tab',
+            'Added session persistence for font size, line break length, and character name'
+        ]
+    },
+    {
+        date: '2025-04-03',
+        changes: [
+            'Added blue formatting for "[ALERT] Lockdown activated!" messages',
+            'Added green formatting for "You seized Item" messages',
+            'Added proper handling for /ame messages with "CHAT LOG: " prefix',
+            'Fixed Prison PA color from purple to blue',
+            'Fixed color persistence after using censorship symbol'
+        ]
+    },
+    {
+        date: '2025-03-23',
+        changes: [
+            'Added Text Coloring System'
+        ]
+    },
+    {
+        date: '2025-03-09',
+        changes: [
+            'Added Error Handling System',
+            'Added Cross-origin protection script',
+            'Added local Font Awesome files',
+            'Improved clipboard functionality',
+            'Fixed various bugs and improved character name filter'
+        ]
+    },
+    {
+        date: '2025-02-07',
+        changes: [
+            'Fixed CIM styling',
+            'Added property and bank related money lines',
+            'Added exclamation mark coloring for loudspeaker lines'
+        ]
+    },
+    {
+        date: '2025-01-26',
+        changes: [
+            'Added [STREET] styling',
+            'Added chance, microphone, and injuries styling',
+            'Changed automatic date removal from /pay lines'
+        ]
+    },
+    {
+        date: '2025-01-18',
+        changes: [
+            'Added useful card reader lines'
+        ]
+    },
+    {
+        date: '2025-01-16',
+        changes: [
+            'Added faction invite style'
+        ]
+    },
+    {
+        date: '2025-01-11',
+        changes: [
+            'Added inventory styling',
+            'Added equipped weapon styling',
+            'Added [!] coloring',
+            'Added "was seized by" style',
+            'Added "You were frisked by" style'
+        ]
+    },
+    {
+        date: '2025-01-05',
+        changes: [
+            'Added "you\'ve used" style'
+        ]
+    },
+    {
+        date: '2024-12-27',
+        changes: [
+            'Fixed whisper detection for all whisper types',
+            'Added jail time message formatting'
+        ]
+    },
+    {
+        date: '2024-11-20',
+        changes: [
+            'Added style for "Equipped Weapons"',
+            'Added style for group whispers',
+            'Added style for corpse damage check',
+            'Added style for "You\'ve been shot"',
+            'Reworked censoring system'
+        ]
+    },
+    {
+        date: '2024-10-20',
+        changes: [
+            'Changed lineLengthInput to number type',
+            'Added \'you dropped\' coloring',
+            'Added \'emergencyCallPattern\''
+        ]
+    },
+    {
+        date: '2024-10-13',
+        changes: [
+            'Added changeable line break length',
+            'Added "you\'ve just taken" logic',
+            'Added Prison PA logic',
+            'Added CASHTAP coloring'
+        ]
+    },
+    {
+        date: '2024-10-03',
+        changes: [
+            'Changed logic and coloring for new phone system'
+        ]
+    },
+    {
+        date: '2024-09-25',
+        changes: [
+            'Added phone /me coloring',
+            'Added [lower] coloring'
+        ]
+    },
+    {
+        date: '2024-09-18',
+        changes: [
+            'Added censoring option for monetary values and identifiers',
+            'Fixed SMS coloring'
+        ]
+    },
+    {
+        date: '2024-09-17',
+        changes: [
+            'Added [low] recognition in character filter',
+            'Fixed font-smoothing browser compatibility'
+        ]
+    },
+    {
+        date: '2024-09-15',
+        changes: [
+            'Added PropertyRobbery coloring',
+            'Added Vessel Traffic Service coloring',
+            'Improved UI with better hover states and transitions',
+            'Adjusted logo and input styling'
+        ]
+    },
+    {
+        date: '2024-09-13',
+        changes: [
+            'Added "you paid" coloring',
+            'Added "ame" coloring',
+            'Updated "me" and "ame" coloring',
+            'Added Department Radio coloring',
+            'Added various new coloring patterns'
+        ]
+    }
+]; 

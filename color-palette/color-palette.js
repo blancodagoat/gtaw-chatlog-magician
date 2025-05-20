@@ -11,7 +11,6 @@
     let $toggleColorPaletteBtn;
 
     function init() {
-
         $colorPalette = $("#colorPalette");
         $output = $("#output");
         $toggleColorPaletteBtn = $("#toggleColorPalette");
@@ -23,8 +22,15 @@
         $output.on("mouseup", ".colorable", handleDragEnd);
         $output.on("mouseover", ".colorable", handleDragOver);
 
-        setupClosePaletteHandler();
+        // Prevent default text selection in coloring mode
+        $output.on("selectstart", ".colorable", function(e) {
+            if (coloringMode) {
+                e.preventDefault();
+                return false;
+            }
+        });
 
+        setupClosePaletteHandler();
         $(window).on('resize', updateColorPalettePosition);
     }
 
@@ -38,6 +44,12 @@
             isDragging = false;
             dragStartElement = null;
             $colorPalette.show();
+
+            // Disable text selection globally while in coloring mode
+            document.body.style.userSelect = 'none';
+            document.body.style.webkitUserSelect = 'none';
+            document.body.style.mozUserSelect = 'none';
+            document.body.style.msUserSelect = 'none';
 
             alert("Click on text to select it. Use Ctrl+click for multiple selections or drag to select multiple items. Click 'Color Text' button again to exit coloring mode.");
 
@@ -53,6 +65,13 @@
             clearAllSelections();
             isDragging = false;
             dragStartElement = null;
+
+            // Re-enable text selection
+            document.body.style.userSelect = '';
+            document.body.style.webkitUserSelect = '';
+            document.body.style.mozUserSelect = '';
+            document.body.style.msUserSelect = '';
+
             setupClosePaletteHandler();
         }
     }
@@ -94,25 +113,44 @@
 
     function handleDragStart(e) {
         if (!coloringMode) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
         isDragging = true;
         dragStartElement = e.currentTarget;
+
+        if (!e.ctrlKey) {
+            clearAllSelections();
+        }
+
+        if (!selectedElements.includes(dragStartElement)) {
+            selectedElements.push(dragStartElement);
+            $(dragStartElement).addClass("selected-for-coloring");
+        }
+    }
+
+    function handleDragOver(e) {
+        if (!isDragging || !coloringMode) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const currentElement = e.currentTarget;
+        if (!selectedElements.includes(currentElement)) {
+            selectedElements.push(currentElement);
+            $(currentElement).addClass("selected-for-coloring");
+        }
     }
 
     function handleDragEnd(e) {
         if (!coloringMode) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
         isDragging = false;
         dragStartElement = null;
-    }
-
-    function handleDragOver(e) {
-        if (!coloringMode || !isDragging) return;
-        const currentElement = e.currentTarget;
-        if (currentElement !== dragStartElement) {
-            if (!selectedElements.includes(currentElement)) {
-                selectedElements.push(currentElement);
-                $(currentElement).addClass("selected-for-coloring");
-            }
-        }
     }
 
     function clearAllSelections() {

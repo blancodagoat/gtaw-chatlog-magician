@@ -451,6 +451,23 @@ function escapeHtml(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
+function toggleChangelogPanel() {
+    const panel = document.getElementById('changelogPanel');
+    const isOpen = panel.classList.contains('open');
+
+    panel.classList.toggle('open');
+    panel.setAttribute('aria-hidden', !isOpen);
+
+    const tab = document.querySelector('.changelog-tab');
+    tab.setAttribute('aria-expanded', !isOpen);
+    tab.setAttribute('aria-label', isOpen ? 'Open changelog' : 'Close changelog');
+
+    if (!isOpen) {
+        const firstItem = panel.querySelector('.changelog-item');
+        if (firstItem) firstItem.focus();
+    }
+}
+
 $(document).ready(function() {
 
   function getCharacterList() {
@@ -602,4 +619,17 @@ $(document).ready(function() {
   $('.history-header').append(
     $('<button class="clear-history-btn" onclick="clearHistory()" aria-label="Clear all history">Clear All</button>')
   );
+
+  // Add click-away functionality for changelog panel
+  $(document).on('click', function(e) {
+    const panel = document.getElementById('changelogPanel');
+    const tab = document.querySelector('.changelog-tab');
+    
+    if (!$(e.target).closest('#changelogPanel, .changelog-tab').length && panel.classList.contains('open')) {
+      panel.classList.remove('open');
+      panel.setAttribute('aria-hidden', 'true');
+      tab.setAttribute('aria-expanded', 'false');
+      tab.setAttribute('aria-label', 'Open changelog');
+    }
+  });
 });

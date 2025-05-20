@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/app.css" />
   <link rel="stylesheet" href="css/modern.css" />
   <link rel="stylesheet" href="css/fontawesome.min.css" />
+  <link rel="stylesheet" href="color-palette/color-palette.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="icon" href="favicon.png" type="image/png" />
 
@@ -98,6 +99,7 @@
                     <button id="toggleBackground" class="button">Toggle Background</button>
                     <button id="toggleCensorshipStyle" class="button">Toggle Censorship Style</button>
                     <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character">÷</button>
+                    <button id="toggleColorPalette" class="button" aria-label="Toggle color palette">Color Text</button>
                     <div class="button" style="display: inline-flex; align-items: center; padding: 0.5em 1em; height: 38px;">
                      <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="blancodagoat" data-color="#000000" data-emoji="" data-font="Cookie" data-text="Buy me a pizza" data-outline-color="#ffffff" data-font-color="#ffffff" data-coffee-color="#FFDD00" data-size="small"></script>
                    </div>
@@ -118,6 +120,7 @@
      <script src="js/parse-text.js" defer></script>
      <script src="js/chat.js" defer></script>
      <script src="js/color-picker.js" defer></script>
+     <script src="color-palette/color-palette.js" defer></script>
      <script src="js/chatlog-parser.js" defer></script>
      <script src="js/app.js" defer></script>
 
@@ -142,10 +145,56 @@
        <div class="history-items" role="list"></div>
      </div>
 
+     <!-- Color Palette -->
+     <div id="colorPalette" class="color-palette" style="display: none;">
+         <div class="color-palette-header">Select Color</div>
+         <div class="color-palette-items">
+             <div class="color-item me" data-color="me"></div>
+             <div class="color-item ame" data-color="ame"></div>
+             <div class="color-item darkgrey" data-color="darkgrey"></div>
+             <div class="color-item grey" data-color="grey"></div>
+             <div class="color-item lightgrey" data-color="lightgrey"></div>
+             <div class="color-item death" data-color="death"></div>
+             <div class="color-item yellow" data-color="yellow"></div>
+             <div class="color-item green" data-color="green"></div>
+             <div class="color-item orange" data-color="orange"></div>
+             <div class="color-item blue" data-color="blue"></div>
+             <div class="color-item white" data-color="white"></div>
+             <div class="color-item radioColor" data-color="radioColor"></div>
+             <div class="color-item radioColor2" data-color="radioColor2"></div>
+             <div class="color-item depColor" data-color="depColor"></div>
+             <div class="color-item vesseltraffic" data-color="vesseltraffic"></div>
+             <div class="color-item toyou" data-color="toyou"></div>
+         </div>
+     </div>
+
+     <!-- Changelog tab -->
+     <div class="changelog-tab" 
+          role="button" 
+          tabindex="0" 
+          aria-label="Open changelog" 
+          aria-expanded="false">
+       <i class="fas fa-list" aria-hidden="true"></i>
+     </div>
+
+     <div id="changelogPanel" 
+          class="changelog-panel" 
+          role="dialog" 
+          aria-label="Changelog" 
+          aria-hidden="true">
+       <div class="changelog-header">
+         <h3>Latest Updates</h3>
+       </div>
+       <div class="changelog-items" role="list"></div>
+     </div>
+
+     <script src="js/changelog-data.js" defer></script>
+     <script src="js/changelog.js" defer></script>
+
      <script>
         document.addEventListener('DOMContentLoaded', function() {
-
+            ColorPalette.init();
         });
      </script>
-  </body>
+ </body>
 </html>
