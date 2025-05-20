@@ -4,7 +4,15 @@
   ],
   "hints": {
     "axe/forms": "off",
-    "no-inline-styles": "off"
+    "no-inline-styles": "off",
+    "compat-api/html": [
+      "default",
+      {
+        "ignore": [
+          "meta[name=theme-color]"
+        ]
+      }
+    ]
   },
   "browserslist": [
     "defaults",

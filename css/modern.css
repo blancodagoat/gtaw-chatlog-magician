@@ -1,10 +1,5 @@
-/**
- * Chatlog Magician - Modern CSS
- * Enhanced styling while preserving all original functionality
- */
-
 :root {
-  /* Color variables */
+
   --bg-color: #24282e;
   --text-color: #fff;
   --input-bg: rgba(255, 255, 255, 0.15);
@@ -14,8 +9,7 @@
   --button-shadow: rgba(0, 0, 0, 0.5);
   --scrollbar-thumb: rgba(255, 255, 255, 0.5);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 1);
-  
-  /* Text colors */
+
   --me-color: #c2a3da;
   --ame-color: #c2a3da;
   --darkgrey-color: #5a5a5b;
@@ -34,27 +28,23 @@
   --dep-color: #ccca15;
   --vessel-color: #33C1C9;
   --toyou-color: #ff00bc;
-  
-  /* Spacing */
+
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
-  
-  /* Border radius */
+
   --border-radius-sm: 0.25rem;
   --border-radius-md: 0.5rem;
   --border-radius-lg: 1rem;
-  
-  /* Font sizes */
+
   --font-size-xs: 11px;
   --font-size-sm: 12px;
   --font-size-md: 14px;
   --font-size-lg: 16px;
 }
 
-/* Base styles */
 body {
   font-family: Arial, sans-serif;
   width: 100%;
@@ -68,7 +58,6 @@ html::-webkit-scrollbar {
   background-color: transparent;
 }
 
-/* Textarea styling */
 .textarea-input {
   font-family: Arial, sans-serif;
   -webkit-font-smoothing: none !important;
@@ -100,7 +89,6 @@ html::-webkit-scrollbar {
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* Scrollbar styling */
 .textarea-input::-webkit-scrollbar {
   width: 6px;
 }
@@ -118,7 +106,6 @@ html::-webkit-scrollbar {
   background: var(--scrollbar-thumb-hover);
 }
 
-/* Container styling */
 .textarea-container {
   position: relative;
   width: 100%;
@@ -127,7 +114,6 @@ html::-webkit-scrollbar {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Output styling */
 .generated {
   display: inline;
   position: relative;
@@ -168,7 +154,6 @@ html::-webkit-scrollbar {
   padding: var(--spacing-lg);
 }
 
-/* Text color classes */
 .me { color: var(--me-color); }
 .ame { color: var(--ame-color); }
 .darkgrey { color: var(--darkgrey-color); }
@@ -186,7 +171,6 @@ html::-webkit-scrollbar {
 .vesseltraffic { color: var(--vessel-color); }
 .toyou { color: var(--toyou-color); }
 
-/* Button styles */
 .button {
   padding: 0.7rem 1.2rem;
   font-size: var(--font-size-lg);
@@ -210,7 +194,6 @@ html::-webkit-scrollbar {
   outline-offset: 2px;
 }
 
-/* Input group styling */
 .input-group {
   display: flex;
   align-items: center;
@@ -237,7 +220,6 @@ html::-webkit-scrollbar {
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
-/* Button styling inside input group */
 .input-group-button .button {
   padding: 0.7rem 1.2rem;
   font-size: var(--font-size-lg);
@@ -254,14 +236,12 @@ html::-webkit-scrollbar {
   background-color: #333;
 }
 
-/* Label styles */
 .cell label {
   font-weight: bold;
   font-size: var(--font-size-md);
   margin-bottom: 0;
 }
 
-/* Input styles */
 .cell input {
   padding: var(--spacing-sm);
   border: 1px solid #ccc;
@@ -271,7 +251,6 @@ html::-webkit-scrollbar {
   margin-bottom: 0;
 }
 
-/* Switch toggle styling */
 .scale-toggle {
   display: flex;
   align-items: center;
@@ -310,12 +289,10 @@ html::-webkit-scrollbar {
   transform: translateX(25px);
 }
 
-/* General container styles */
 .grid-container {
   padding: 1.5rem;
 }
 
-/* Logo overlay styles */
 .logo-overlay {
   position: absolute;
   top: 0px;
@@ -332,13 +309,11 @@ html::-webkit-scrollbar {
   height: auto;
 }
 
-/* Grid styles */
 .grid-x {
   display: flex;
   flex-wrap: wrap;
 }
 
-/* Censorship Styles */
 .pixelated {
   filter: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='pixelate-filter'><feOffset dx='0' dy='0' result='box-blur'/><feFlood x='1' y='1' height='1' width='1'/><feComposite width='3' height='3'/><feTile result='tiles'/><feComposite in='box-blur' operator='in'/><feMorphology operator='dilate' radius='1'/></filter></svg>#pixelate-filter");
 }
@@ -347,7 +322,6 @@ html::-webkit-scrollbar {
   opacity: 0;
 }
 
-/* Info tooltip styles */
 .info-bracket {
   display: inline-block;
   align-items: center;
@@ -404,7 +378,6 @@ html::-webkit-scrollbar {
   display: block;
 }
 
-/* Censor character button styles */
 .censor-char-button {
   padding: 0.4em 0.5em;
   font-weight: bold;
@@ -412,7 +385,6 @@ html::-webkit-scrollbar {
   line-height: 1;
 }
 
-/* Responsive styles */
 @media only screen and (max-width: 768px) {
   .grid-container {
     padding: 1rem;

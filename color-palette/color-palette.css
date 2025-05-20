@@ -1,0 +1,73 @@
+#colorPalette {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+.color-item {
+    width: 30px;
+    height: 30px;
+    margin: 5px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.color-item:hover {
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.color-red { color: #ff4444; }
+.color-orange { color: #ff8800; }
+.color-yellow { color: #ffbb33; }
+.color-green { color: #00C851; }
+.color-blue { color: #33b5e5; }
+.color-purple { color: #aa66cc; }
+.color-pink { color: #ff4081; }
+.color-white { color: #ffffff; }
+
+.coloring-mode .colorable {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.coloring-mode .colorable:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.selected-for-coloring {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+#colorPalette {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    max-width: 200px;
+}
+
+@media (max-width: 768px) {
+    #colorPalette {
+        right: 10px;
+        bottom: 10px;
+        padding: 8px;
+    }
+
+    .color-item {
+        width: 25px;
+        height: 25px;
+        margin: 3px;
+    }
+}
