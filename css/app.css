@@ -547,41 +547,6 @@ html::-webkit-scrollbar {
 	margin-right: 2px;
 }
 
-.tooltip-text {
-	display: none;
-	position: absolute;
-	top: 100%;
-	left: 50%;
-	transform: translateX(-50%);
-	background-color: rgba(45, 45, 45, 0.95);
-	color: #fff;
-	padding: 12px;
-	border-radius: 8px;
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-	z-index: 10;
-	white-space: nowrap;
-	-webkit-backdrop-filter: blur(10px);
-	backdrop-filter: blur(10px);
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.info-bracket:hover .tooltip-text {
-	display: block;
-	animation: tooltipFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes tooltipFade {
-	from {
-		opacity: 0;
-		transform: translate(-50%, -10px);
-	}
-	to {
-		opacity: 1;
-		transform: translate(-50%, 0);
-	}
-}
-
 .censor-char-container {
 	display: inline-block;
 	vertical-align: middle;
