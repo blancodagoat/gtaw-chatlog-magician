@@ -1,5 +1,13 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-05-31',
+        changes: [
+            'Removed exclamation mark coloring for phone messages',
+            'Added character name-based coloring for phone messages (white for matching character, yellow for others)',
+            'Improved phone message detection to handle both "says [low] (phone):" and "says (phone):" formats'
+        ]
+    },
+    {
         date: '2025-05-20',
         changes: [
             'Reimplemented and modularized the coloring function for better maintainability',
