@@ -1,5 +1,11 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-06-01',
+        changes: [
+            'Fixed character name detection to properly handle (to CharacterName) format - now correctly colors lines white when your character is speaking and lightgrey when others are speaking to you'
+        ]
+    },
+    {
         date: '2025-05-31',
         changes: [
             'Removed exclamation mark coloring for phone messages',

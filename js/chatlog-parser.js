@@ -193,7 +193,6 @@ $(document).ready(function() {
     }
 
     function formatLineWithFilter(line) {
-
         const lowerLine = line.toLowerCase();
 
         const formattedLine = applySpecialFormatting(line, lowerLine);
@@ -201,22 +200,43 @@ $(document).ready(function() {
             return formattedLine;
         }
 
-        const currentCharacterName = $("#characterNameInput").val().toLowerCase();
-        if (currentCharacterName && currentCharacterName.trim() !== "") {
-            if (!line.toLowerCase().includes(currentCharacterName)) {
-
-                if (isRadioLine(line)) return wrapSpan("radio-line-dim", line);
-                return wrapSpan("dim", line);
-            } else {
-
-                return wrapSpan("character", line);
+        const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
+        if (currentCharacterName && currentCharacterName !== "") {
+            // Remove [!] if present for name detection
+            const lineWithoutExclamation = line.replace(/^\[!\]\s*/, '');
+            
+            // Extract the name before "says" and check if it matches the character name
+            const nameMatch = lineWithoutExclamation.match(/^([^:]+?)\s+says/);
+            const speakerName = nameMatch ? nameMatch[1].trim() : '';
+            
+            // Check if the line contains (to CharacterName)
+            const toSectionPattern = /\(to [^)]+\)/i;
+            const hasToSection = toSectionPattern.test(lineWithoutExclamation);
+            
+            // If the line has a (to ...) section and the character name is in it, don't color as character
+            if (hasToSection) {
+                const toSectionMatch = lineWithoutExclamation.match(toSectionPattern);
+                const isInToSection = toSectionMatch && toSectionMatch[0].toLowerCase().includes(currentCharacterName.toLowerCase());
+                
+                if (isInToSection) {
+                    // If the speaker is the character, color white, otherwise lightgrey
+                    return wrapSpan(speakerName.toLowerCase() === currentCharacterName.toLowerCase() ? "white" : "lightgrey", line);
+                }
             }
+            
+            // Check if the speaker is the character
+            if (speakerName.toLowerCase() === currentCharacterName.toLowerCase()) {
+                return wrapSpan("white", line);
+            }
+            
+            return wrapSpan("lightgrey", line);
         }
 
         return formatLine(line);
     }
 
     function applySpecialFormatting(line, lowerLine) {
+        const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
 
         if (line.startsWith("[ALERT] Lockdown activated!")) {
             return wrapSpan("blue", line);
@@ -298,7 +318,6 @@ $(document).ready(function() {
         }
 
         if (isRadioLine(line)) {
-            const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
             if (!currentCharacterName) {
                 return wrapSpan("radioColor", line);
             }
@@ -312,7 +331,6 @@ $(document).ready(function() {
         }
 
         if (lowerLine.includes("says [low]:")) {
-            const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
             if (!currentCharacterName) {
                 return wrapSpan("grey", line);
             }
@@ -322,7 +340,6 @@ $(document).ready(function() {
         }
 
         if (lowerLine.includes("says [low] (to")) {
-            const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
             if (!currentCharacterName) {
                 return wrapSpan("grey", line);
             }
@@ -336,7 +353,6 @@ $(document).ready(function() {
         }
 
         if (line.includes("says [low] (phone):") || line.includes("says (phone):")) {
-            const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
             if (currentCharacterName && line.toLowerCase().includes(currentCharacterName)) {
                 return wrapSpan("white", line);
             } else {
@@ -344,14 +360,39 @@ $(document).ready(function() {
             }
         }
 
-        if (lowerLine.includes("says:") || lowerLine.includes("shouts:")) {
-            const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
+        if (lowerLine.includes("says:") && !lowerLine.includes("[low]") && !lowerLine.includes("[lower]") && !lowerLine.includes("whispers") && !lowerLine.includes("(phone)") && !lowerLine.includes("(loudspeaker)")) {
             if (!currentCharacterName) {
                 return wrapSpan("white", line);
             }
-            return lowerLine.includes(currentCharacterName)
-                ? wrapSpan("white", line)
-                : wrapSpan("lightgrey", line);
+
+            // Remove [!] if present for name detection
+            const lineWithoutExclamation = line.replace(/^\[!\]\s*/, '');
+            
+            // Extract the name before "says" and check if it matches the character name
+            const nameMatch = lineWithoutExclamation.match(/^([^:]+?)\s+says/);
+            const speakerName = nameMatch ? nameMatch[1].trim() : '';
+            
+            // Check if the line contains (to CharacterName)
+            const toSectionPattern = /\(to [^)]+\)/i;
+            const hasToSection = toSectionPattern.test(lineWithoutExclamation);
+            
+            // If the line has a (to ...) section and the character name is in it, don't color as character
+            if (hasToSection) {
+                const toSectionMatch = lineWithoutExclamation.match(toSectionPattern);
+                const isInToSection = toSectionMatch && toSectionMatch[0].toLowerCase().includes(currentCharacterName.toLowerCase());
+                
+                if (isInToSection) {
+                    // If the speaker is the character, color white, otherwise lightgrey
+                    return wrapSpan(speakerName.toLowerCase() === currentCharacterName.toLowerCase() ? "white" : "lightgrey", line);
+                }
+            }
+            
+            // Check if the speaker is the character
+            if (speakerName.toLowerCase() === currentCharacterName.toLowerCase()) {
+                return wrapSpan("white", line);
+            }
+            
+            return wrapSpan("lightgrey", line);
         }
 
         if (line.startsWith("you were frisked by")) {
@@ -586,15 +627,15 @@ $(document).ready(function() {
             return handleGoods(line);
 
         if (lowerLine.includes("says:") && !lowerLine.includes("[low]") && !lowerLine.includes("[lower]") && !lowerLine.includes("whispers") && !lowerLine.includes("(phone)") && !lowerLine.includes("(loudspeaker)")) {
-            if (!characterName) {
+            if (!currentCharacterName) {
                 return wrapSpan("white", line);
             }
             const toSectionPattern = /\(to [^)]+\)/i;
             const lineWithoutToSection = line.replace(toSectionPattern, "");
-            const speakingToPattern = new RegExp(`says \\(to ${characterName}\\):`, 'i');
-            const isSpeakingToCharacter = characterName && speakingToPattern.test(line);
+            const speakingToPattern = new RegExp(`says \\(to ${currentCharacterName}\\):`, 'i');
+            const isSpeakingToCharacter = currentCharacterName && speakingToPattern.test(line);
 
-            const startsWithCharName = new RegExp(`^${characterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(line);
+            const startsWithCharName = new RegExp(`^${currentCharacterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(lineWithoutToSection);
 
             if (isSpeakingToCharacter) {
                 return wrapSpan("character", line);
