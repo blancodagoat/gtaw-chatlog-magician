@@ -360,6 +360,10 @@ $(document).ready(function() {
             }
         }
 
+        if (line === "Injuries:") {
+            return wrapSpan("blue", line);
+        }
+
         if (lowerLine.includes("says:") && !lowerLine.includes("[low]") && !lowerLine.includes("[lower]") && !lowerLine.includes("whispers") && !lowerLine.includes("(phone)") && !lowerLine.includes("(loudspeaker)")) {
             if (!currentCharacterName) {
                 return wrapSpan("white", line);
@@ -532,10 +536,6 @@ $(document).ready(function() {
             return wrapSpan("yellow", line);
         }
 
-        if (line === "Injuries:") {
-            return wrapSpan("blue", line);
-        }
-
         if (line.includes("[STREET]")) {
             if (line.includes(" / ")) {
 
@@ -656,6 +656,32 @@ $(document).ready(function() {
             const key = emergencyMatch[1];
             const value = emergencyMatch[2];
             return '<span class="blue">' + key + ': </span><span class="white">' + value + '</span>';
+        }
+
+        // Add new pattern for total items purchase
+        if (line.startsWith("You have bought a total of")) {
+            const match = line.match(/^(You have bought a total of )(\d+)( items for )(\$\d+(?:,\d{3})*)( total\.)$/);
+            if (match) {
+                const [_, prefix, number, middle, amount, suffix] = match;
+                return wrapSpan("white", prefix) + 
+                       wrapSpan("white", number) + 
+                       wrapSpan("white", middle) + 
+                       wrapSpan("green", amount) + 
+                       wrapSpan("white", suffix);
+            }
+        }
+
+        // Add new pattern for PAYG Credit purchase
+        if (line.startsWith("You have bought")) {
+            const match = line.match(/^(You have bought )(X\d+)( PAYG Credit for )(\$\d+(?:,\d{3})*)(\.)$/i);
+            if (match) {
+                const [_, prefix, credit, middle, amount, suffix] = match;
+                return wrapSpan("white", prefix) + 
+                       wrapSpan("blue", credit + " PAYG Credit") + 
+                       wrapSpan("white", " for ") + 
+                       wrapSpan("green", amount) + 
+                       wrapSpan("white", suffix);
+            }
         }
 
         return null;
