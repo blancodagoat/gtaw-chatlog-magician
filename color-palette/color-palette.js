@@ -160,12 +160,22 @@
         selectedElements = [];
     }
 
+    const COLOR_CLASSES = [
+        'me', 'ame', 'darkgrey', 'grey', 'lightgrey', 'death', 'yellow',
+        'green', 'orange', 'blue', 'white', 'radioColor', 'radioColor2',
+        'depColor', 'vesseltraffic', 'toyou'
+    ];
+
     function applyColorToSelection(e) {
         if (!coloringMode || selectedElements.length === 0) return;
 
         const colorClass = $(e.currentTarget).data('color');
         selectedElements.forEach(element => {
-            $(element).removeClass().addClass(colorClass);
+            $(element)
+                .removeClass(COLOR_CLASSES.join(' '))
+                .addClass('colorable')
+                .addClass(colorClass)
+                .removeClass('selected-for-coloring');
         });
 
         clearAllSelections();
