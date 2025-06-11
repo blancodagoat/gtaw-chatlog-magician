@@ -368,35 +368,35 @@ $(document).ready(function() {
             if (!currentCharacterName) {
                 return wrapSpan("white", line);
             }
-
-            // Remove [!] if present for name detection
-            const lineWithoutExclamation = line.replace(/^\[!\]\s*/, '');
-            
-            // Extract the name before "says" and check if it matches the character name
-            const nameMatch = lineWithoutExclamation.match(/^([^:]+?)\s+says/);
-            const speakerName = nameMatch ? nameMatch[1].trim() : '';
-            
-            // Check if the line contains (to CharacterName)
             const toSectionPattern = /\(to [^)]+\)/i;
-            const hasToSection = toSectionPattern.test(lineWithoutExclamation);
-            
-            // If the line has a (to ...) section and the character name is in it, don't color as character
-            if (hasToSection) {
-                const toSectionMatch = lineWithoutExclamation.match(toSectionPattern);
-                const isInToSection = toSectionMatch && toSectionMatch[0].toLowerCase().includes(currentCharacterName.toLowerCase());
-                
-                if (isInToSection) {
-                    // If the speaker is the character, color white, otherwise lightgrey
-                    return wrapSpan(speakerName.toLowerCase() === currentCharacterName.toLowerCase() ? "white" : "lightgrey", line);
-                }
-            }
-            
-            // Check if the speaker is the character
-            if (speakerName.toLowerCase() === currentCharacterName.toLowerCase()) {
+            const lineWithoutToSection = line.replace(toSectionPattern, "");
+            const speakingToPattern = new RegExp(`says \\(to ${currentCharacterName}\\):`, 'i');
+            const isSpeakingToCharacter = currentCharacterName && speakingToPattern.test(line);
+
+            const startsWithCharName = new RegExp(`^${currentCharacterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(lineWithoutToSection);
+
+            if (isSpeakingToCharacter) {
+                return wrapSpan("character", line);
+            } else if (startsWithCharName) {
                 return wrapSpan("white", line);
+            } else {
+                return wrapSpan("lightgrey", line);
             }
-            
-            return wrapSpan("lightgrey", line);
+        }
+
+        // Check for shouts before other conditions
+        if (lowerLine.includes("shouts:") || lowerLine.includes("shouts (to")) {
+            return wrapSpan("white", line);
+        }
+
+        // Handle panic alarm messages
+        const panicAlarmPattern = /^\[(LSSD|LSPD|PHMC|SADCR) PANIC ALARM\] (.+) activated their panic alarm at (.+)$/i;
+        const panicMatch = line.match(panicAlarmPattern);
+        if (panicMatch) {
+            const [_, department, officer, location] = panicMatch;
+            return wrapSpan("blue", `[${department} PANIC ALARM]`) + 
+                   wrapSpan("white", ` ${officer} activated their panic alarm at`) + 
+                   wrapSpan("blue", ` ${location}`);
         }
 
         if (line.startsWith("you were frisked by")) {
@@ -436,9 +436,13 @@ $(document).ready(function() {
         }
 
         if (line.match(/^(?:\[\d{2}:\d{2}:\d{2}\]\s+)?\d+: .+/)) {
-
+            // Handle PH: lines directly without recursion
             if (line.includes("PH:")) {
-                return formatLine(line);
+                const phoneMatch = line.trim().match(/^(\d+: .+? x\d+ \(.+?\) -) (PH: \d+)$/);
+                if (phoneMatch) {
+                    const [_, itemPart, phonePart] = phoneMatch;
+                    return wrapSpan("yellow", itemPart) + " " + wrapSpan("green", phonePart);
+                }
             }
 
             if (line.includes("Money ($")) {
@@ -729,9 +733,13 @@ $(document).ready(function() {
         }
 
         if (line.match(/^(?:\[\d{2}:\d{2}:\d{2}\]\s+)?\d+: .+/)) {
-
+            // Handle PH: lines directly without recursion
             if (line.includes("PH:")) {
-                return formatLine(line);
+                const phoneMatch = line.trim().match(/^(\d+: .+? x\d+ \(.+?\) -) (PH: \d+)$/);
+                if (phoneMatch) {
+                    const [_, itemPart, phonePart] = phoneMatch;
+                    return wrapSpan("yellow", itemPart) + " " + wrapSpan("green", phonePart);
+                }
             }
 
             if (line.includes("Money ($")) {

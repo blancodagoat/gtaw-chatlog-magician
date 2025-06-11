@@ -1,5 +1,13 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-06-11',
+        changes: [
+            'Improved color class handling - now preserves "colorable" class while removing only color classes, making colored text remain selectable for further coloring',
+            'Added panic alarm message formatting',
+            'Fixed shouting message colors to always be white regardless of character name'
+        ]
+    },
+    {
         date: '2025-06-02',
         changes: [
             'Added coloring for total items purchase messages',
