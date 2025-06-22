@@ -156,6 +156,21 @@ $(document).ready(function() {
 
             if (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') return;
             if (parent.querySelector('.colorable')) return;
+            
+            // Skip if parent already has custom formatting (like weather spans)
+            if (parent.querySelector('span[class*="green"], span[class*="white"], span[class*="blue"], span[class*="yellow"], span[class*="orange"], span[class*="red"], span[class*="grey"], span[class*="me"], span[class*="ame"], span[class*="death"], span[class*="radioColor"], span[class*="depColor"], span[class*="vesseltraffic"], span[class*="toyou"]')) return;
+            
+            // Skip if the parent div contains any span elements (indicating custom formatting)
+            if (parent.querySelector('span')) return;
+            
+            // Skip if the text node is already inside a formatted span
+            let currentNode = textNode.parentNode;
+            while (currentNode && currentNode !== $output[0]) {
+                if (currentNode.tagName === 'SPAN' && (currentNode.className.includes('green') || currentNode.className.includes('white') || currentNode.className.includes('blue') || currentNode.className.includes('yellow') || currentNode.className.includes('orange') || currentNode.className.includes('red') || currentNode.className.includes('grey') || currentNode.className.includes('me') || currentNode.className.includes('ame') || currentNode.className.includes('death') || currentNode.className.includes('radioColor') || currentNode.className.includes('depColor') || currentNode.className.includes('vesseltraffic') || currentNode.className.includes('toyou'))) {
+                    return;
+                }
+                currentNode = currentNode.parentNode;
+            }
 
             const text = textNode.textContent;
 
@@ -237,6 +252,12 @@ $(document).ready(function() {
 
     function applySpecialFormatting(line, lowerLine) {
         const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
+
+        // Check for weather pattern first
+        const weatherFormatted = formatWeatherLine(line);
+        if (weatherFormatted) {
+            return weatherFormatted;
+        }
 
         if (line.startsWith("[ALERT] Lockdown activated!")) {
             return wrapSpan("blue", line);
@@ -778,6 +799,80 @@ $(document).ready(function() {
 
     function wrapSpan(className, content) {
         return `<span class="${className}">${content}</span>`;
+    }
+
+    function formatWeatherLine(line) {
+        // Pattern to match weather information
+        // Example: "Temperature: 31.88°C (89.42°F), it is currently sunny."
+        const weatherPattern = /^Temperature:\s*([\d.]+°C)\s*\(([\d.]+°F)\),\s*it\s*is\s*currently\s*([^.]+)\.\s*Wind:\s*([\d.]+)\s*km\/h\s*\(([\d.]+)\s*mph\),\s*humidity:\s*([\d.]+%),\s*rain\s*precipitation:\s*([\d.]+)\s*mm\.\s*Current\s*time:\s*([\d\/A-Z\s-]+:\d{2}:\d{2}:\d{2})$/;
+        
+        const match = line.match(weatherPattern);
+        if (match) {
+            const [_, tempC, tempF, condition, windKmh, windMph, humidity, rain, time] = match;
+            
+            return wrapSpan("white", "Temperature: ") + 
+                   wrapSpan("green", tempC) + " " + 
+                   wrapSpan("white", "(") + 
+                   wrapSpan("green", tempF) + 
+                   wrapSpan("white", ")") + 
+                   wrapSpan("white", ", it is currently ") + 
+                   wrapSpan("green", condition) + 
+                   wrapSpan("white", ". Wind: ") + 
+                   wrapSpan("green", windKmh + " km/h") + 
+                   " " + 
+                   wrapSpan("white", "(") + 
+                   wrapSpan("green", windMph + " mph") + 
+                   wrapSpan("white", ")") + 
+                   wrapSpan("white", ", humidity: ") + 
+                   wrapSpan("green", humidity) + 
+                   wrapSpan("white", ", rain precipitation: ") + 
+                   wrapSpan("green", rain + " mm") + 
+                   wrapSpan("white", ". Current time: ") + 
+                   wrapSpan("white", time);
+        }
+        
+        // Handle individual weather lines that might be split
+        if (line.startsWith("Temperature:")) {
+            const tempMatch = line.match(/^Temperature:\s*([\d.]+°C)\s*\(([\d.]+°F)\),\s*it\s*is\s*currently\s*([^.]+)\.?$/);
+            if (tempMatch) {
+                const [_, tempC, tempF, condition] = tempMatch;
+                return wrapSpan("white", "Temperature: ") + 
+                       wrapSpan("green", tempC) + " " + 
+                       wrapSpan("white", "(") + 
+                       wrapSpan("green", tempF) + 
+                       wrapSpan("white", ")") + 
+                       wrapSpan("white", ", it is currently ") + 
+                       wrapSpan("green", condition) + ".";
+            }
+            return wrapSpan("white", "Temperature: ") + 
+                   wrapSpan("green", line.replace("Temperature:", "").trim());
+        }
+        
+        if (line.startsWith("Wind:")) {
+            const windMatch = line.match(/^Wind:\s*([\d.]+)\s*km\/h\s*\(([\d.]+)\s*mph\),\s*humidity:\s*([\d.]+%),\s*rain\s*precipitation:\s*([\d.]+)\s*mm\.?$/);
+            if (windMatch) {
+                const [_, windKmh, windMph, humidity, rain] = windMatch;
+                return wrapSpan("white", "Wind: ") + 
+                       wrapSpan("green", windKmh + " km/h") + 
+                       " " + 
+                       wrapSpan("white", "(") + 
+                       wrapSpan("green", windMph + " mph") + 
+                       wrapSpan("white", ")") + 
+                       wrapSpan("white", ", humidity: ") + 
+                       wrapSpan("green", humidity) + 
+                       wrapSpan("white", ", rain precipitation: ") + 
+                       wrapSpan("green", rain + " mm") + ".";
+            }
+            return wrapSpan("white", "Wind: ") + 
+                   wrapSpan("green", line.replace("Wind:", "").trim());
+        }
+        
+        if (line.startsWith("Current time:")) {
+            return wrapSpan("white", "Current time: ") + 
+                   wrapSpan("white", line.replace("Current time:", "").trim());
+        }
+        
+        return null;
     }
 
     function isRadioLine(line) {

@@ -1,5 +1,15 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-06-22',
+        changes: [
+            'Added weather information formatting with specific color coding',
+            'Temperature values, weather conditions, wind speeds, humidity, and precipitation now display in green',
+            'Brackets around Fahrenheit and mph values display in white',
+            'Current time information displays in white',
+            'Improved makeTextColorable function to prevent overriding custom formatted content'
+        ]
+    },
+    {
         date: '2025-06-11',
         changes: [
             'Improved color class handling - now preserves "colorable" class while removing only color classes, making colored text remain selectable for further coloring',
