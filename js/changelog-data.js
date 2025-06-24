@@ -1,5 +1,11 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-06-24',
+        changes: [
+            'Fixed colorable span functionality for text selection'
+        ]
+    },
+    {
         date: '2025-06-22',
         changes: [
             'Added weather information formatting with specific color coding',

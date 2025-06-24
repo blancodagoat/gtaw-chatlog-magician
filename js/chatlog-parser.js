@@ -155,34 +155,28 @@ $(document).ready(function() {
             const parent = textNode.parentNode;
 
             if (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') return;
+            
+            // Skip if the immediate parent already has colorable spans
             if (parent.querySelector('.colorable')) return;
             
-            // Skip if parent already has custom formatting (like weather spans)
-            if (parent.querySelector('span[class*="green"], span[class*="white"], span[class*="blue"], span[class*="yellow"], span[class*="orange"], span[class*="red"], span[class*="grey"], span[class*="me"], span[class*="ame"], span[class*="death"], span[class*="radioColor"], span[class*="depColor"], span[class*="vesseltraffic"], span[class*="toyou"]')) return;
-            
-            // Skip if the parent div contains any span elements (indicating custom formatting)
-            if (parent.querySelector('span')) return;
-            
-            // Skip if the text node is already inside a formatted span
-            let currentNode = textNode.parentNode;
-            while (currentNode && currentNode !== $output[0]) {
-                if (currentNode.tagName === 'SPAN' && (currentNode.className.includes('green') || currentNode.className.includes('white') || currentNode.className.includes('blue') || currentNode.className.includes('yellow') || currentNode.className.includes('orange') || currentNode.className.includes('red') || currentNode.className.includes('grey') || currentNode.className.includes('me') || currentNode.className.includes('ame') || currentNode.className.includes('death') || currentNode.className.includes('radioColor') || currentNode.className.includes('depColor') || currentNode.className.includes('vesseltraffic') || currentNode.className.includes('toyou'))) {
-                    return;
-                }
-                currentNode = currentNode.parentNode;
+            // Skip if the text node is directly inside a formatted span (but allow if it's in a parent that contains formatted spans)
+            if (parent.tagName === 'SPAN' && (parent.className.includes('green') || parent.className.includes('white') || parent.className.includes('blue') || parent.className.includes('yellow') || parent.className.includes('orange') || parent.className.includes('red') || parent.className.includes('grey') || parent.className.includes('me') || parent.className.includes('ame') || parent.className.includes('death') || parent.className.includes('radioColor') || parent.className.includes('depColor') || parent.className.includes('vesseltraffic') || parent.className.includes('toyou'))) {
+                return;
             }
+            
+            if (parent.tagName === 'SPAN' && parent.className.includes('colorable')) return;
 
             const text = textNode.textContent;
 
             const temp = document.createElement('div');
 
-            const fragments = text.split(/(\s+)/g).filter(fragment => fragment);
-
-            const html = fragments.map(fragment => {
-
-                if (/^\s+$/.test(fragment)) return fragment;
-
-                return `<span class="colorable">${fragment}</span>`;
+            // Split into individual characters for letter-by-letter selection
+            const characters = text.split('');
+            
+            const html = characters.map(char => {
+                // Preserve whitespace as-is, wrap other characters in colorable spans
+                if (/\s/.test(char)) return char;
+                return `<span class="colorable">${char}</span>`;
             }).join('');
 
             temp.innerHTML = html;
@@ -683,7 +677,6 @@ $(document).ready(function() {
             return '<span class="blue">' + key + ': </span><span class="white">' + value + '</span>';
         }
 
-        // Add new pattern for total items purchase
         if (line.startsWith("You have bought a total of")) {
             const match = line.match(/^(You have bought a total of )(\d+)( items for )(\$\d+(?:,\d{3})*)( total\.)$/);
             if (match) {
@@ -696,7 +689,6 @@ $(document).ready(function() {
             }
         }
 
-        // Add new pattern for PAYG Credit purchase
         if (line.startsWith("You have bought")) {
             const match = line.match(/^(You have bought )(X\d+)( PAYG Credit for )(\$\d+(?:,\d{3})*)(\.)$/i);
             if (match) {
@@ -754,7 +746,6 @@ $(document).ready(function() {
         }
 
         if (line.match(/^(?:\[\d{2}:\d{2}:\d{2}\]\s+)?\d+: .+/)) {
-            // Handle PH: lines directly without recursion
             if (line.includes("PH:")) {
                 const phoneMatch = line.trim().match(/^(\d+: .+? x\d+ \(.+?\) -) (PH: \d+)$/);
                 if (phoneMatch) {
@@ -798,12 +789,24 @@ $(document).ready(function() {
     }
 
     function wrapSpan(className, content) {
-        return `<span class="${className}">${content}</span>`;
+        const words = content.split(/(\s+)/g).filter(word => word.length > 0);
+        
+        const html = words.map(word => {
+            if (/^\s+$/.test(word)) {
+                return word;
+            } else {
+                const characters = word.split('');
+                const charSpans = characters.map(char => 
+                    `<span class="${className} colorable">${char}</span>`
+                ).join('');
+                return charSpans;
+            }
+        }).join('');
+        
+        return html;
     }
 
     function formatWeatherLine(line) {
-        // Pattern to match weather information
-        // Example: "Temperature: 31.88°C (89.42°F), it is currently sunny."
         const weatherPattern = /^Temperature:\s*([\d.]+°C)\s*\(([\d.]+°F)\),\s*it\s*is\s*currently\s*([^.]+)\.\s*Wind:\s*([\d.]+)\s*km\/h\s*\(([\d.]+)\s*mph\),\s*humidity:\s*([\d.]+%),\s*rain\s*precipitation:\s*([\d.]+)\s*mm\.\s*Current\s*time:\s*([\d\/A-Z\s-]+:\d{2}:\d{2}:\d{2})$/;
         
         const match = line.match(weatherPattern);
@@ -831,7 +834,6 @@ $(document).ready(function() {
                    wrapSpan("white", time);
         }
         
-        // Handle individual weather lines that might be split
         if (line.startsWith("Temperature:")) {
             const tempMatch = line.match(/^Temperature:\s*([\d.]+°C)\s*\(([\d.]+°F)\),\s*it\s*is\s*currently\s*([^.]+)\.?$/);
             if (tempMatch) {
