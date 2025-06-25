@@ -95,11 +95,16 @@ $(document).ready(function() {
         return text.replace(/(\.{2,3}-|-\.{2,3})/g, '—');
     }
 
+    function fixBrokenApostrophes(text) {
+        return text.replace(/&(amp;)?(?:apos|apost)[;:]/g, "'");
+    }
+
     function processOutput() {
         const chatText = $textarea.val();
         const chatLines = chatText.split("\n")
                                   .map(removeTimestamps)
-                                  .map(replaceDashes);
+                                  .map(replaceDashes)
+                                  .map(fixBrokenApostrophes);
 
         const fragment = document.createDocumentFragment();
 
