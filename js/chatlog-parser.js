@@ -609,6 +609,9 @@ $(document).ready(function() {
         if (lowerLine.includes("you received a location from"))
             return colorLocationLine(line);
 
+        if (/^waypoint set on the gps by .+\.$/.test(lowerLine))
+            return wrapSpan("green", line);
+
         if (lowerLine.includes("you gave") ||
             lowerLine.includes("paid you") ||
             lowerLine.includes("you paid") ||
