@@ -315,7 +315,7 @@ html::-webkit-scrollbar {
 }
 
 .pixelated {
-  filter: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='pixelate-filter'><feOffset dx='0' dy='0' result='box-blur'/><feFlood x='1' y='1' height='1' width='1'/><feComposite width='3' height='3'/><feTile result='tiles'/><feComposite in='box-blur' operator='in'/><feMorphology operator='dilate' radius='1'/></filter></svg>#pixelate-filter");
+  filter: blur(5px);
 }
 
 .hidden {

@@ -199,7 +199,9 @@ $(document).ready(function() {
 
     function applyUserCensorship(line) {
 
-        return line.replace(/÷(.*?)÷/g, (match, p1) => `<span class="${censorshipStyle} censored-content" data-original="${p1}">${p1}</span>`);
+        line = line.replace(/÷([^÷]*?)÷/g, (match, p1) => `<span class="${censorshipStyle} censored-content" data-original="${p1}">${p1}</span>`);
+
+        return line.replace(/÷/g, "");
     }
 
     function removeTimestamps(line) {
