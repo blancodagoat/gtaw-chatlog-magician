@@ -94,7 +94,6 @@ function downloadOutputImage() {
   }
 
   const output = $("#output");
-  $(".censored-content").addClass("pixelated");
 
   showLoadingIndicator();
 
@@ -129,14 +128,12 @@ function downloadOutputImage() {
       const trimmedCanvas = trimCanvas(canvas);
       trimmedCanvas.toBlob(function(trimmedBlob) {
         window.saveAs(trimmedBlob, generateFilename());
-        $(".censored-content").removeClass("pixelated");
         hideLoadingIndicator();
       });
     };
   }).catch(function(error) {
     console.error("Error generating image:", error);
     alert("There was an error generating the image. Please try again.");
-    $(".censored-content").removeClass("pixelated");
     hideLoadingIndicator();
   });
 }

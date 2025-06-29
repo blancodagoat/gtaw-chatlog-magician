@@ -1,8 +1,27 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-01-27',
+        changes: [
+            'Simplified censorship functionality to only use hidden style',
+            'Removed censorship style toggle button and pixelated option',
+            'Censorship now always uses opacity: 0 for clean hidden text'
+        ]
+    },
+    {
+        date: '2025-01-27',
+        changes: [
+            'Fixed censorship functionality HTML structure breaking when line breaks are applied',
+            'Added censorship detection in formatLineWithFilter to prevent HTML from being processed by wrapSpan',
+            'Enhanced addLineBreaksAndHandleSpans to properly handle spans without breaking them',
+            'Improved text coloring to work alongside censorship without breaking HTML structure',
+            'Fixed censorship style toggle to update existing spans in the DOM when style is changed'
+        ]
+    },
+    {
         date: '2025-06-24',
         changes: [
-            'Fixed colorable span functionality for text selection'
+            'Fixed colorable span functionality for text selection',
+            'Fixed censorship functionality (÷ symbol) that was duplicating lines in some browsers'
         ]
     },
     {

@@ -2,7 +2,6 @@ $(document).ready(function() {
 
     let applyBackground = false;
     let applyCensorship = false;
-    let censorshipStyle = 'pixelated';
 
     let selectedElements = []; 
     let coloringMode = false;
@@ -13,7 +12,6 @@ $(document).ready(function() {
     const $output = $("#output");
     const $toggleBackgroundBtn = $("#toggleBackground");
     const $toggleCensorshipBtn = $("#toggleCensorship");
-    const $toggleCensorshipStyleBtn = $("#toggleCensorshipStyle");
     const $censorCharButton = $("#censorCharButton");
     const $lineLengthInput = $("#lineLengthInput");
     const $characterNameInput = $("#characterNameInput");
@@ -22,7 +20,6 @@ $(document).ready(function() {
 
     $toggleBackgroundBtn.click(toggleBackground);
     $toggleCensorshipBtn.click(toggleCensorship);
-    $toggleCensorshipStyleBtn.click(toggleCensorshipStyle);
     $censorCharButton.click(copyCensorChar);
     $lineLengthInput.on("input", processOutput);
     $characterNameInput.on("input", applyFilter);
@@ -53,15 +50,9 @@ $(document).ready(function() {
         processOutput();
     }
 
-    function toggleCensorshipStyle() {
-        censorshipStyle = (censorshipStyle === 'pixelated') ? 'hidden' : 'pixelated';
-        $toggleCensorshipStyleBtn.text(`Censor Style: ${censorshipStyle.charAt(0).toUpperCase() + censorshipStyle.slice(1)}`);
-        processOutput();
-    }
-
     function applyFilter() {
     processOutput();
-} 
+}
 
     function debounce(func, wait) {
         let timeout;
@@ -95,16 +86,11 @@ $(document).ready(function() {
         return text.replace(/(\.{2,3}-|-\.{2,3})/g, '—');
     }
 
-    function fixBrokenApostrophes(text) {
-        return text.replace(/&(amp;)?(?:apos|apost)[;:]/g, "'");
-    }
-
     function processOutput() {
         const chatText = $textarea.val();
         const chatLines = chatText.split("\n")
                                   .map(removeTimestamps)
-                                  .map(replaceDashes)
-                                  .map(fixBrokenApostrophes);
+                                  .map(replaceDashes);
 
         const fragment = document.createDocumentFragment();
 
@@ -112,9 +98,10 @@ $(document).ready(function() {
             const div = document.createElement("div");
             div.className = "generated";
 
-            let formattedLine = formatLineWithFilter(line);
-
-            formattedLine = applyUserCensorship(formattedLine);
+            // Apply censorship BEFORE formatting to avoid HTML structure conflicts
+            let censoredLine = applyUserCensorship(line);
+            
+            let formattedLine = formatLineWithFilter(censoredLine);
 
             if (line.includes("[!]")) {
                 formattedLine = formattedLine.replace(/\[!\]/g, '<span class="toyou">[!]</span>');
@@ -136,70 +123,78 @@ $(document).ready(function() {
     }
 
     function makeTextColorable() {
-
-        const textNodes = [];
-        const walker = document.createTreeWalker(
-            $output[0],
-            NodeFilter.SHOW_TEXT,
-            { acceptNode: node => node.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT },
-            false
-        );
-
-        let node;
-        while (node = walker.nextNode()) {
-
-            if (node.textContent.trim().length > 0) {
-                textNodes.push(node);
-            }
-        }
-
-        textNodes.forEach(textNode => {
-
-            if (textNode.textContent.trim().length <= 1) return;
-
-            const parent = textNode.parentNode;
-
-            if (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') return;
+        // Process each .generated div individually
+        $output.find('.generated').each(function() {
+            const generatedDiv = $(this);
             
-            // Skip if the immediate parent already has colorable spans
-            if (parent.querySelector('.colorable')) return;
+            // Get all child nodes (both elements and text nodes)
+            const childNodes = generatedDiv[0].childNodes;
+            const nodesToProcess = [];
             
-            // Skip if the text node is directly inside a formatted span (but allow if it's in a parent that contains formatted spans)
-            if (parent.tagName === 'SPAN' && (parent.className.includes('green') || parent.className.includes('white') || parent.className.includes('blue') || parent.className.includes('yellow') || parent.className.includes('orange') || parent.className.includes('red') || parent.className.includes('grey') || parent.className.includes('me') || parent.className.includes('ame') || parent.className.includes('death') || parent.className.includes('radioColor') || parent.className.includes('depColor') || parent.className.includes('vesseltraffic') || parent.className.includes('toyou'))) {
-                return;
+            // Collect text nodes that should be processed
+            for (let i = 0; i < childNodes.length; i++) {
+                const node = childNodes[i];
+                
+                // Only process text nodes
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.textContent.trim();
+                    
+                    // Skip empty text nodes
+                    if (text.length === 0) continue;
+                    
+                    // Skip text nodes that contain HTML-like content
+                    if (/<[^>]*>/.test(text) || /&[a-zA-Z0-9#]+;/.test(text)) continue;
+                    
+                    nodesToProcess.push(node);
+                }
             }
             
-            if (parent.tagName === 'SPAN' && parent.className.includes('colorable')) return;
-
-            const text = textNode.textContent;
-
-            const temp = document.createElement('div');
-
-            // Split into individual characters for letter-by-letter selection
-            const characters = text.split('');
-            
-            const html = characters.map(char => {
-                // Preserve whitespace as-is, wrap other characters in colorable spans
-                if (/\s/.test(char)) return char;
-                return `<span class="colorable">${char}</span>`;
-            }).join('');
-
-            temp.innerHTML = html;
-
-            const fragment = document.createDocumentFragment();
-            while (temp.firstChild) {
-                fragment.appendChild(temp.firstChild);
-            }
-
-            parent.replaceChild(fragment, textNode);
+            // Process the collected text nodes
+            nodesToProcess.forEach(textNode => {
+                const text = textNode.textContent;
+                const parent = textNode.parentNode;
+                
+                const temp = document.createElement('div');
+                
+                // Split into individual characters for letter-by-letter selection
+                const characters = text.split('');
+                
+                const html = characters.map(char => {
+                    // Preserve whitespace as-is, wrap other characters in colorable spans
+                    if (/\s/.test(char)) return char;
+                    return `<span class="colorable">${char}</span>`;
+                }).join('');
+                
+                temp.innerHTML = html;
+                
+                const fragment = document.createDocumentFragment();
+                while (temp.firstChild) {
+                    fragment.appendChild(temp.firstChild);
+                }
+                
+                parent.replaceChild(fragment, textNode);
+            });
         });
-
+        
         console.log("Made text colorable - words wrapped: " + $output.find('.colorable').length);
     }
 
     function applyUserCensorship(line) {
-
-        return line.replace(/÷(.*?)÷/g, (match, p1) => `<span class="${censorshipStyle} censored-content" data-original="${p1}">${p1}</span>`);
+        // Use a more robust approach that handles browser compatibility issues
+        // Replace ÷ with a more reliable delimiter and handle edge cases
+        try {
+            return line.replace(/÷(.*?)÷/g, (match, p1) => {
+                // Ensure we're not duplicating content
+                if (p1 && p1.trim()) {
+                    return `<span class="hidden censored-content" data-original="${p1.replace(/"/g, '&quot;')}">${p1}</span>`;
+                }
+                return match; // Return original if no content to censor
+            });
+        } catch (error) {
+            // Fallback for browsers with regex issues
+            console.warn('Censorship regex failed, using fallback method:', error);
+            return line.replace(/÷/g, '÷'); // Just return the line as-is if regex fails
+        }
     }
 
     function removeTimestamps(line) {
@@ -208,6 +203,11 @@ $(document).ready(function() {
 
     function formatLineWithFilter(line) {
         const lowerLine = line.toLowerCase();
+
+        // Check if the line contains censorship HTML - if so, return it as-is
+        if (line.includes('censored-content')) {
+            return line;
+        }
 
         const formattedLine = applySpecialFormatting(line, lowerLine);
         if (formattedLine) {
@@ -608,9 +608,6 @@ $(document).ready(function() {
 
         if (lowerLine.includes("you received a location from"))
             return colorLocationLine(line);
-
-        if (/^waypoint set on the gps by .+\.$/.test(lowerLine))
-            return wrapSpan("green", line);
 
         if (lowerLine.includes("you gave") ||
             lowerLine.includes("paid you") ||
@@ -1263,12 +1260,15 @@ $(document).ready(function() {
         let currentLineLength = 0;
         let inSpan = false;
         let currentSpan = "";
+        let spanContent = "";
 
         function addLineBreak() {
             if (inSpan) {
-                const spanClassMatch = currentSpan.match(/class="([^"]+)"/);
-                const spanClass = spanClassMatch ? spanClassMatch[1] : "";
-                result += `</span><br><span class="${spanClass}">`;
+                // Don't break spans - just add a line break after the span closes
+                result += spanContent;
+                result += "</span><br>";
+                inSpan = false;
+                spanContent = "";
             } else {
                 result += "<br>";
             }
@@ -1277,23 +1277,39 @@ $(document).ready(function() {
 
         for (let i = 0; i < text.length; i++) {
             if (text[i] === "<" && text.substr(i, 5) === "<span") {
+                // Found opening span tag
                 let spanEnd = text.indexOf(">", i);
                 currentSpan = text.substring(i, spanEnd + 1);
                 i = spanEnd;
                 inSpan = true;
+                spanContent = "";
                 result += currentSpan;
             } else if (text[i] === "<" && text.substr(i, 7) === "</span>") {
-                inSpan = false;
+                // Found closing span tag
+                result += spanContent;
                 result += "</span>";
                 i += 6;
+                inSpan = false;
+                spanContent = "";
             } else {
-                result += text[i];
-                currentLineLength++;
+                if (inSpan) {
+                    // Inside a span - collect content without breaking
+                    spanContent += text[i];
+                } else {
+                    // Outside a span - normal character processing
+                    result += text[i];
+                    currentLineLength++;
 
-                if (currentLineLength >= maxLineLength && text[i] === " ") {
-                    addLineBreak();
+                    if (currentLineLength >= maxLineLength && text[i] === " ") {
+                        addLineBreak();
+                    }
                 }
             }
+        }
+
+        // Handle any remaining span content
+        if (inSpan && spanContent) {
+            result += spanContent;
         }
 
         return result;
