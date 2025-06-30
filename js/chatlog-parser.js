@@ -1258,17 +1258,18 @@ $(document).ready(function() {
         const maxLineLength = document.getElementById("lineLengthInput").value;
         let result = "";
         let currentLineLength = 0;
-        let inSpan = false;
-        let currentSpan = "";
-        let spanContent = "";
+        const openSpans = [];
 
         function addLineBreak() {
-            if (inSpan) {
-                // Don't break spans - just add a line break after the span closes
-                result += spanContent;
-                result += "</span><br>";
-                inSpan = false;
-                spanContent = "";
+            if (openSpans.length > 0) {
+                // Close all open spans, insert a break, then reopen them
+                for (let i = openSpans.length - 1; i >= 0; i--) {
+                    result += "</span>";
+                }
+                result += "<br>";
+                for (const span of openSpans) {
+                    result += span;
+                }
             } else {
                 result += "<br>";
             }
@@ -1277,39 +1278,23 @@ $(document).ready(function() {
 
         for (let i = 0; i < text.length; i++) {
             if (text[i] === "<" && text.substr(i, 5) === "<span") {
-                // Found opening span tag
-                let spanEnd = text.indexOf(">", i);
-                currentSpan = text.substring(i, spanEnd + 1);
+                const spanEnd = text.indexOf(">", i);
+                const spanTag = text.substring(i, spanEnd + 1);
+                openSpans.push(spanTag);
+                result += spanTag;
                 i = spanEnd;
-                inSpan = true;
-                spanContent = "";
-                result += currentSpan;
             } else if (text[i] === "<" && text.substr(i, 7) === "</span>") {
-                // Found closing span tag
-                result += spanContent;
                 result += "</span>";
                 i += 6;
-                inSpan = false;
-                spanContent = "";
+                openSpans.pop();
             } else {
-                if (inSpan) {
-                    // Inside a span - collect content without breaking
-                    spanContent += text[i];
-                } else {
-                    // Outside a span - normal character processing
-                    result += text[i];
-                    currentLineLength++;
+                result += text[i];
+                currentLineLength++;
 
-                    if (currentLineLength >= maxLineLength && text[i] === " ") {
-                        addLineBreak();
-                    }
+                if (currentLineLength >= maxLineLength && text[i] === " ") {
+                    addLineBreak();
                 }
             }
-        }
-
-        // Handle any remaining span content
-        if (inSpan && spanContent) {
-            result += spanContent;
         }
 
         return result;
