@@ -98,10 +98,10 @@ $(document).ready(function() {
             const div = document.createElement("div");
             div.className = "generated";
 
-            // Apply censorship BEFORE formatting to avoid HTML structure conflicts
-            let censoredLine = applyUserCensorship(line);
-            
-            let formattedLine = formatLineWithFilter(censoredLine);
+            let formattedLine = formatLineWithFilter(line);
+
+            // Apply censorship after formatting to catch plain lines
+            formattedLine = applyUserCensorship(formattedLine);
 
             if (line.includes("[!]")) {
                 formattedLine = formattedLine.replace(/\[!\]/g, '<span class="toyou">[!]</span>');
@@ -202,12 +202,9 @@ $(document).ready(function() {
     }
 
     function formatLineWithFilter(line) {
-        const lowerLine = line.toLowerCase();
-
-        // Check if the line contains censorship HTML - if so, return it as-is
-        if (line.includes('censored-content')) {
-            return line;
-        }
+        // Strip censorship markers for formatting logic
+        const cleanLine = line.replace(/÷(.*?)÷/g, '$1');
+        const lowerLine = cleanLine.toLowerCase();
 
         const formattedLine = applySpecialFormatting(line, lowerLine);
         if (formattedLine) {
@@ -217,7 +214,7 @@ $(document).ready(function() {
         const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
         if (currentCharacterName && currentCharacterName !== "") {
             // Remove [!] if present for name detection
-            const lineWithoutExclamation = line.replace(/^\[!\]\s*/, '');
+            const lineWithoutExclamation = cleanLine.replace(/^\[!\]\s*/, '');
             
             // Extract the name before "says" and check if it matches the character name
             const nameMatch = lineWithoutExclamation.match(/^([^:]+?)\s+says/);
@@ -794,20 +791,50 @@ $(document).ready(function() {
     }
 
     function wrapSpan(className, content) {
-        const words = content.split(/(\s+)/g).filter(word => word.length > 0);
-        
-        const html = words.map(word => {
-            if (/^\s+$/.test(word)) {
-                return word;
-            } else {
-                const characters = word.split('');
-                const charSpans = characters.map(char => 
-                    `<span class="${className} colorable">${char}</span>`
-                ).join('');
-                return charSpans;
+        const words = content.split(/(\s+)/g);
+        let html = '';
+        let censoring = false;
+        let censorBuffer = '';
+
+        const flushCensor = () => {
+            if (censorBuffer.length > 0) {
+                html += `<span class="hidden censored-content" data-original="${censorBuffer}">${censorBuffer}</span>`;
+                censorBuffer = '';
             }
-        }).join('');
-        
+        };
+
+        words.forEach(word => {
+            if (word === '') return;
+            if (/^\s+$/.test(word)) {
+                if (censoring) {
+                    censorBuffer += word;
+                } else {
+                    html += word;
+                }
+                return;
+            }
+
+            for (const char of word) {
+                if (char === '÷') {
+                    if (censoring) {
+                        flushCensor();
+                        censoring = false;
+                    } else {
+                        censoring = true;
+                    }
+                } else if (censoring) {
+                    censorBuffer += char;
+                } else {
+                    html += `<span class="${className} colorable">${char}</span>`;
+                }
+            }
+        });
+
+        if (censoring) {
+            // unmatched delimiter, append as plain text
+            html += censorBuffer;
+        }
+
         return html;
     }
 
