@@ -839,7 +839,7 @@ $(document).ready(function() {
     }
 
     function formatWeatherLine(line) {
-        const weatherPattern = /^Temperature:\s*([\d.]+°C)\s*\(([\d.]+°F)\),\s*it\s*is\s*currently\s*([^.]+)\.\s*Wind:\s*([\d.]+)\s*km\/h\s*\(([\d.]+)\s*mph\),\s*humidity:\s*([\d.]+%),\s*rain\s*precipitation:\s*([\d.]+)\s*mm\.\s*Current\s*time:\s*([\d\/A-Z\s-]+:\d{2}:\d{2}:\d{2})$/;
+        const weatherPattern = /^Temperature:\s*([\d.]+°C)\s*\(([\d.]+°?F)\),\s*it\s*is\s*currently\s*([^.]+)\.\s*Wind:\s*([\d.]+)\s*km\/h\s*\(([\d.]+)\s*mph\),\s*humidity:\s*([\d.]+%),\s*rain\s*precipitation:\s*([\d.]+)\s*mm\.\s*Current\s*time:\s*([\d\/A-Z\s-]+:\d{2}:\d{2}:\d{2})$/;
         
         const match = line.match(weatherPattern);
         if (match) {
@@ -867,7 +867,7 @@ $(document).ready(function() {
         }
         
         if (line.startsWith("Temperature:")) {
-            const tempMatch = line.match(/^Temperature:\s*([\d.]+°C)\s*\(([\d.]+°F)\),\s*it\s*is\s*currently\s*([^.]+)\.?$/);
+            const tempMatch = line.match(/^Temperature:\s*([\d.]+°C)\s*\(([\d.]+°?F)\),\s*it\s*is\s*currently\s*([^.]+)\.?$/);
             if (tempMatch) {
                 const [_, tempC, tempF, condition] = tempMatch;
                 return wrapSpan("white", "Temperature: ") + 
