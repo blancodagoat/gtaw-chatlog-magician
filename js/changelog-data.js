@@ -1,15 +1,24 @@
 const CHANGELOG_ENTRIES = [
     {
-        date: '2025-01-27',
+        date: '2025-07-04',
         changes: [
-            'Simplified censorship functionality to only use hidden style',
-            'Removed censorship style toggle button and pixelated option',
-            'Censorship now always uses opacity: 0 for clean hidden text'
+            'Added comprehensive CORS handling for dom-to-image compatibility',
+            'Created js/cors-handler.js to manage external resource access issues',
+            'Enhanced image export with fallback mechanisms for external CDN resources',
+            'Improved error handling for SecurityError and cssRules access issues',
+            'Optimized canvas operations with willReadFrequently attribute for better performance',
+            'Updated error-handler.js to filter dom-to-image and CORS-related console errors',
+            'Enhanced chatlog-parser.js with curly apostrophe normalization',
+            'Made filter functions globally accessible for better modularity',
+            'Added robust two-tier image generation with clean output fallback'
         ]
     },
     {
         date: '2025-01-27',
         changes: [
+            'Simplified censorship functionality to only use hidden style',
+            'Removed censorship style toggle button and pixelated option',
+            'Censorship now always uses opacity: 0 for clean hidden text',
             'Fixed censorship functionality HTML structure breaking when line breaks are applied',
             'Added censorship detection in formatLineWithFilter to prevent HTML from being processed by wrapSpan',
             'Enhanced addLineBreaksAndHandleSpans to properly handle spans without breaking them',
