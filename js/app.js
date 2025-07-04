@@ -10,7 +10,7 @@ function updateFontSize() {
 }
 
 function trimCanvas(canvas) {
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const pixels = imgData.data;
   let top = null,
@@ -66,7 +66,7 @@ function trimCanvas(canvas) {
     let trimmedCanvas = document.createElement("canvas");
     trimmedCanvas.width = right - left + 1;
     trimmedCanvas.height = bottom - top + 1;
-    trimmedCanvas.getContext("2d").putImageData(
+    trimmedCanvas.getContext("2d", { willReadFrequently: true }).putImageData(
       ctx.getImageData(left, top, trimmedCanvas.width, trimmedCanvas.height),
       0, 0
     );
@@ -103,18 +103,76 @@ function downloadOutputImage() {
 
   output.css('padding-bottom', '100px');
 
-  domtoimage.toBlob(output[0], {
-    width: width,
-    height: height,
-    style: {
-      transform: 'scale(1)',
-      transformOrigin: "top left",
-    }
-  }).then(function(blob) {
+  // Configure dom-to-image with CORS handling
+  const domtoimageOptions = window.CORSHandler ? 
+    window.CORSHandler.getDomToImageOptions({
+      width: width,
+      height: height,
+      style: {
+        transform: 'scale(1)',
+        transformOrigin: "top left",
+      }
+    }) : {
+      width: width,
+      height: height,
+      style: {
+        transform: 'scale(1)',
+        transformOrigin: "top left",
+      },
+      filter: function(node) {
+        if (node.tagName === 'LINK' && node.href && 
+            (node.href.includes('cdnjs.cloudflare.com') || 
+             node.href.includes('fonts.googleapis.com'))) {
+          return false;
+        }
+        return true;
+      },
+      imagePlaceholder: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y0ZjRmNCIvPjwvc3ZnPg=='
+    };
 
+  // Try with original output first
+  domtoimage.toBlob(output[0], domtoimageOptions).then(function(blob) {
     output.css('padding-bottom', originalPadding);
+    processGeneratedBlob(blob);
+  }).catch(function(error) {
+    console.error("Error generating image with original output:", error);
+    
+    // If CORS issues persist, try with a clean version
+    if (error.message && (error.message.includes('SecurityError') || 
+                          error.message.includes('cssRules') || 
+                          error.message.includes('Cannot access rules'))) {
+      
+      console.log("Attempting fallback with clean output...");
+      
+      // Create a clean version without external resources
+      const cleanOutput = window.CORSHandler ? 
+        window.CORSHandler.createCleanOutput(output[0]) : 
+        output[0].cloneNode(true);
+      
+      // Remove external stylesheets from the clone
+      const externalLinks = cleanOutput.querySelectorAll('link[rel="stylesheet"]');
+      externalLinks.forEach(link => {
+        if (link.href && (link.href.includes('cdnjs.cloudflare.com') || 
+                         link.href.includes('fonts.googleapis.com'))) {
+          link.remove();
+        }
+      });
+      
+      domtoimage.toBlob(cleanOutput, domtoimageOptions).then(function(blob) {
+        output.css('padding-bottom', originalPadding);
+        processGeneratedBlob(blob);
+      }).catch(function(fallbackError) {
+        console.error("Fallback also failed:", fallbackError);
+        handleImageGenerationError(error);
+      });
+    } else {
+      handleImageGenerationError(error);
+    }
+  });
 
+  function processGeneratedBlob(blob) {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.src = URL.createObjectURL(blob);
 
     img.onload = function() {
@@ -122,7 +180,8 @@ function downloadOutputImage() {
       canvas.width = img.width;
       canvas.height = img.height;
 
-      const ctx = canvas.getContext("2d");
+      // Set willReadFrequently to true for better performance with multiple readback operations
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
       ctx.drawImage(img, 0, 0);
 
       const trimmedCanvas = trimCanvas(canvas);
@@ -131,11 +190,29 @@ function downloadOutputImage() {
         hideLoadingIndicator();
       });
     };
-  }).catch(function(error) {
+
+    img.onerror = function() {
+      console.error("Error loading generated image");
+      alert("There was an error processing the generated image. Please try again.");
+      hideLoadingIndicator();
+    };
+  }
+
+  function handleImageGenerationError(error) {
     console.error("Error generating image:", error);
-    alert("There was an error generating the image. Please try again.");
+    
+    // Provide more specific error messages
+    let errorMessage = "There was an error generating the image. Please try again.";
+    
+    if (error.message && error.message.includes('SecurityError')) {
+      errorMessage = "Unable to access external resources. The image may be generated without some styling.";
+    } else if (error.message && error.message.includes('cssRules')) {
+      errorMessage = "Some external styles could not be loaded. The image will be generated with available styles.";
+    }
+    
+    alert(errorMessage);
     hideLoadingIndicator();
-  });
+  }
 }
 
 function showLoadingIndicator() {
@@ -565,7 +642,6 @@ $(document).ready(function() {
 
   $('#characterNameInput').on('input', function() {
     localStorage.setItem('chatlogCharacterName', $(this).val());
-    if (typeof applyFilter === 'function') applyFilter();
   });
 
   $('#chatlogInput').on('input', function() {

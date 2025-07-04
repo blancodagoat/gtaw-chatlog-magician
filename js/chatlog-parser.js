@@ -51,8 +51,11 @@ $(document).ready(function() {
     }
 
     function applyFilter() {
-    processOutput();
-}
+        processOutput();
+    }
+
+    // Make applyFilter globally accessible
+    window.applyFilter = applyFilter;
 
     function debounce(func, wait) {
         let timeout;
@@ -86,11 +89,28 @@ $(document).ready(function() {
         return text.replace(/(\.{2,3}-|-\.{2,3})/g, '—');
     }
 
+    function replaceCurlyApostrophes(text) {
+        // More comprehensive approach: replace any character in the curly apostrophe Unicode range
+        let result = text;
+        for (let i = 0; i < text.length; i++) {
+            const charCode = text.charCodeAt(i);
+            if (charCode >= 8216 && charCode <= 8219 && charCode !== 39) {
+                result = result.replace(text[i], "'");
+            }
+        }
+        
+        // Also try the regex approach
+        result = result.replace(/['''']/g, "'");
+        
+        return result;
+    }
+
     function processOutput() {
         const chatText = $textarea.val();
         const chatLines = chatText.split("\n")
                                   .map(removeTimestamps)
-                                  .map(replaceDashes);
+                                  .map(replaceDashes)
+                                  .map(replaceCurlyApostrophes);
 
         const fragment = document.createDocumentFragment();
 
@@ -121,6 +141,9 @@ $(document).ready(function() {
 
         makeTextColorable();
     }
+
+    // Make processOutput globally accessible
+    window.processOutput = processOutput;
 
     function makeTextColorable() {
         // Process each .generated div individually
@@ -160,6 +183,17 @@ $(document).ready(function() {
                 const characters = text.split('');
                 
                 const html = characters.map(char => {
+                    // Convert curly apostrophes to straight apostrophes
+                    // Check for various curly apostrophe Unicode characters
+                    if (char === '' || char === '' || char === '' || char === '' || char.charCodeAt(0) === 8217 || char.charCodeAt(0) === 8216) {
+                        char = "'";
+                    }
+                    
+                    // More comprehensive check: any character that looks like an apostrophe but isn't a straight apostrophe
+                    if (char !== "'" && char.charCodeAt(0) !== 39 && (char.charCodeAt(0) >= 8216 && char.charCodeAt(0) <= 8219)) {
+                        char = "'";
+                    }
+                    
                     // Preserve whitespace as-is, wrap other characters in colorable spans
                     if (/\s/.test(char)) return char;
                     return `<span class="colorable">${char}</span>`;
@@ -240,7 +274,8 @@ $(document).ready(function() {
                 return wrapSpan("white", line);
             }
             
-            return wrapSpan("lightgrey", line);
+            // If no specific character is speaking, color as lightgrey
+            return wrapSpan("white", line);
         }
 
         return formatLine(line);
@@ -393,7 +428,7 @@ $(document).ready(function() {
             const startsWithCharName = new RegExp(`^${currentCharacterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(lineWithoutToSection);
 
             if (isSpeakingToCharacter) {
-                return wrapSpan("character", line);
+                return wrapSpan("toyou", line);
             } else if (startsWithCharName) {
                 return wrapSpan("white", line);
             } else {
@@ -417,6 +452,10 @@ $(document).ready(function() {
         }
 
         if (line.startsWith("you were frisked by")) {
+            return wrapSpan("green", line);
+        }
+
+        if (lowerLine.startsWith("you've used")) {
             return wrapSpan("green", line);
         }
 
@@ -659,7 +698,7 @@ $(document).ready(function() {
             const startsWithCharName = new RegExp(`^${currentCharacterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(lineWithoutToSection);
 
             if (isSpeakingToCharacter) {
-                return wrapSpan("character", line);
+                return wrapSpan("toyou", line);
             } else if (startsWithCharName) {
                 return wrapSpan("white", line);
             } else {
@@ -713,39 +752,17 @@ $(document).ready(function() {
             return wrapSpan("green", line);
         }
 
-        if (line.includes("Money ($")) {
-            const moneyMatch = line.match(/^(\d+: Money \()(\$\d+(?:,\d{3})*)(\) \(\d+g\))$/);
-            if (moneyMatch) {
-                const [_, prefix, amount, suffix] = moneyMatch;
-                return wrapSpan("yellow", prefix) + wrapSpan("green", amount) + wrapSpan("yellow", suffix);
-            }
-        }
 
-        if (lowerLine.startsWith("you've used")) {
-            return wrapSpan("green", line);
-        }
 
         if (lowerLine.includes("was seized by")) {
             return wrapSpan("death", line);
-        }
-
-        if (lowerLine.startsWith("you were frisked by")) {
-            return wrapSpan("green", line);
         }
 
         if (line.match(/\|------ .+'s Items \d{2}\/[A-Z]{3}\/\d{4} - \d{2}:\d{2}:\d{2} ------\|/)) {
             return wrapSpan("green", line);
         }
 
-        if (line.match(/\|------ .+'s Equipped Weapons ------\|/)) {
-            return wrapSpan("green", line);
-        }
 
-        const phoneMatch = line.trim().match(/^(\d+: .+? x\d+ \(.+?\) -) (PH: \d+)$/);
-        if (phoneMatch) {
-            const [_, itemPart, phonePart] = phoneMatch;
-            return wrapSpan("yellow", itemPart) + " " + wrapSpan("green", phonePart);
-        }
 
         if (line.match(/^(?:\[\d{2}:\d{2}:\d{2}\]\s+)?\d+: .+/)) {
             if (line.includes("PH:")) {
@@ -766,18 +783,6 @@ $(document).ready(function() {
             return wrapSpan("yellow", line);
         }
 
-        if (lowerLine.startsWith("total weight:")) {
-            return wrapSpan("yellow", line);
-        }
-
-        if (lowerLine.startsWith("money on hand:")) {
-            return wrapSpan("green", line);
-        }
-
-        if (lowerLine.includes("left in jail")) {
-            return formatJailTime(line);
-        }
-
         return replaceColorCodes(line);
     }
 
@@ -791,6 +796,9 @@ $(document).ready(function() {
     }
 
     function wrapSpan(className, content) {
+        // Convert curly apostrophes to straight apostrophes
+        content = content.replace(/['''']/g, "'");
+        
         const words = content.split(/(\s+)/g);
         let html = '';
         let censoring = false;

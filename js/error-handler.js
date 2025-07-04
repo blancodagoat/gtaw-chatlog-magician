@@ -5,7 +5,8 @@
     CLIPBOARD: ['clipboard', 'Clipboard'],
     SOURCE_MAP: ['source map', 'sourcemap', '.map'],
     WXT_STORAGE: ['@wxt-dev/storage', 'Storage migration'],
-    CROSS_ORIGIN: ['cross-origin', 'XrayWrapper'],
+    CROSS_ORIGIN: ['cross-origin', 'XrayWrapper', 'Cannot access rules', 'SecurityError'],
+    DOMTOIMAGE: ['domtoimage', 'dom-to-image', 'cssRules', 'SecurityError: Failed to read'],
     IGNORED: ['ResizeObserver loop', 'ResizeObserver loop limit exceeded']
   };
 
@@ -21,7 +22,7 @@
       return errorCache.get(errorText);
     }
 
-    const result = matchesErrorCategory(errorText, ['FONT_AWESOME', 'CLIPBOARD', 'SOURCE_MAP', 'WXT_STORAGE', 'CROSS_ORIGIN', 'IGNORED']);
+    const result = matchesErrorCategory(errorText, ['FONT_AWESOME', 'CLIPBOARD', 'SOURCE_MAP', 'WXT_STORAGE', 'CROSS_ORIGIN', 'DOMTOIMAGE', 'IGNORED']);
     errorCache.set(errorText, result);
     return result;
   };
