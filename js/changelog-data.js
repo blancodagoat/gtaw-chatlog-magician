@@ -1,5 +1,11 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-07-05',
+        changes: [
+            'Fixed SMS message bracket removal issue - now preserves brackets in message content like [LOCATION]'
+        ]
+    },
+    {
         date: '2025-07-04',
         changes: [
             'Added comprehensive CORS handling for dom-to-image compatibility',

@@ -982,9 +982,22 @@ $(document).ready(function() {
     }
 
     function formatSmsMessage(line) {
-
+        // Match the pattern: (phone) Message from sender: content
+        const match = line.match(/^\(([^)]+)\)\s+Message from ([^:]+):\s*(.+)$/);
+        
+        if (match) {
+            const phone = match[1];
+            const sender = match[2];
+            const message = match[3];
+            
+            // Remove brackets only from the phone identifier, preserve them in the message
+            const cleanPhone = phone.replace(/[\[\]]/g, '');
+            
+            return wrapSpan('yellow', `(${cleanPhone}) Message from ${sender}: ${message}`);
+        }
+        
+        // Fallback: if pattern doesn't match, just remove brackets from the whole line
         line = line.replace(/[\[\]]/g, '');
-
         return wrapSpan('yellow', line);
     }
 
