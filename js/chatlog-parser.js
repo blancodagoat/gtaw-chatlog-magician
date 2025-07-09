@@ -94,15 +94,12 @@ $(document).ready(function() {
             return wrapSpan("white", line);
         }
 
-        const toSectionPattern = /\(to [^)]+\)/i;
-        const lineWithoutToSection = line.replace(toSectionPattern, "");
-        const speakingToPattern = new RegExp(`says \\(to ${escapeRegex(currentCharacterName)}\\):`, 'i');
-        const isSpeakingToCharacter = speakingToPattern.test(line);
-        const startsWithCharName = new RegExp(`^${escapeRegex(currentCharacterName)}\\b`, 'i').test(lineWithoutToSection);
+        // Extract the speaker's name (before 'says')
+        const nameMatch = line.match(/^([^:]+?)\s+says/);
+        const speakerName = nameMatch ? nameMatch[1].trim().toLowerCase() : '';
 
-        if (isSpeakingToCharacter) {
-            return wrapSpan("toyou", line);
-        } else if (startsWithCharName) {
+        // If no speaker name found or speaker matches character name, color white
+        if (!speakerName || speakerName === currentCharacterName.toLowerCase()) {
             return wrapSpan("white", line);
         }
         return wrapSpan("lightgrey", line);
@@ -298,7 +295,7 @@ $(document).ready(function() {
             }
             
             // If no specific character is speaking, color as lightgrey
-            return wrapSpan("white", line);
+            return wrapSpan("lightgrey", line);
         }
 
         return formatLine(line);
