@@ -85,6 +85,29 @@ $(document).ready(function() {
         };
     }
 
+    function escapeRegex(text) {
+        return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function formatSaysLine(line, currentCharacterName) {
+        if (!currentCharacterName) {
+            return wrapSpan("white", line);
+        }
+
+        const toSectionPattern = /\(to [^)]+\)/i;
+        const lineWithoutToSection = line.replace(toSectionPattern, "");
+        const speakingToPattern = new RegExp(`says \\(to ${escapeRegex(currentCharacterName)}\\):`, 'i');
+        const isSpeakingToCharacter = speakingToPattern.test(line);
+        const startsWithCharName = new RegExp(`^${escapeRegex(currentCharacterName)}\\b`, 'i').test(lineWithoutToSection);
+
+        if (isSpeakingToCharacter) {
+            return wrapSpan("toyou", line);
+        } else if (startsWithCharName) {
+            return wrapSpan("white", line);
+        }
+        return wrapSpan("lightgrey", line);
+    }
+
     function replaceDashes(text) {
         return text.replace(/(\.{2,3}-|-\.{2,3})/g, '—');
     }
@@ -417,23 +440,7 @@ $(document).ready(function() {
         }
 
         if (lowerLine.includes("says:") && !lowerLine.includes("[low]") && !lowerLine.includes("[lower]") && !lowerLine.includes("whispers") && !lowerLine.includes("(phone)") && !lowerLine.includes("(loudspeaker)")) {
-            if (!currentCharacterName) {
-                return wrapSpan("white", line);
-            }
-            const toSectionPattern = /\(to [^)]+\)/i;
-            const lineWithoutToSection = line.replace(toSectionPattern, "");
-            const speakingToPattern = new RegExp(`says \\(to ${currentCharacterName}\\):`, 'i');
-            const isSpeakingToCharacter = currentCharacterName && speakingToPattern.test(line);
-
-            const startsWithCharName = new RegExp(`^${currentCharacterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(lineWithoutToSection);
-
-            if (isSpeakingToCharacter) {
-                return wrapSpan("toyou", line);
-            } else if (startsWithCharName) {
-                return wrapSpan("white", line);
-            } else {
-                return wrapSpan("lightgrey", line);
-            }
+            return formatSaysLine(line, currentCharacterName);
         }
 
         // Check for shouts before other conditions
@@ -689,23 +696,7 @@ $(document).ready(function() {
             return handleGoods(line);
 
         if (lowerLine.includes("says:") && !lowerLine.includes("[low]") && !lowerLine.includes("[lower]") && !lowerLine.includes("whispers") && !lowerLine.includes("(phone)") && !lowerLine.includes("(loudspeaker)")) {
-            if (!currentCharacterName) {
-                return wrapSpan("white", line);
-            }
-            const toSectionPattern = /\(to [^)]+\)/i;
-            const lineWithoutToSection = line.replace(toSectionPattern, "");
-            const speakingToPattern = new RegExp(`says \\(to ${currentCharacterName}\\):`, 'i');
-            const isSpeakingToCharacter = currentCharacterName && speakingToPattern.test(line);
-
-            const startsWithCharName = new RegExp(`^${currentCharacterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(lineWithoutToSection);
-
-            if (isSpeakingToCharacter) {
-                return wrapSpan("toyou", line);
-            } else if (startsWithCharName) {
-                return wrapSpan("white", line);
-            } else {
-                return wrapSpan("lightgrey", line);
-            }
+            return formatSaysLine(line, currentCharacterName);
         }
 
         if (/^\*\* \[PRISON PA\].*\*\*$/.test(line)) {
