@@ -94,15 +94,32 @@ $(document).ready(function() {
             return wrapSpan("white", line);
         }
 
+        // Check if line starts with [!]
+        const hasExclamation = line.startsWith("[!]");
+        const lineWithoutExclamation = hasExclamation ? line.substring(3).trim() : line;
+
         // Extract the speaker's name (before 'says')
-        const nameMatch = line.match(/^([^:]+?)\s+says/);
+        const nameMatch = lineWithoutExclamation.match(/^([^:]+?)\s+says/);
         const speakerName = nameMatch ? nameMatch[1].trim().toLowerCase() : '';
 
-        // If no speaker name found or speaker matches character name, color white
+        // Determine the color for the main content
+        let mainColor;
         if (!speakerName || speakerName === currentCharacterName.toLowerCase()) {
-            return wrapSpan("white", line);
+            mainColor = "white";
+        } else {
+            mainColor = "lightgrey";
         }
-        return wrapSpan("lightgrey", line);
+
+        // If line has [!], format it specially
+        if (hasExclamation) {
+            // For [!] lines, we need to handle the coloring differently
+            // to avoid the wrapSpan function breaking down the HTML
+            const restOfLine = lineWithoutExclamation;
+            // Return HTML that won't be processed by makeTextColorable
+            return `<span class="toyou">[!]</span> <span class="${mainColor}">${restOfLine}</span>`;
+        }
+
+        return wrapSpan(mainColor, line);
     }
 
     function replaceDashes(text) {
@@ -135,19 +152,52 @@ $(document).ready(function() {
         const fragment = document.createDocumentFragment();
 
         chatLines.forEach((line) => {
+            // Skip animation stop messages
+            if (line.includes("Use /anim stop to stop animations and remove items from your hands.")) {
+                return;
+            }
+
+            // Skip abuse warning messages
+            if (line.includes("Any abuse of the editor will result in harsh admin punishment.")) {
+                return;
+            }
+
             const div = document.createElement("div");
             div.className = "generated";
 
-            let formattedLine = formatLineWithFilter(line);
+            // Check if this is a [!] line first, before any other processing
+            if (line.startsWith("[!]")) {
+                const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
+                const lineWithoutExclamation = line.substring(3).trim();
+                
+                // Extract the speaker's name (before 'says')
+                const nameMatch = lineWithoutExclamation.match(/^([^:]+?)\s+says/);
+                const speakerName = nameMatch ? nameMatch[1].trim().toLowerCase() : '';
+                
+                // Determine the color for the main content
+                let mainColor;
+                if (!speakerName || speakerName === currentCharacterName) {
+                    mainColor = "white";
+                } else {
+                    mainColor = "lightgrey";
+                }
+                
+                // Create the properly formatted HTML for [!] lines
+                div.innerHTML = `<span class="toyou">[!]</span> <span class="${mainColor}">${lineWithoutExclamation}</span>`;
+                div.classList.add('no-colorable');
+            } else {
+                let formattedLine = formatLineWithFilter(line);
 
-            // Apply censorship after formatting to catch plain lines
-            formattedLine = applyUserCensorship(formattedLine);
-
-            if (line.includes("[!]")) {
-                formattedLine = formattedLine.replace(/\[!\]/g, '<span class="toyou">[!]</span>');
+                // Apply censorship after formatting to catch plain lines
+                formattedLine = applyUserCensorship(formattedLine);
+                div.innerHTML = addLineBreaksAndHandleSpans(formattedLine);
+                
+                // If the formatted line contains HTML (like [!] lines), mark it to skip makeTextColorable
+                if (formattedLine.includes('<span') || formattedLine.includes('<div')) {
+                    div.classList.add('no-colorable');
+                }
             }
-
-            div.innerHTML = addLineBreaksAndHandleSpans(formattedLine);
+            
             fragment.appendChild(div);
 
             const clearDiv = document.createElement("div");
@@ -169,6 +219,18 @@ $(document).ready(function() {
         // Process each .generated div individually
         $output.find('.generated').each(function() {
             const generatedDiv = $(this);
+            
+            // Skip if the div already contains HTML elements (like spans)
+            // Also check the innerHTML to see if it contains HTML tags
+            const hasElements = generatedDiv.find('span, div, br').length > 0;
+            const hasSpanInHTML = generatedDiv.html().includes('<span');
+            const hasDivInHTML = generatedDiv.html().includes('<div');
+            const hasBrInHTML = generatedDiv.html().includes('<br');
+            
+            // Skip if the div has the no-colorable class or contains HTML elements
+            if (generatedDiv.hasClass('no-colorable') || hasElements || hasSpanInHTML || hasDivInHTML || hasBrInHTML) {
+                return;
+            }
             
             // Get all child nodes (both elements and text nodes)
             const childNodes = generatedDiv[0].childNodes;
@@ -295,7 +357,7 @@ $(document).ready(function() {
             }
             
             // If no specific character is speaking, color as lightgrey
-            return wrapSpan("lightgrey", line);
+            return wrapSpan("white", line);
         }
 
         return formatLine(line);
