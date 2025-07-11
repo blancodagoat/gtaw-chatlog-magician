@@ -1,5 +1,24 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-07-11',
+        changes: [
+            'Skipped kick/ban messages in chatlog parser to hide administrative notifications'
+        ]
+    },
+    {
+        date: '2025-07-09',
+        changes: [
+            'Refactored speech line handling and speaker color detection for greater accuracy',
+            'Specially formatted [!] lines and filtered certain system messages'
+        ]
+    },
+    {
+        date: '2025-07-08',
+        changes: [
+            'Added orange coloring for lines beginning with "You took"'
+        ]
+    },
+    {
         date: '2025-07-05',
         changes: [
             'Fixed SMS message bracket removal issue - now preserves brackets in message content like [LOCATION]'
