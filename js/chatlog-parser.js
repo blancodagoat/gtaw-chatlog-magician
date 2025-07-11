@@ -162,6 +162,11 @@ $(document).ready(function() {
                 return;
             }
 
+            // Skip kick/ban messages
+            if (line.includes("was kicked for:") || line.includes("was banned for:")) {
+                return;
+            }
+
             const div = document.createElement("div");
             div.className = "generated";
 
@@ -182,8 +187,9 @@ $(document).ready(function() {
                     mainColor = "lightgrey";
                 }
                 
-                // Create the properly formatted HTML for [!] lines
-                div.innerHTML = `<span class="toyou">[!]</span> <span class="${mainColor}">${lineWithoutExclamation}</span>`;
+                // Create the properly formatted HTML for [!] lines and apply line breaks
+                const formattedHTML = `<span class="toyou">[!]</span> <span class="${mainColor}">${lineWithoutExclamation}</span>`;
+                div.innerHTML = addLineBreaksAndHandleSpans(formattedHTML);
                 div.classList.add('no-colorable');
             } else {
                 let formattedLine = formatLineWithFilter(line);
