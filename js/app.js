@@ -131,6 +131,13 @@ function downloadOutputImage() {
     };
 
   // Try with original output first
+  if (typeof domtoimage === 'undefined') {
+    console.error('domtoimage library not loaded');
+    alert('Image generation library not available. Please refresh the page and try again.');
+    hideLoadingIndicator();
+    return;
+  }
+  
   domtoimage.toBlob(output[0], domtoimageOptions).then(function(blob) {
     output.css('padding-bottom', originalPadding);
     processGeneratedBlob(blob);
@@ -157,6 +164,13 @@ function downloadOutputImage() {
           link.remove();
         }
       });
+      
+      if (typeof domtoimage === 'undefined') {
+        console.error('domtoimage library not loaded');
+        alert('Image generation library not available. Please refresh the page and try again.');
+        hideLoadingIndicator();
+        return;
+      }
       
       domtoimage.toBlob(cleanOutput, domtoimageOptions).then(function(blob) {
         output.css('padding-bottom', originalPadding);

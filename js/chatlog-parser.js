@@ -3,11 +3,6 @@ $(document).ready(function() {
     let applyBackground = false;
     let applyCensorship = false;
 
-    let selectedElements = []; 
-    let coloringMode = false;
-    let isDragging = false; 
-    let dragStartElement = null; 
-
     const $textarea = $("#chatlogInput");
     const $output = $("#output");
     const $toggleBackgroundBtn = $("#toggleBackground");
@@ -24,12 +19,6 @@ $(document).ready(function() {
     $lineLengthInput.on("input", processOutput);
     $characterNameInput.on("input", applyFilter);
     $textarea.off("input").on("input", throttle(processOutput, 200));
-
-    $output.on("click", ".colorable", handleTextElementClick);
-
-    $output.on("mousedown", ".colorable", handleDragStart);
-    $output.on("mouseup", ".colorable", handleDragEnd);
-    $output.on("mouseover", ".colorable", handleDragOver);
 
     function toggleBackground() {
         applyBackground = !applyBackground;
@@ -102,12 +91,31 @@ $(document).ready(function() {
         const nameMatch = lineWithoutExclamation.match(/^([^:]+?)\s+says/);
         const speakerName = nameMatch ? nameMatch[1].trim().toLowerCase() : '';
 
+        // Check if the line contains (to CharacterName) format
+        const toSectionPattern = /\(to [^)]+\)/i;
+        const hasToSection = toSectionPattern.test(lineWithoutExclamation);
+        
         // Determine the color for the main content
         let mainColor;
-        if (!speakerName || speakerName === currentCharacterName.toLowerCase()) {
-            mainColor = "white";
+        if (hasToSection) {
+            // Extract the target name from (to CharacterName)
+            const toSectionMatch = lineWithoutExclamation.match(toSectionPattern);
+            const targetName = toSectionMatch ? toSectionMatch[0].match(/\(to ([^)]+)\)/i)[1].toLowerCase() : '';
+            
+            // If the target is the current character, color as white (directed at you)
+            if (targetName === currentCharacterName.toLowerCase()) {
+                mainColor = "white";
+            } else {
+                // If speaker is the current character, color as white, otherwise lightgrey
+                mainColor = (speakerName === currentCharacterName.toLowerCase()) ? "white" : "lightgrey";
+            }
         } else {
-            mainColor = "lightgrey";
+            // No (to CharacterName) format, check if speaker is the current character
+            if (speakerName === currentCharacterName.toLowerCase()) {
+                mainColor = "white";
+            } else {
+                mainColor = "lightgrey";
+            }
         }
 
         // If line has [!], format it specially
@@ -116,7 +124,7 @@ $(document).ready(function() {
             // to avoid the wrapSpan function breaking down the HTML
             const restOfLine = lineWithoutExclamation;
             // Return HTML that won't be processed by makeTextColorable
-            return `<span class="toyou">[!]</span> <span class="${mainColor}">${restOfLine}</span>`;
+            return `<span class="toyou colorable">[!]</span> <span class="${mainColor} colorable">${restOfLine}</span>`;
         }
 
         return wrapSpan(mainColor, line);
@@ -179,18 +187,38 @@ $(document).ready(function() {
                 const nameMatch = lineWithoutExclamation.match(/^([^:]+?)\s+says/);
                 const speakerName = nameMatch ? nameMatch[1].trim().toLowerCase() : '';
                 
+                // Check if the line contains (to CharacterName) format
+                const toSectionPattern = /\(to [^)]+\)/i;
+                const hasToSection = toSectionPattern.test(lineWithoutExclamation);
+                
                 // Determine the color for the main content
                 let mainColor;
-                if (!speakerName || speakerName === currentCharacterName) {
-                    mainColor = "white";
+                if (hasToSection) {
+                    // Extract the target name from (to CharacterName)
+                    const toSectionMatch = lineWithoutExclamation.match(toSectionPattern);
+                    const targetName = toSectionMatch ? toSectionMatch[0].match(/\(to ([^)]+)\)/i)[1].toLowerCase() : '';
+                    
+                    // If the target is the current character, color as white (directed at you)
+                    if (targetName === currentCharacterName) {
+                        mainColor = "white";
+                    } else {
+                        // If speaker is the current character, color as white, otherwise lightgrey
+                        mainColor = (speakerName === currentCharacterName) ? "white" : "lightgrey";
+                    }
                 } else {
-                    mainColor = "lightgrey";
+                    // No (to CharacterName) format, check if speaker is the current character
+                    if (speakerName === currentCharacterName) {
+                        mainColor = "white";
+                    } else {
+                        mainColor = "lightgrey";
+                    }
                 }
                 
                 // Create the properly formatted HTML for [!] lines and apply line breaks
-                const formattedHTML = `<span class="toyou">[!]</span> <span class="${mainColor}">${lineWithoutExclamation}</span>`;
+                // Add colorable class to make spans selectable for letter-by-letter coloring
+                const formattedHTML = `<span class="toyou colorable">[!]</span> <span class="${mainColor} colorable">${lineWithoutExclamation}</span>`;
                 div.innerHTML = addLineBreaksAndHandleSpans(formattedHTML);
-                div.classList.add('no-colorable');
+                // Don't add no-colorable class since we want these spans to be colorable
             } else {
                 let formattedLine = formatLineWithFilter(line);
 
@@ -226,15 +254,54 @@ $(document).ready(function() {
         $output.find('.generated').each(function() {
             const generatedDiv = $(this);
             
-            // Skip if the div already contains HTML elements (like spans)
-            // Also check the innerHTML to see if it contains HTML tags
+            // Skip if the div has the no-colorable class
+            if (generatedDiv.hasClass('no-colorable')) {
+                return;
+            }
+            
+            // Check if the div contains HTML elements (like spans)
             const hasElements = generatedDiv.find('span, div, br').length > 0;
             const hasSpanInHTML = generatedDiv.html().includes('<span');
             const hasDivInHTML = generatedDiv.html().includes('<div');
             const hasBrInHTML = generatedDiv.html().includes('<br');
             
-            // Skip if the div has the no-colorable class or contains HTML elements
-            if (generatedDiv.hasClass('no-colorable') || hasElements || hasSpanInHTML || hasDivInHTML || hasBrInHTML) {
+            // If the div contains HTML elements, process them for letter-by-letter coloring
+            if (hasElements || hasSpanInHTML || hasDivInHTML || hasBrInHTML) {
+                // Find all text nodes within existing spans and make them colorable character by character
+                generatedDiv.find('span').each(function() {
+                    const span = $(this);
+                    const text = span.text();
+                    
+                    // Skip if the span already contains other spans (nested structure)
+                    if (span.find('span').length > 0) {
+                        return;
+                    }
+                    
+                    // Get the existing classes from the span
+                    const existingClasses = span.attr('class') || '';
+                    const classArray = existingClasses.split(/\s+/).filter(cls => cls !== 'colorable');
+                    
+                    // Split the text into individual characters and wrap each in a colorable span
+                    const characters = text.split('');
+                    const html = characters.map(char => {
+                        // Convert curly apostrophes to straight apostrophes
+                        if (char === '' || char === '' || char === '' || char === '' || char.charCodeAt(0) === 8217 || char.charCodeAt(0) === 8216) {
+                            char = "'";
+                        }
+                        
+                        // More comprehensive check: any character that looks like an apostrophe but isn't a straight apostrophe
+                        if (char !== "'" && char.charCodeAt(0) !== 39 && (char.charCodeAt(0) >= 8216 && char.charCodeAt(0) <= 8219)) {
+                            char = "'";
+                        }
+                        
+                        // Preserve whitespace as-is, wrap other characters in colorable spans with existing classes
+                        if (/\s/.test(char)) return char;
+                        return `<span class="${classArray.join(' ')} colorable">${char}</span>`;
+                    }).join('');
+                    
+                    // Replace the span's content with the character-by-character HTML
+                    span.html(html);
+                });
                 return;
             }
             
@@ -301,6 +368,9 @@ $(document).ready(function() {
         console.log("Made text colorable - words wrapped: " + $output.find('.colorable').length);
     }
 
+    // Make makeTextColorable globally accessible for the color palette
+    window.makeTextColorable = makeTextColorable;
+
     function applyUserCensorship(line) {
         // Use a more robust approach that handles browser compatibility issues
         // Replace ÷ with a more reliable delimiter and handle edge cases
@@ -340,30 +410,36 @@ $(document).ready(function() {
             
             // Extract the name before "says" and check if it matches the character name
             const nameMatch = lineWithoutExclamation.match(/^([^:]+?)\s+says/);
-            const speakerName = nameMatch ? nameMatch[1].trim() : '';
+            const speakerName = nameMatch ? nameMatch[1].trim().toLowerCase() : '';
             
-            // Check if the line contains (to CharacterName)
+            // Check if the line contains (to CharacterName) format
             const toSectionPattern = /\(to [^)]+\)/i;
             const hasToSection = toSectionPattern.test(lineWithoutExclamation);
             
-            // If the line has a (to ...) section and the character name is in it, don't color as character
+            // Determine the color based on speaker and target
+            let mainColor;
             if (hasToSection) {
+                // Extract the target name from (to CharacterName)
                 const toSectionMatch = lineWithoutExclamation.match(toSectionPattern);
-                const isInToSection = toSectionMatch && toSectionMatch[0].toLowerCase().includes(currentCharacterName.toLowerCase());
+                const targetName = toSectionMatch ? toSectionMatch[0].match(/\(to ([^)]+)\)/i)[1].toLowerCase() : '';
                 
-                if (isInToSection) {
-                    // If the speaker is the character, color white, otherwise lightgrey
-                    return wrapSpan(speakerName.toLowerCase() === currentCharacterName.toLowerCase() ? "white" : "lightgrey", line);
+                // If the target is the current character, color as white (directed at you)
+                if (targetName === currentCharacterName) {
+                    mainColor = "white";
+                } else {
+                    // If speaker is the current character, color as white, otherwise lightgrey
+                    mainColor = (speakerName === currentCharacterName) ? "white" : "lightgrey";
+                }
+            } else {
+                // No (to CharacterName) format, check if speaker is the current character
+                if (speakerName === currentCharacterName) {
+                    mainColor = "white";
+                } else {
+                    mainColor = "lightgrey";
                 }
             }
             
-            // Check if the speaker is the character
-            if (speakerName.toLowerCase() === currentCharacterName.toLowerCase()) {
-                return wrapSpan("white", line);
-            }
-            
-            // If no specific character is speaking, color as lightgrey
-            return wrapSpan("white", line);
+            return wrapSpan(mainColor, line);
         }
 
         return formatLine(line);
@@ -461,7 +537,7 @@ $(document).ready(function() {
             if (!currentCharacterName) {
                 return wrapSpan("radioColor", line);
             }
-            return lowerLine.includes(currentCharacterName)
+            return lowerLine.includes(currentCharacterName.toLowerCase())
                 ? wrapSpan("radioColor", line)
                 : wrapSpan("radioColor2", line);
         }
@@ -474,7 +550,7 @@ $(document).ready(function() {
             if (!currentCharacterName) {
                 return wrapSpan("grey", line);
             }
-            return lowerLine.includes(currentCharacterName)
+            return lowerLine.includes(currentCharacterName.toLowerCase())
                 ? wrapSpan("lightgrey", line)
                 : wrapSpan("grey", line);
         }
@@ -486,14 +562,14 @@ $(document).ready(function() {
 
             const saysIndex = lowerLine.indexOf("says");
             const nameBeforeSays = lowerLine.substring(0, saysIndex);
-            if (nameBeforeSays.includes(currentCharacterName)) {
+            if (nameBeforeSays.includes(currentCharacterName.toLowerCase())) {
                 return wrapSpan("lightgrey", line);
             }
             return wrapSpan("grey", line);
         }
 
         if (line.includes("says [low] (phone):") || line.includes("says (phone):")) {
-            if (currentCharacterName && line.toLowerCase().includes(currentCharacterName)) {
+            if (currentCharacterName && line.toLowerCase().includes(currentCharacterName.toLowerCase())) {
                 return wrapSpan("white", line);
             } else {
                 return wrapSpan("yellow", line);
@@ -1322,6 +1398,24 @@ $(document).ready(function() {
         return line;
     }
 
+    /**
+     * Formats police MDC (Mobile Data Computer) messages with blue highlighting
+     * @param {string} line - The line to format
+     * @returns {string} The formatted line
+     */
+    function formatPoliceMDC(line) {
+        if (line.includes("[POLICE MDC]")) {
+            return line.replace(
+                /\[POLICE MDC\]/g,
+                '<span class="blue">[POLICE MDC]</span>'
+            ).replace(
+                /^(.*?)(<span class="blue">\[POLICE MDC\]<\/span>)(.*)$/,
+                '<span class="white">$1</span>$2<span class="white">$3</span>'
+            );
+        }
+        return line;
+    }
+
     function formatCardReader(line) {
         const [prefix, rest] = line.split(":");
         const moneyMatch = rest.match(/\$\d+/);
@@ -1407,136 +1501,6 @@ $(document).ready(function() {
         }
 
         return result;
-    }
-
-    function clearAllSelections() {
-        if (selectedElements.length > 0) {
-            selectedElements.forEach(element => {
-                $(element).removeClass("selected-for-coloring");
-            });
-            selectedElements = [];
-        }
-    }
-
-    function handleTextElementClick(e) {
-
-        if (!coloringMode) return;
-
-        console.log('Click on element:', e.currentTarget.textContent);
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        const clickedElement = e.currentTarget;
-
-        if (e.ctrlKey) {
-
-            const index = selectedElements.indexOf(clickedElement);
-            if (index > -1) {
-                selectedElements.splice(index, 1);
-                $(clickedElement).removeClass("selected-for-coloring");
-            } else {
-
-                selectedElements.push(clickedElement);
-                $(clickedElement).addClass("selected-for-coloring");
-            }
-        } 
-
-        else {
-
-            clearAllSelections();
-
-            selectedElements.push(clickedElement);
-            $(clickedElement).addClass("selected-for-coloring");
-        }
-    }
-
-    function handleDragStart(e) {
-
-        if (!coloringMode) return;
-
-        console.log('Drag start on element:', e.currentTarget.textContent);
-
-        isDragging = true;
-        dragStartElement = e.currentTarget;
-
-        if (!e.ctrlKey) {
-            clearAllSelections();
-        }
-
-        if (!selectedElements.includes(dragStartElement)) {
-            selectedElements.push(dragStartElement);
-            $(dragStartElement).addClass("selected-for-coloring");
-        }
-
-        e.preventDefault();
-    }
-
-    function handleDragOver(e) {
-
-        if (!isDragging || !coloringMode) return;
-
-        const currentElement = e.currentTarget;
-
-        if (!selectedElements.includes(currentElement)) {
-            selectedElements.push(currentElement);
-            $(currentElement).addClass("selected-for-coloring");
-        }
-    }
-
-    function handleDragEnd(e) {
-
-        if (isDragging && coloringMode) {
-            console.log('Drag ended, selected elements:', selectedElements.length);
-            isDragging = false;
-            dragStartElement = null;
-        }
-    }
-
-    function getElementsBetween(startEl, endEl) {
-
-        const allSpans = $output.find('span.colorable').toArray();
-
-        const startIndex = allSpans.indexOf(startEl);
-        const endIndex = allSpans.indexOf(endEl);
-
-        if (startIndex === -1 || endIndex === -1) return [];
-
-        const start = Math.min(startIndex, endIndex);
-        const end = Math.max(startIndex, endIndex);
-
-        return allSpans.slice(start, end + 1);
-    }
-
-    function applyColorToSelection(e) {
-        e.preventDefault();
-
-        if (selectedElements.length === 0 || !coloringMode) {
-            if (coloringMode) {
-                alert('Please click on some text in the output area first.');
-            }
-            return;
-        }
-
-        const colorClass = $(e.currentTarget).data('color');
-
-        selectedElements.forEach(element => {
-
-            const currentClasses = element.className.split(/\s+/);
-
-            $(".color-item").each(function() {
-                const classToRemove = $(this).data('color');
-                if (currentClasses.includes(classToRemove)) {
-                    $(element).removeClass(classToRemove);
-                }
-            });
-
-            $(element).addClass(colorClass);
-
-            $(element).removeClass("selected-for-coloring");
-        });
-
-        selectedElements = [];
     }
 
     function cleanUp() {

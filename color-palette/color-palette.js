@@ -5,6 +5,9 @@
     let selectedElements = [];
     let isDragging = false;
     let dragStartElement = null;
+    let dragDistance = 0; // Track if we actually moved during drag
+    let dragStartPosition = null; // Track starting position
+    let justFinishedDragging = false; // Flag to prevent click from clearing selection after drag
 
     let $colorPalette;
     let $output;
@@ -21,6 +24,32 @@
         $output.on("mousedown", ".colorable", handleDragStart);
         $output.on("mouseup", ".colorable", handleDragEnd);
         $output.on("mouseover", ".colorable", handleDragOver);
+
+        // Add click handler to clear selections when clicking outside selected elements
+        $output.on("click", function(e) {
+            if (!coloringMode) return;
+            
+            // Don't clear selections if we just finished dragging
+            if (justFinishedDragging) {
+                console.log('Preventing selection clear due to recent drag');
+                return;
+            }
+            
+            // If clicking on the output area but not on a colorable element, clear selections
+            if (!$(e.target).hasClass('colorable') && !$(e.target).closest('.colorable').length) {
+                console.log('Clearing selections due to click outside colorable elements');
+                clearAllSelections();
+            }
+        });
+
+        // Add keyboard shortcut to clear selections (Escape key)
+        $(document).on("keydown", function(e) {
+            if (!coloringMode) return;
+            
+            if (e.key === "Escape") {
+                clearAllSelections();
+            }
+        });
 
         // Prevent default text selection in coloring mode
         $output.on("selectstart", ".colorable", function(e) {
@@ -105,7 +134,10 @@
                 $(clickedElement).addClass("selected-for-coloring");
             }
         } else {
-            clearAllSelections();
+            // Don't clear selections if we just finished dragging
+            if (!justFinishedDragging) {
+                clearAllSelections();
+            }
             selectedElements.push(clickedElement);
             $(clickedElement).addClass("selected-for-coloring");
         }
@@ -119,6 +151,7 @@
 
         isDragging = true;
         dragStartElement = e.currentTarget;
+        dragStartPosition = { x: e.clientX, y: e.clientY };
 
         if (!e.ctrlKey) {
             clearAllSelections();
@@ -136,6 +169,13 @@
         e.preventDefault();
         e.stopPropagation();
 
+        // Track drag distance
+        if (dragStartPosition) {
+            const dx = e.clientX - dragStartPosition.x;
+            const dy = e.clientY - dragStartPosition.y;
+            dragDistance = Math.sqrt(dx * dx + dy * dy);
+        }
+
         const currentElement = e.currentTarget;
         if (!selectedElements.includes(currentElement)) {
             selectedElements.push(currentElement);
@@ -149,8 +189,23 @@
         e.preventDefault();
         e.stopPropagation();
 
+        console.log('Drag ended, selected elements:', selectedElements.length, 'drag distance:', dragDistance);
+        
         isDragging = false;
         dragStartElement = null;
+        
+        // Only set the flag if we actually moved during the drag (not just a click)
+        if (dragDistance > 5) { // Threshold of 5 pixels
+            justFinishedDragging = true;
+            setTimeout(() => {
+                justFinishedDragging = false;
+                console.log('Drag flag reset, selected elements:', selectedElements.length);
+            }, 100); // Reset flag after 100ms
+        }
+        
+        // Reset drag tracking
+        dragDistance = 0;
+        dragStartPosition = null;
     }
 
     function clearAllSelections() {
@@ -158,6 +213,20 @@
             $(element).removeClass("selected-for-coloring");
         });
         selectedElements = [];
+    }
+
+    function getElementsBetween(startEl, endEl) {
+        const allSpans = $output.find('span.colorable').toArray();
+
+        const startIndex = allSpans.indexOf(startEl);
+        const endIndex = allSpans.indexOf(endEl);
+
+        if (startIndex === -1 || endIndex === -1) return [];
+
+        const start = Math.min(startIndex, endIndex);
+        const end = Math.max(startIndex, endIndex);
+
+        return allSpans.slice(start, end + 1);
     }
 
     const COLOR_CLASSES = [
@@ -174,11 +243,8 @@
             $(element)
                 .removeClass(COLOR_CLASSES.join(' '))
                 .addClass('colorable')
-                .addClass(colorClass)
-                .removeClass('selected-for-coloring');
+                .addClass(colorClass);
         });
-
-        clearAllSelections();
     }
 
     function updateColorPalettePosition() {
@@ -198,7 +264,13 @@
     }
 
     function makeTextColorable() {
-        $output.find('span').addClass('colorable');
+        // Use the main chatlog parser's makeTextColorable function if it exists
+        if (typeof window.makeTextColorable === 'function') {
+            window.makeTextColorable();
+        } else {
+            // Fallback to simple implementation
+            $output.find('span').addClass('colorable');
+        }
     }
 
     window.ColorPalette = {

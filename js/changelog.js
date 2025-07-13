@@ -3,7 +3,7 @@ class Changelog {
         this.panel = document.getElementById('changelogPanel');
         this.tab = document.querySelector('.changelog-tab');
         this.items = document.querySelector('.changelog-items');
-        this.entries = CHANGELOG_ENTRIES;
+        this.entries = typeof CHANGELOG_ENTRIES !== 'undefined' ? CHANGELOG_ENTRIES : [];
         this.init();
     }
 
@@ -84,7 +84,13 @@ class Changelog {
     }
 }
 
-// Initialize changelog when document is ready
+// Initialize changelog when document is ready and data is available
 document.addEventListener('DOMContentLoaded', () => {
-    window.changelog = new Changelog();
+    // Wait for CHANGELOG_ENTRIES to be available
+    if (typeof CHANGELOG_ENTRIES !== 'undefined') {
+        window.changelog = new Changelog();
+    } else {
+        // Fallback: initialize with empty entries
+        window.changelog = new Changelog();
+    }
 }); 
