@@ -703,6 +703,9 @@ $(document).ready(function() {
 
         if (lowerLine.startsWith("you placed")) return wrapSpan("orange", line);
 
+        if (/^you took.*from the property\.$/i.test(line))
+            return wrapSpan("death", line);
+
         if (lowerLine.startsWith("you took")) return wrapSpan("orange", line);
 
         if (lowerLine.includes("from the property")) return wrapSpan("death", line);
