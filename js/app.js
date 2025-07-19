@@ -86,7 +86,7 @@ function generateFilename() {
     .replaceAll(":", "-") + "_chatlog.png";
 }
 
-async function downloadOutputImage() {
+function downloadOutputImage() {
   const text = $('#chatlogInput').val().trim();
   if (text) {
     saveToHistory(text);
@@ -97,40 +97,27 @@ async function downloadOutputImage() {
 
   showLoadingIndicator();
 
-  if (document.fonts && document.fonts.ready) {
-    try {
-      await document.fonts.ready;
-    } catch (e) {
-      console.warn('Font loading wait failed:', e);
-    }
-  }
-
   const height = output.prop('scrollHeight') + 100;
   const width = output.width();
-  const scale = window.devicePixelRatio || 1;
   const originalPadding = output.css('padding-bottom');
 
   output.css('padding-bottom', '100px');
 
   // Configure dom-to-image with CORS handling
-  const domtoimageOptions = window.CORSHandler ?
+  const domtoimageOptions = window.CORSHandler ? 
     window.CORSHandler.getDomToImageOptions({
-      width: width * scale,
-      height: height * scale,
+      width: width,
+      height: height,
       style: {
-        transform: `scale(${scale})`,
+        transform: 'scale(1)',
         transformOrigin: "top left",
-        width: `${width}px`,
-        height: `${height}px`,
       }
     }) : {
-      width: width * scale,
-      height: height * scale,
+      width: width,
+      height: height,
       style: {
-        transform: `scale(${scale})`,
+        transform: 'scale(1)',
         transformOrigin: "top left",
-        width: `${width}px`,
-        height: `${height}px`,
       },
       filter: function(node) {
         if (node.tagName === 'LINK' && node.href && 
