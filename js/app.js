@@ -99,6 +99,7 @@ function downloadOutputImage() {
 
   const height = output.prop('scrollHeight') + 100;
   const width = output.width();
+  const scale = window.devicePixelRatio || 1;
   const originalPadding = output.css('padding-bottom');
 
   output.css('padding-bottom', '100px');
@@ -106,17 +107,17 @@ function downloadOutputImage() {
   // Configure dom-to-image with CORS handling
   const domtoimageOptions = window.CORSHandler ? 
     window.CORSHandler.getDomToImageOptions({
-      width: width,
-      height: height,
+      width: width * scale,
+      height: height * scale,
       style: {
-        transform: 'scale(1)',
+        transform: `scale(${scale})`,
         transformOrigin: "top left",
       }
     }) : {
-      width: width,
-      height: height,
+      width: width * scale,
+      height: height * scale,
       style: {
-        transform: 'scale(1)',
+        transform: `scale(${scale})`,
         transformOrigin: "top left",
       },
       filter: function(node) {
