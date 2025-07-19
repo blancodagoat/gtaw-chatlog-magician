@@ -153,7 +153,7 @@ async function downloadOutputImage() {
   
   domtoimage.toBlob(output[0], domtoimageOptions).then(function(blob) {
     output.css('padding-bottom', originalPadding);
-    processGeneratedBlob(blob);
+    processGeneratedBlob(blob, scale);
   }).catch(function(error) {
     console.error("Error generating image with original output:", error);
     
@@ -187,7 +187,7 @@ async function downloadOutputImage() {
       
       domtoimage.toBlob(cleanOutput, domtoimageOptions).then(function(blob) {
         output.css('padding-bottom', originalPadding);
-        processGeneratedBlob(blob);
+        processGeneratedBlob(blob, scale);
       }).catch(function(fallbackError) {
         console.error("Fallback also failed:", fallbackError);
         handleImageGenerationError(error);
@@ -197,7 +197,7 @@ async function downloadOutputImage() {
     }
   });
 
-  function processGeneratedBlob(blob) {
+  function processGeneratedBlob(blob, scale) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = URL.createObjectURL(blob);
@@ -211,7 +211,18 @@ async function downloadOutputImage() {
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       ctx.drawImage(img, 0, 0);
 
-      const trimmedCanvas = trimCanvas(canvas);
+      let workingCanvas = canvas;
+
+      if (scale && scale > 1) {
+        const downscaledCanvas = document.createElement("canvas");
+        downscaledCanvas.width = Math.round(canvas.width / scale);
+        downscaledCanvas.height = Math.round(canvas.height / scale);
+        const dctx = downscaledCanvas.getContext("2d", { willReadFrequently: true });
+        dctx.drawImage(canvas, 0, 0, downscaledCanvas.width, downscaledCanvas.height);
+        workingCanvas = downscaledCanvas;
+      }
+
+      const trimmedCanvas = trimCanvas(workingCanvas);
       trimmedCanvas.toBlob(function(trimmedBlob) {
         window.saveAs(trimmedBlob, generateFilename());
         hideLoadingIndicator();
