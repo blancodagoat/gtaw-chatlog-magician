@@ -86,7 +86,7 @@ function generateFilename() {
     .replaceAll(":", "-") + "_chatlog.png";
 }
 
-function downloadOutputImage() {
+async function downloadOutputImage() {
   const text = $('#chatlogInput').val().trim();
   if (text) {
     saveToHistory(text);
@@ -97,27 +97,40 @@ function downloadOutputImage() {
 
   showLoadingIndicator();
 
+  if (document.fonts && document.fonts.ready) {
+    try {
+      await document.fonts.ready;
+    } catch (e) {
+      console.warn('Font loading wait failed:', e);
+    }
+  }
+
   const height = output.prop('scrollHeight') + 100;
   const width = output.width();
+  const scale = window.devicePixelRatio || 1;
   const originalPadding = output.css('padding-bottom');
 
   output.css('padding-bottom', '100px');
 
   // Configure dom-to-image with CORS handling
-  const domtoimageOptions = window.CORSHandler ? 
+  const domtoimageOptions = window.CORSHandler ?
     window.CORSHandler.getDomToImageOptions({
-      width: width,
-      height: height,
+      width: width * scale,
+      height: height * scale,
       style: {
-        transform: 'scale(1)',
+        transform: `scale(${scale})`,
         transformOrigin: "top left",
+        width: `${width}px`,
+        height: `${height}px`,
       }
     }) : {
-      width: width,
-      height: height,
+      width: width * scale,
+      height: height * scale,
       style: {
-        transform: 'scale(1)',
+        transform: `scale(${scale})`,
         transformOrigin: "top left",
+        width: `${width}px`,
+        height: `${height}px`,
       },
       filter: function(node) {
         if (node.tagName === 'LINK' && node.href && 
@@ -140,7 +153,7 @@ function downloadOutputImage() {
   
   domtoimage.toBlob(output[0], domtoimageOptions).then(function(blob) {
     output.css('padding-bottom', originalPadding);
-    processGeneratedBlob(blob);
+    processGeneratedBlob(blob, scale);
   }).catch(function(error) {
     console.error("Error generating image with original output:", error);
     
@@ -174,7 +187,7 @@ function downloadOutputImage() {
       
       domtoimage.toBlob(cleanOutput, domtoimageOptions).then(function(blob) {
         output.css('padding-bottom', originalPadding);
-        processGeneratedBlob(blob);
+        processGeneratedBlob(blob, scale);
       }).catch(function(fallbackError) {
         console.error("Fallback also failed:", fallbackError);
         handleImageGenerationError(error);
@@ -184,7 +197,7 @@ function downloadOutputImage() {
     }
   });
 
-  function processGeneratedBlob(blob) {
+  function processGeneratedBlob(blob, scale) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = URL.createObjectURL(blob);
@@ -198,7 +211,18 @@ function downloadOutputImage() {
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       ctx.drawImage(img, 0, 0);
 
-      const trimmedCanvas = trimCanvas(canvas);
+      let workingCanvas = canvas;
+
+      if (scale && scale > 1) {
+        const downscaledCanvas = document.createElement("canvas");
+        downscaledCanvas.width = Math.round(canvas.width / scale);
+        downscaledCanvas.height = Math.round(canvas.height / scale);
+        const dctx = downscaledCanvas.getContext("2d", { willReadFrequently: true });
+        dctx.drawImage(canvas, 0, 0, downscaledCanvas.width, downscaledCanvas.height);
+        workingCanvas = downscaledCanvas;
+      }
+
+      const trimmedCanvas = trimCanvas(workingCanvas);
       trimmedCanvas.toBlob(function(trimmedBlob) {
         window.saveAs(trimmedBlob, generateFilename());
         hideLoadingIndicator();
