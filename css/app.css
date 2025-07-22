@@ -806,6 +806,8 @@ html::-webkit-scrollbar {
 	box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	border-right: none;
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .history-tab:hover {
@@ -842,6 +844,12 @@ html::-webkit-scrollbar {
 
 .history-panel.open {
 	right: 0;
+}
+
+.history-tab.hidden {
+	opacity: 0;
+	transform: translateY(-50%) scale(0.8);
+	z-index: -1;
 }
 
 .character-dropdown {
@@ -901,6 +909,8 @@ html::-webkit-scrollbar {
 	box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	border-left: none;
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .changelog-tab:hover {
@@ -927,16 +937,21 @@ html::-webkit-scrollbar {
 	background: rgba(45, 45, 45, 0.95);
 	box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
 	transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	z-index: 1000;
-	display: block !important;
+	z-index: 1002;
 	border-right: 1px solid rgba(255, 255, 255, 0.1);
 	overflow: hidden;
-	display: flex;
+	display: flex !important;
 	flex-direction: column;
 }
 
 .changelog-panel.open {
 	left: 0;
+}
+
+.changelog-tab.hidden {
+	opacity: 0;
+	transform: translateY(-50%) scale(0.8);
+	z-index: -1;
 }
 
 .changelog-header {

@@ -29,7 +29,15 @@ const CHANGELOG_ENTRIES = [
             'Bug Fixes': [
                 'Fixed history panel not closing automatically when clicking outside - now matches changelog behavior',
                 'Fixed changelog scrolling confusion - removed nested scrollable areas for better UX',
-                'Fixed history panel scrolling confusion - removed triple nested scrollable areas for better UX'
+                'Fixed history panel scrolling confusion - removed triple nested scrollable areas for better UX',
+                'Fixed changelog panel not scrolling - resolved CSS display property conflict'
+            ],
+            'UI Improvements': [
+                'Made changelog panel behavior consistent with history panel - tab remains visible and clickable',
+                'Removed tab hiding functionality for changelog to match history panel behavior',
+                'Simplified changelog interaction - no click-outside handler, just tab toggle like history',
+                'Fixed changelog panel z-index - panel now appears in front of the tab like history panel',
+                'Smooth tab animations with opacity and scale transitions for better visual feedback'
             ],
             'Major Improvements': [
                 'Enhanced text coloring system - now ALL text can be colored, not just recognized roleplay formats',

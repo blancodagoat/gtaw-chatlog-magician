@@ -471,6 +471,13 @@ function toggleHistoryPanel() {
   tab.setAttribute('aria-expanded', !isOpen);
   tab.setAttribute('aria-label', isOpen ? 'Open chat history' : 'Close chat history');
 
+  // Hide/show the history tab when panel is open/closed
+  if (!isOpen) {
+    tab.classList.add('hidden');
+  } else {
+    tab.classList.remove('hidden');
+  }
+
   const bmcContainer = document.getElementById('bmc-container');
   if (bmcContainer) {
     bmcContainer.style.display = isOpen ? 'none' : 'block';
@@ -491,22 +498,8 @@ document.addEventListener('click', (e) => {
   const historyTab = document.querySelector('.history-tab');
   
   if (!e.target.closest('#historyPanel, .history-tab') && historyPanel.classList.contains('open')) {
-    // Close the history panel
-    historyPanel.classList.remove('open');
-    historyPanel.setAttribute('aria-hidden', 'true');
-    
-    const tab = document.querySelector('.history-tab');
-    tab.setAttribute('aria-expanded', 'false');
-    tab.setAttribute('aria-label', 'Open chat history');
-    
-    // Show BMC container again
-    const bmcContainer = document.getElementById('bmc-container');
-    if (bmcContainer) {
-      bmcContainer.style.display = 'block';
-      bmcContainer.style.opacity = '1';
-      bmcContainer.style.visibility = 'visible';
-      bmcContainer.style.pointerEvents = 'auto';
-    }
+    // Close the history panel by calling the toggle function
+    toggleHistoryPanel();
   }
 });
 

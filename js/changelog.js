@@ -15,13 +15,6 @@ class Changelog {
     setupEventListeners() {
         // Toggle panel on tab click
         this.tab.addEventListener('click', () => this.togglePanel());
-        
-        // Close panel when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('#changelogPanel, .changelog-tab') && this.panel.classList.contains('open')) {
-                this.closePanel();
-            }
-        });
     }
 
     togglePanel() {
