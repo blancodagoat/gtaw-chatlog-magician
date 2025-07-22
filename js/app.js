@@ -279,8 +279,27 @@ function hideLoadingIndicator() {
   $('#loadingIndicator').hide();
 }
 
+function showAutoSaveIndicator() {
+  // Remove existing indicator
+  $('.auto-save-indicator').remove();
+  
+  // Create and show new indicator
+  const indicator = $('<div class="auto-save-indicator">Settings saved</div>');
+  $('body').append(indicator);
+  
+  // Remove after 2 seconds
+  setTimeout(() => {
+    indicator.fadeOut(300, function() {
+      $(this).remove();
+    });
+  }, 2000);
+}
+
 function toggleBackground() {
   $("#output").toggleClass("background-active");
+  if (typeof processOutput === 'function') {
+    processOutput();
+  }
 }
 
 function autoResizeTextarea() {
@@ -369,16 +388,7 @@ function showCopyError(button) {
 }
 
 function handleKeyboardShortcuts(e) {
-
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-    e.preventDefault();
-    downloadOutputImage();
-  }
-
-  if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-    e.preventDefault();
-    toggleBackground();
-  }
+  // Keyboard shortcuts removed as requested
 }
 
 function initTooltips() {
@@ -470,11 +480,35 @@ function toggleHistoryPanel() {
   }
 
   if (!isOpen) {
-
     const firstItem = panel.querySelector('.history-item');
     if (firstItem) firstItem.focus();
   }
 }
+
+// Add click-outside-to-close functionality for history panel
+document.addEventListener('click', (e) => {
+  const historyPanel = document.getElementById('historyPanel');
+  const historyTab = document.querySelector('.history-tab');
+  
+  if (!e.target.closest('#historyPanel, .history-tab') && historyPanel.classList.contains('open')) {
+    // Close the history panel
+    historyPanel.classList.remove('open');
+    historyPanel.setAttribute('aria-hidden', 'true');
+    
+    const tab = document.querySelector('.history-tab');
+    tab.setAttribute('aria-expanded', 'false');
+    tab.setAttribute('aria-label', 'Open chat history');
+    
+    // Show BMC container again
+    const bmcContainer = document.getElementById('bmc-container');
+    if (bmcContainer) {
+      bmcContainer.style.display = 'block';
+      bmcContainer.style.opacity = '1';
+      bmcContainer.style.visibility = 'visible';
+      bmcContainer.style.pointerEvents = 'auto';
+    }
+  }
+});
 
 function clearHistory() {
   if (confirm('Are you sure you want to clear all chat history?')) {
@@ -646,21 +680,45 @@ $(document).ready(function() {
   }
 
   $('#font-label').on('input', function() {
+    const value = parseInt($(this).val());
+    if (value < 10) $(this).val(10);
+    if (value > 64) $(this).val(64);
+    
     localStorage.setItem('chatlogFontSize', $(this).val());
     updateFontSize();
+    showAutoSaveIndicator();
   });
 
   $('#lineLengthInput').on('input', function() {
+    const value = parseInt($(this).val());
+    if (value < 50) $(this).val(50);
+    if (value > 150) $(this).val(150);
+    
     localStorage.setItem('chatlogLineLength', $(this).val());
+    if (typeof processOutput === 'function') {
+      processOutput();
+    }
+    showAutoSaveIndicator();
   });
 
   $('#characterNameInput').on('input', function() {
     localStorage.setItem('chatlogCharacterName', $(this).val());
+    if (typeof applyFilter === 'function') {
+      applyFilter();
+    }
+    showAutoSaveIndicator();
   });
 
   $('#chatlogInput').on('input', function() {
-
     const text = $(this).val().trim();
+    
+    // Show subtle processing indicator for large inputs
+    if (text.length > 1000) {
+      $('#output').addClass('processing');
+      setTimeout(() => {
+        $('#output').removeClass('processing');
+      }, 100);
+    }
   });
 
   $(document).on('chatlogProcessed', function(event, text) {

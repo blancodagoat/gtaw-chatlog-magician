@@ -8,6 +8,8 @@
     let dragDistance = 0; // Track if we actually moved during drag
     let dragStartPosition = null; // Track starting position
     let justFinishedDragging = false; // Flag to prevent click from clearing selection after drag
+    let mouseDownTime = 0; // Track when mouse was pressed
+    let mouseUpTime = 0; // Track when mouse was released
 
     let $colorPalette;
     let $output;
@@ -24,6 +26,9 @@
         $output.on("mousedown", ".colorable", handleDragStart);
         $output.on("mouseup", ".colorable", handleDragEnd);
         $output.on("mouseover", ".colorable", handleDragOver);
+        
+        // Add global mouse up handler to ensure drag state is reset
+        $(document).on("mouseup", handleGlobalMouseUp);
 
         // Add click handler to clear selections when clicking outside selected elements
         $output.on("click", function(e) {
@@ -41,13 +46,37 @@
                 clearAllSelections();
             }
         });
+        
+        // Add mouseleave handler to reset drag state if mouse leaves the output area
+        $output.on("mouseleave", function(e) {
+            if (!coloringMode) return;
+            
+            if (isDragging) {
+                console.log('Mouse left output area while dragging, resetting state');
+                isDragging = false;
+                dragStartElement = null;
+                dragDistance = 0;
+                dragStartPosition = null;
+                justFinishedDragging = false;
+            }
+        });
 
-        // Add keyboard shortcut to clear selections (Escape key)
+        // Add keyboard shortcuts
         $(document).on("keydown", function(e) {
             if (!coloringMode) return;
             
             if (e.key === "Escape") {
                 clearAllSelections();
+            }
+            
+            // Number keys 1-9 for quick color selection
+            if (e.key >= '1' && e.key <= '9' && selectedElements.length > 0) {
+                const colorIndex = parseInt(e.key) - 1;
+                const colorItems = $('.color-item');
+                if (colorIndex < colorItems.length) {
+                    const colorClass = colorItems.eq(colorIndex).data('color');
+                    applyColorToSelectionByClass(colorClass);
+                }
             }
         });
 
@@ -92,8 +121,15 @@
             $output.removeClass("coloring-mode");
             $colorPalette.hide();
             clearAllSelections();
+            
+            // Reset all drag state
             isDragging = false;
             dragStartElement = null;
+            dragDistance = 0;
+            dragStartPosition = null;
+            justFinishedDragging = false;
+            mouseDownTime = 0;
+            mouseUpTime = 0;
 
             // Re-enable text selection
             document.body.style.userSelect = '';
@@ -141,6 +177,7 @@
             selectedElements.push(clickedElement);
             $(clickedElement).addClass("selected-for-coloring");
         }
+        updateSelectionCounter();
     }
 
     function handleDragStart(e) {
@@ -152,6 +189,7 @@
         isDragging = true;
         dragStartElement = e.currentTarget;
         dragStartPosition = { x: e.clientX, y: e.clientY };
+        mouseDownTime = Date.now();
 
         if (!e.ctrlKey) {
             clearAllSelections();
@@ -161,6 +199,7 @@
             selectedElements.push(dragStartElement);
             $(dragStartElement).addClass("selected-for-coloring");
         }
+        updateSelectionCounter();
     }
 
     function handleDragOver(e) {
@@ -181,6 +220,7 @@
             selectedElements.push(currentElement);
             $(currentElement).addClass("selected-for-coloring");
         }
+        updateSelectionCounter();
     }
 
     function handleDragEnd(e) {
@@ -189,7 +229,10 @@
         e.preventDefault();
         e.stopPropagation();
 
-        console.log('Drag ended, selected elements:', selectedElements.length, 'drag distance:', dragDistance);
+        mouseUpTime = Date.now();
+        const clickDuration = mouseUpTime - mouseDownTime;
+        
+        console.log('Drag ended, selected elements:', selectedElements.length, 'drag distance:', dragDistance, 'click duration:', clickDuration);
         
         isDragging = false;
         dragStartElement = null;
@@ -200,7 +243,10 @@
             setTimeout(() => {
                 justFinishedDragging = false;
                 console.log('Drag flag reset, selected elements:', selectedElements.length);
-            }, 100); // Reset flag after 100ms
+            }, 150); // Increased timeout to 150ms
+        } else if (clickDuration < 200) {
+            // Short click, ensure we're not in a drag state
+            justFinishedDragging = false;
         }
         
         // Reset drag tracking
@@ -213,6 +259,26 @@
             $(element).removeClass("selected-for-coloring");
         });
         selectedElements = [];
+        updateSelectionCounter();
+    }
+
+    function updateSelectionCounter() {
+        const count = selectedElements.length;
+        $('.selection-counter').text(count + ' selected');
+    }
+
+    function handleGlobalMouseUp(e) {
+        if (!coloringMode) return;
+        
+        // If we're still in a dragging state but mouse is up, reset everything
+        if (isDragging) {
+            console.log('Global mouse up detected while dragging, resetting state');
+            isDragging = false;
+            dragStartElement = null;
+            dragDistance = 0;
+            dragStartPosition = null;
+            justFinishedDragging = false;
+        }
     }
 
     function getElementsBetween(startEl, endEl) {
@@ -239,12 +305,37 @@
         if (!coloringMode || selectedElements.length === 0) return;
 
         const colorClass = $(e.currentTarget).data('color');
+        applyColorToSelectionByClass(colorClass);
+    }
+
+    function applyColorToSelectionByClass(colorClass) {
+        if (!coloringMode || selectedElements.length === 0) return;
+
         selectedElements.forEach(element => {
             $(element)
                 .removeClass(COLOR_CLASSES.join(' '))
                 .addClass('colorable')
                 .addClass(colorClass);
         });
+        
+        // Show brief feedback
+        showColorAppliedFeedback(colorClass);
+    }
+
+    function showColorAppliedFeedback(colorClass) {
+        // Remove existing feedback
+        $('.color-applied-feedback').remove();
+        
+        // Create feedback element
+        const feedback = $(`<div class="color-applied-feedback">Applied ${colorClass}</div>`);
+        $('body').append(feedback);
+        
+        // Remove after 1 second
+        setTimeout(() => {
+            feedback.fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, 1000);
     }
 
     function updateColorPalettePosition() {

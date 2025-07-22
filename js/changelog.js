@@ -66,16 +66,42 @@ class Changelog {
             day: 'numeric'
         });
 
-        return `
-            <div class="changelog-item">
-                <div class="changelog-date">${formattedDate}</div>
-                <div class="changelog-content">
-                    <ul>
-                        ${entry.changes.map(change => `<li>${change}</li>`).join('')}
-                    </ul>
+        // Handle both old format (changes array) and new format (categories)
+        if (entry.categories) {
+            // New categorized format
+            const title = entry.title ? `<h4 class="changelog-title">${entry.title}</h4>` : '';
+            const categoriesHtml = Object.entries(entry.categories)
+                .map(([categoryName, changes]) => `
+                    <div class="changelog-category">
+                        <h5 class="category-name">${categoryName}</h5>
+                        <ul>
+                            ${changes.map(change => `<li>${change}</li>`).join('')}
+                        </ul>
+                    </div>
+                `).join('');
+
+            return `
+                <div class="changelog-item">
+                    <div class="changelog-date">${formattedDate}</div>
+                    <div class="changelog-content">
+                        ${title}
+                        ${categoriesHtml}
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            // Old format (backward compatibility)
+            return `
+                <div class="changelog-item">
+                    <div class="changelog-date">${formattedDate}</div>
+                    <div class="changelog-content">
+                        <ul>
+                            ${entry.changes.map(change => `<li>${change}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
     }
 
     addEntry(date, changes) {

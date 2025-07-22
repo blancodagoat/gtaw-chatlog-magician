@@ -191,6 +191,36 @@ html::-webkit-scrollbar {
 	transition: all 0.3s ease;
 }
 
+.output.processing {
+	opacity: 0.8;
+	transform: scale(0.99);
+}
+
+.auto-save-indicator {
+	position: fixed;
+	top: 20px;
+	right: 20px;
+	background: rgba(56, 150, 243, 0.9);
+	color: white;
+	padding: 8px 16px;
+	border-radius: 6px;
+	font-size: 14px;
+	z-index: 10000;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+	from {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+
 * {
 	-webkit-font-smoothing: none !important;
 	-moz-osx-font-smoothing: none !important;
@@ -441,6 +471,8 @@ html::-webkit-scrollbar {
 	max-height: auto;
 }
 
+
+
 .grid-x {
 	display: flex;
 	flex-wrap: wrap;
@@ -608,6 +640,7 @@ html::-webkit-scrollbar {
 	align-items: center;
 	background: rgba(45, 45, 45, 0.95);
 	color: white;
+	flex-shrink: 0;
 }
 
 .history-header h3 {
@@ -621,6 +654,25 @@ html::-webkit-scrollbar {
 	flex: 1;
 	overflow-y: auto;
 	padding: 10px;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.history-items::-webkit-scrollbar {
+	width: 8px;
+}
+
+.history-items::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.history-items::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 4px;
+}
+
+.history-items::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.5);
 }
 
 .history-item {
@@ -631,7 +683,7 @@ html::-webkit-scrollbar {
 	border-radius: 4px;
 	background: #2c3e50;
 	transition: all 0.2s ease;
-	max-height: 300px;
+	max-height: 200px;
 	overflow-y: auto;
 }
 
@@ -763,7 +815,9 @@ html::-webkit-scrollbar {
 	z-index: 1000;
 	display: block !important;
 	border-left: 1px solid rgba(255, 255, 255, 0.1);
-	overflow-y: auto;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }
 
 .history-panel.open {
@@ -856,7 +910,9 @@ html::-webkit-scrollbar {
 	z-index: 1000;
 	display: block !important;
 	border-right: 1px solid rgba(255, 255, 255, 0.1);
-	overflow-y: auto;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }
 
 .changelog-panel.open {
@@ -871,6 +927,7 @@ html::-webkit-scrollbar {
 	align-items: center;
 	background: rgba(45, 45, 45, 0.95);
 	color: white;
+	flex-shrink: 0;
 }
 
 .changelog-header h3 {
@@ -884,6 +941,25 @@ html::-webkit-scrollbar {
 	flex: 1;
 	overflow-y: auto;
 	padding: 10px;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.changelog-items::-webkit-scrollbar {
+	width: 8px;
+}
+
+.changelog-items::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.changelog-items::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 4px;
+}
+
+.changelog-items::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.5);
 }
 
 .changelog-item {
@@ -923,7 +999,33 @@ html::-webkit-scrollbar {
 }
 
 .changelog-content li:last-child {
-	margin-bottom: 0;
+    margin-bottom: 0;
+}
+
+.changelog-title {
+    color: #3896f3;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.changelog-category {
+    margin-bottom: 16px;
+}
+
+.changelog-category:last-child {
+    margin-bottom: 0;
+}
+
+.category-name {
+    color: #fbf724;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 @media (max-width: 768px) {

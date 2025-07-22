@@ -98,8 +98,8 @@
                  <div class="cell auto">
                     <button id="downloadOutputTransparent" class="button success" aria-label="Download chat log">Download</button>
                     <button id="toggleBackground" class="button">Toggle Background</button>
-                    <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character">÷</button>
-                    <button id="toggleColorPalette" class="button" aria-label="Toggle color palette">Color Text</button>
+                    <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character" title="Copy ÷ character">÷</button>
+                    <button id="toggleColorPalette" class="button" aria-label="Toggle color palette" title="Click text to color">Color Text</button>
                     <div class="button" style="display: inline-flex; align-items: center; padding: 0.5em 1em; height: 38px;">
                      <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="blancodagoat" data-color="#000000" data-emoji="" data-font="Cookie" data-text="Buy me a pizza" data-outline-color="#ffffff" data-font-color="#ffffff" data-coffee-color="#FFDD00" data-size="small"></script>
                    </div>
@@ -146,24 +146,27 @@
 
      <!-- Color Palette -->
      <div id="colorPalette" class="color-palette" style="display: none;">
-         <div class="color-palette-header">Select Color</div>
+         <div class="color-palette-header">
+             Select Color
+             <div class="selection-counter">0 selected</div>
+         </div>
          <div class="color-palette-items">
-             <div class="color-item me" data-color="me"></div>
-             <div class="color-item ame" data-color="ame"></div>
-             <div class="color-item darkgrey" data-color="darkgrey"></div>
-             <div class="color-item grey" data-color="grey"></div>
-             <div class="color-item lightgrey" data-color="lightgrey"></div>
-             <div class="color-item death" data-color="death"></div>
-             <div class="color-item yellow" data-color="yellow"></div>
-             <div class="color-item green" data-color="green"></div>
-             <div class="color-item orange" data-color="orange"></div>
-             <div class="color-item blue" data-color="blue"></div>
-             <div class="color-item white" data-color="white"></div>
-             <div class="color-item radioColor" data-color="radioColor"></div>
-             <div class="color-item radioColor2" data-color="radioColor2"></div>
-             <div class="color-item depColor" data-color="depColor"></div>
-             <div class="color-item vesseltraffic" data-color="vesseltraffic"></div>
-             <div class="color-item toyou" data-color="toyou"></div>
+             <div class="color-item me" data-color="me" data-tooltip="Me/Ame Actions"></div>
+             <div class="color-item ame" data-color="ame" data-tooltip="Me/Ame Actions"></div>
+             <div class="color-item darkgrey" data-color="darkgrey" data-tooltip="Lower Voice"></div>
+             <div class="color-item grey" data-color="grey" data-tooltip="Low Voice"></div>
+             <div class="color-item lightgrey" data-color="lightgrey" data-tooltip="Normal Text"></div>
+             <div class="color-item death" data-color="death" data-tooltip="Death/Failures"></div>
+             <div class="color-item yellow" data-color="yellow" data-tooltip="Important Info"></div>
+             <div class="color-item green" data-color="green" data-tooltip="Success"></div>
+             <div class="color-item orange" data-color="orange" data-tooltip="Warnings"></div>
+             <div class="color-item blue" data-color="blue" data-tooltip="Info"></div>
+             <div class="color-item white" data-color="white" data-tooltip="Normal Text"></div>
+             <div class="color-item radioColor" data-color="radioColor" data-tooltip="Radio (Your Channel)"></div>
+             <div class="color-item radioColor2" data-color="radioColor2" data-tooltip="Radio (Other Channel)"></div>
+             <div class="color-item depColor" data-color="depColor" data-tooltip="Department"></div>
+             <div class="color-item vesseltraffic" data-color="vesseltraffic" data-tooltip="Vessel Traffic"></div>
+             <div class="color-item toyou" data-color="toyou" data-tooltip="Directed at You [!]"></div>
          </div>
      </div>
 

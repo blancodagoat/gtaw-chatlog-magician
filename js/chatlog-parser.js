@@ -175,6 +175,46 @@ $(document).ready(function() {
                 return;
             }
 
+            // Skip unfreeze instructions
+            if (line.includes("⚠️You can now press K to unfreeze yourself. Do not hold W while doing so.")) {
+                return;
+            }
+
+            // Skip animation stop info
+            if (line.includes("[INFO] If this doesn't work, use .stop or /anim stop.")) {
+                return;
+            }
+
+            // Skip vehicle teleport info
+            if (line.includes("You may now use /vget, your vehicle will be automatically teleported on you.")) {
+                return;
+            }
+
+            // Skip fixveh warning
+            if (line.includes("((ANY MISUSAGE OF /FIXVEH IS BANNABLE, YOU MAY ONLY USE IT AFTER A BUG THAT LEFT YOU WITHOUT VEHICLES OOCLY.))")) {
+                return;
+            }
+
+            // Skip hat info
+            if (line.includes("[INFO] You can also use /hat custom1-5 to pick one of your saved favourite hats!")) {
+                return;
+            }
+
+            // Skip animation error
+            if (line.includes("[ERROR] That animation was not found.")) {
+                return;
+            }
+
+            // Skip phone locked error
+            if (line.includes("[ERROR] This phone is locked.")) {
+                return;
+            }
+
+            // Skip F2/F3 instructions
+            if (line.includes("Use F2 to re-enable the chat and use F3 to activate the cursor. You can also use /pc for the cursor.")) {
+                return;
+            }
+
             const div = document.createElement("div");
             div.className = "generated";
 

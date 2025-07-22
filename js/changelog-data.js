@@ -1,5 +1,39 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-07-22',
+        title: 'Major Update: Automatic Processing & Enhanced Color System',
+        categories: {
+            'Core Features': [
+                'Added automatic output updates - no more manual typing required!',
+                'Character name, line length, and font size changes now update instantly',
+                'Background toggle now refreshes output automatically'
+            ],
+            'User Experience': [
+                'Added processing indicator for large chat logs',
+                'Added auto-save notifications when settings change',
+                'Added input validation to prevent invalid values',
+                'Enhanced tooltips for better user guidance'
+            ],
+            'Color Palette': [
+                'Enhanced color palette with descriptive tooltips for each color',
+                'Added selection counter showing number of selected elements',
+                'Added keyboard shortcuts (1-9) for quick color application',
+                'Improved visual feedback for selected text elements',
+                'Added color application feedback notifications',
+                'Fixed tooltip visibility issues with improved z-index and styling',
+                'Fixed stuck left-click selection issue with improved drag state handling'
+            ],
+            'Content Filtering': [
+                'Added filtering for common system messages (unfreeze, vehicle teleport, hat info, animation errors, phone errors, etc.)'
+            ],
+            'Bug Fixes': [
+                'Fixed history panel not closing automatically when clicking outside - now matches changelog behavior',
+                'Fixed changelog scrolling confusion - removed nested scrollable areas for better UX',
+                'Fixed history panel scrolling confusion - removed triple nested scrollable areas for better UX'
+            ]
+        }
+    },
+    {
         date: '2025-07-05',
         changes: [
             'Fixed SMS message bracket removal issue - now preserves brackets in message content like [LOCATION]'
