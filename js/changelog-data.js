@@ -30,6 +30,11 @@ const CHANGELOG_ENTRIES = [
                 'Fixed history panel not closing automatically when clicking outside - now matches changelog behavior',
                 'Fixed changelog scrolling confusion - removed nested scrollable areas for better UX',
                 'Fixed history panel scrolling confusion - removed triple nested scrollable areas for better UX'
+            ],
+            'Major Improvements': [
+                'Enhanced text coloring system - now ALL text can be colored, not just recognized roleplay formats',
+                'Added visual indicators for unrecognized text with subtle background highlighting',
+                'Improved character-by-character selection for any text content in the output'
             ]
         }
     },

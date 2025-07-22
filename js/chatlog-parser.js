@@ -405,7 +405,46 @@ $(document).ready(function() {
             });
         });
         
-        console.log("Made text colorable - words wrapped: " + $output.find('.colorable').length);
+        // NEW: Make ALL remaining text colorable, even if not recognized by parser
+        $output.find('.generated').each(function() {
+            const generatedDiv = $(this);
+            
+            // Skip if already processed or has no-colorable class
+            if (generatedDiv.hasClass('no-colorable') || generatedDiv.find('.colorable').length > 0) {
+                return;
+            }
+            
+            // Get all text content that hasn't been processed yet
+            const textContent = generatedDiv.text().trim();
+            if (textContent.length === 0) return;
+            
+            // Create a temporary container to process the text
+            const temp = document.createElement('div');
+            
+            // Split into individual characters for letter-by-letter selection
+            const characters = textContent.split('');
+            
+            const html = characters.map(char => {
+                // Convert curly apostrophes to straight apostrophes
+                if (char === '' || char === '' || char === '' || char === '' || char.charCodeAt(0) === 8217 || char.charCodeAt(0) === 8216) {
+                    char = "'";
+                }
+                
+                // More comprehensive check: any character that looks like an apostrophe but isn't a straight apostrophe
+                if (char !== "'" && char.charCodeAt(0) !== 39 && (char.charCodeAt(0) >= 8216 && char.charCodeAt(0) <= 8219)) {
+                    char = "'";
+                }
+                
+                // Preserve whitespace as-is, wrap other characters in colorable spans
+                if (/\s/.test(char)) return char;
+                return `<span class="colorable unrecognized">${char}</span>`;
+            }).join('');
+            
+            // Replace the entire content with the character-by-character HTML
+            generatedDiv.html(html);
+        });
+        
+        console.log("Made text colorable - total colorable elements: " + $output.find('.colorable').length);
     }
 
     // Make makeTextColorable globally accessible for the color palette

@@ -505,6 +505,26 @@ html::-webkit-scrollbar {
 	display: inline;
 }
 
+.colorable.unrecognized {
+	background-color: rgba(255, 255, 255, 0.05);
+	border-radius: 2px;
+	padding: 1px 2px;
+	margin: 0 1px;
+	transition: background-color 0.2s ease;
+}
+
+.colorable.unrecognized:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+}
+
+.coloring-mode .colorable.unrecognized {
+	background-color: rgba(255, 255, 255, 0.1);
+}
+
+.coloring-mode .colorable.unrecognized:hover {
+	background-color: rgba(255, 255, 255, 0.2);
+}
+
 .coloring-mode .colorable:hover {
 	background-color: rgba(255, 255, 255, 0.1);
 	outline: 1px dotted #3896f3;
