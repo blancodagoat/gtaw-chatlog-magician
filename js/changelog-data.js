@@ -1,5 +1,33 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-08-04',
+        title: 'Bug Fixes: Excessive Span Generation, Unrecognized Text Styling & Line Break Issues',
+        categories: {
+            'Critical Bug Fixes': [
+                'Fixed excessive <span> tag generation in coloring mode that was causing deeply nested HTML structures',
+                'Resolved issue where makeTextColorable function was repeatedly processing already-converted single-character spans',
+                'Updated conditional logic in makeTextColorable to properly detect and skip already-processed colorable spans',
+                'Prevented redundant wrapping of text elements that were already converted to single-character colorable spans',
+                'Fixed line break functionality for unrecognized text - now properly breaks long lines of unrecognized content',
+                'Resolved order of operations issue where line breaks were applied before character spans were created'
+            ],
+            'UI Improvements': [
+                'Removed visual styling for .colorable.unrecognized elements to prevent different appearance from regular text',
+                'Unrecognized text now appears identical to regular text without background highlighting or special styling',
+                'Maintained coloring functionality for unrecognized text while removing visual distinction',
+                'Improved text consistency across all output content regardless of recognition status',
+                'Enhanced line break handling for unrecognized text to respect line length settings'
+            ],
+            'Code Quality': [
+                'Enhanced conditional checks in makeTextColorable function with more robust logic',
+                'Improved span processing efficiency by preventing duplicate wrapping operations',
+                'Maintained backward compatibility with existing coloring system functionality',
+                'Modified makeTextColorable to apply line breaks after creating individual character spans for unrecognized text',
+                'Enhanced addLineBreaksAndHandleSpans function to better handle existing <br> tags and span elements'
+            ]
+        }
+    },
+    {
         date: '2025-07-22',
         title: 'Major Update: Automatic Processing & Enhanced Color System',
         categories: {

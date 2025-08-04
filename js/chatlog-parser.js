@@ -312,10 +312,10 @@ $(document).ready(function() {
                     const span = $(this);
                     const text = span.text();
                     
-                    // Skip if the span already contains other spans (nested structure)
-                    if (span.find('span').length > 0) {
-                        return;
-                    }
+                                    // CORREÇÃO: Pula spans que já foram processados para evitar duplicação.
+                if ((span.hasClass('colorable') && span.text().length === 1) || span.children().length > 0) {
+                    return; // Skip to the next span
+                }
                     
                     // Get the existing classes from the span
                     const existingClasses = span.attr('class') || '';
@@ -418,9 +418,6 @@ $(document).ready(function() {
             const textContent = generatedDiv.text().trim();
             if (textContent.length === 0) return;
             
-            // Create a temporary container to process the text
-            const temp = document.createElement('div');
-            
             // Split into individual characters for letter-by-letter selection
             const characters = textContent.split('');
             
@@ -440,8 +437,11 @@ $(document).ready(function() {
                 return `<span class="colorable unrecognized">${char}</span>`;
             }).join('');
             
-            // Replace the entire content with the character-by-character HTML
-            generatedDiv.html(html);
+            // Apply line breaks to the HTML with individual character spans
+            const htmlWithLineBreaks = addLineBreaksAndHandleSpans(html);
+            
+            // Replace the entire content with the character-by-character HTML that has line breaks
+            generatedDiv.html(htmlWithLineBreaks);
         });
         
         console.log("Made text colorable - total colorable elements: " + $output.find('.colorable').length);
@@ -1569,6 +1569,13 @@ $(document).ready(function() {
                 result += "</span>";
                 i += 6;
                 openSpans.pop();
+            } else if (text[i] === "<" && text.substr(i, 4) === "<br") {
+                // Handle existing <br> tags
+                const brEnd = text.indexOf(">", i);
+                const brTag = text.substring(i, brEnd + 1);
+                result += brTag;
+                i = brEnd;
+                currentLineLength = 0; // Reset line length after a break
             } else {
                 result += text[i];
                 currentLineLength++;
