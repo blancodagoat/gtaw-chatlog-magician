@@ -674,18 +674,24 @@ $(document).ready(function() {
 
   $('#font-label').on('input', function() {
     const value = parseInt($(this).val());
-    if (value < 10) $(this).val(10);
-    if (value > 64) $(this).val(64);
+    // Remove font size limitations - allow any positive value
+    if (value < 1) $(this).val(1);
     
     localStorage.setItem('chatlogFontSize', $(this).val());
     updateFontSize();
+    
+    // Reprocess output to recalculate line breaks with new font size
+    if (typeof processOutput === 'function') {
+      processOutput();
+    }
+    
     showAutoSaveIndicator();
   });
 
   $('#lineLengthInput').on('input', function() {
     const value = parseInt($(this).val());
-    if (value < 50) $(this).val(50);
-    if (value > 150) $(this).val(150);
+    // Remove line length limitations - allow any positive value
+    if (value < 1) $(this).val(1);
     
     localStorage.setItem('chatlogLineLength', $(this).val());
     if (typeof processOutput === 'function') {

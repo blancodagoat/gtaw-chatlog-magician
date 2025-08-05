@@ -1538,9 +1538,26 @@ $(document).ready(function() {
 
     function addLineBreaksAndHandleSpans(text) {
         const maxLineLength = document.getElementById("lineLengthInput").value;
+        const currentFontSize = parseInt($('#font-label').val()) || 12;
         let result = "";
         let currentLineLength = 0;
         const openSpans = [];
+
+        // Calculate font size adjustment factor for better line breaking
+        // This compensates for the fact that larger fonts take up more visual space
+        // We use a dynamic calculation to handle unlimited font sizes
+        let fontSizeAdjustment;
+        if (currentFontSize <= 12) {
+            fontSizeAdjustment = 1.0; // No adjustment needed for 12px and below
+        } else {
+            // Dynamic calculation for larger fonts
+            // Use a logarithmic approach to handle very large font sizes gracefully
+            fontSizeAdjustment = Math.max(0.3, Math.min(1.0, 12 / currentFontSize));
+        }
+        
+        const adjustedMaxLineLength = Math.floor(maxLineLength * fontSizeAdjustment);
+        
+
 
         function addLineBreak() {
             if (openSpans.length > 0) {
@@ -1580,7 +1597,7 @@ $(document).ready(function() {
                 result += text[i];
                 currentLineLength++;
 
-                if (currentLineLength >= maxLineLength && text[i] === " ") {
+                if (currentLineLength >= adjustedMaxLineLength && text[i] === " ") {
                     addLineBreak();
                 }
             }
