@@ -1,5 +1,37 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-08-07',
+        title: 'New Feature: Character Name Coloring Toggle & Enhanced Low Voice Logic',
+        categories: {
+                         'New Features': [
+                 'Added "Name Colors" toggle button to disable character name detection coloring even when character name is inputted',
+                 'Users can now choose simplified coloring for all voice lines (normal says, low, lower) regardless of character name presence',
+                 'Toggle provides visual feedback with button styling changes to indicate current state',
+                 'Enhanced accessibility with proper ARIA labels and tooltips for the new toggle feature'
+             ],
+                         'Character Name Detection': [
+                 'Refined low voice coloring logic: "low" lines now use lightgrey when no character name is inputted',
+                 'Updated lower voice coloring logic: "lower" lines now use grey when no character name is inputted',
+                 'Improved character name detection for "lower" lines: grey when character name is detected, darkgrey otherwise',
+                 'Maintained existing logic for "low" lines: lightgrey when character name is detected, grey otherwise',
+                 'Enhanced normal "says" line coloring: white when character name is detected, lightgrey otherwise',
+                 'Enhanced consistency across all voice line types (normal says, low, lower) with unified coloring behavior'
+             ],
+                         'User Experience': [
+                 'Added toggle functionality that respects user preferences for character name coloring',
+                 'Toggle state persists during session and affects all voice line processing (normal says, low, lower)',
+                 'Improved button placement in the main control panel for easy access',
+                 'Maintained backward compatibility with existing character name detection functionality'
+             ],
+            'Code Quality': [
+                'Added disableCharacterNameColoring variable to track toggle state',
+                'Implemented toggleCharacterNameColoring function with proper state management',
+                'Enhanced conditional logic in low/lower line processing to respect toggle state',
+                'Integrated new toggle with existing UI patterns and styling conventions'
+            ]
+        }
+    },
+    {
         date: '2025-08-04',
         title: 'Bug Fixes: Excessive Span Generation, Unrecognized Text Styling & Line Break Issues',
         categories: {

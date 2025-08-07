@@ -2,11 +2,13 @@ $(document).ready(function() {
 
     let applyBackground = false;
     let applyCensorship = false;
+    let disableCharacterNameColoring = false;
 
     const $textarea = $("#chatlogInput");
     const $output = $("#output");
     const $toggleBackgroundBtn = $("#toggleBackground");
     const $toggleCensorshipBtn = $("#toggleCensorship");
+    const $toggleCharacterNameColoringBtn = $("#toggleCharacterNameColoring");
     const $censorCharButton = $("#censorCharButton");
     const $lineLengthInput = $("#lineLengthInput");
     const $characterNameInput = $("#characterNameInput");
@@ -15,6 +17,7 @@ $(document).ready(function() {
 
     $toggleBackgroundBtn.click(toggleBackground);
     $toggleCensorshipBtn.click(toggleCensorship);
+    $toggleCharacterNameColoringBtn.click(toggleCharacterNameColoring);
     $censorCharButton.click(copyCensorChar);
     $lineLengthInput.on("input", processOutput);
     $characterNameInput.on("input", applyFilter);
@@ -36,6 +39,14 @@ $(document).ready(function() {
         $toggleCensorshipBtn
             .toggleClass("btn-dark", applyCensorship)
             .toggleClass("btn-outline-dark", !applyCensorship);
+        processOutput();
+    }
+
+    function toggleCharacterNameColoring() {
+        disableCharacterNameColoring = !disableCharacterNameColoring;
+        $toggleCharacterNameColoringBtn
+            .toggleClass("btn-dark", disableCharacterNameColoring)
+            .toggleClass("btn-outline-dark", !disableCharacterNameColoring);
         processOutput();
     }
 
@@ -79,7 +90,7 @@ $(document).ready(function() {
     }
 
     function formatSaysLine(line, currentCharacterName) {
-        if (!currentCharacterName) {
+        if (!currentCharacterName || disableCharacterNameColoring) {
             return wrapSpan("white", line);
         }
 
@@ -621,31 +632,36 @@ $(document).ready(function() {
                 : wrapSpan("radioColor2", line);
         }
 
-        if (lowerLine.includes("says [lower]")) {
-            return wrapSpan("darkgrey", line);
-        }
+                    if (lowerLine.includes("says [lower]")) {
+                if (!currentCharacterName || disableCharacterNameColoring) {
+                    return wrapSpan("grey", line);
+                }
+                return lowerLine.includes(currentCharacterName.toLowerCase())
+                    ? wrapSpan("grey", line)
+                    : wrapSpan("darkgrey", line);
+            }
 
-        if (lowerLine.includes("says [low]:")) {
-            if (!currentCharacterName) {
+            if (lowerLine.includes("says [low]:")) {
+                if (!currentCharacterName || disableCharacterNameColoring) {
+                    return wrapSpan("lightgrey", line);
+                }
+                return lowerLine.includes(currentCharacterName.toLowerCase())
+                    ? wrapSpan("lightgrey", line)
+                    : wrapSpan("grey", line);
+            }
+
+            if (lowerLine.includes("says [low] (to")) {
+                if (!currentCharacterName || disableCharacterNameColoring) {
+                    return wrapSpan("lightgrey", line);
+                }
+
+                const saysIndex = lowerLine.indexOf("says");
+                const nameBeforeSays = lowerLine.substring(0, saysIndex);
+                if (nameBeforeSays.includes(currentCharacterName.toLowerCase())) {
+                    return wrapSpan("lightgrey", line);
+                }
                 return wrapSpan("grey", line);
             }
-            return lowerLine.includes(currentCharacterName.toLowerCase())
-                ? wrapSpan("lightgrey", line)
-                : wrapSpan("grey", line);
-        }
-
-        if (lowerLine.includes("says [low] (to")) {
-            if (!currentCharacterName) {
-                return wrapSpan("grey", line);
-            }
-
-            const saysIndex = lowerLine.indexOf("says");
-            const nameBeforeSays = lowerLine.substring(0, saysIndex);
-            if (nameBeforeSays.includes(currentCharacterName.toLowerCase())) {
-                return wrapSpan("lightgrey", line);
-            }
-            return wrapSpan("grey", line);
-        }
 
         if (line.includes("says [low] (phone):") || line.includes("says (phone):")) {
             if (currentCharacterName && line.toLowerCase().includes(currentCharacterName.toLowerCase())) {
