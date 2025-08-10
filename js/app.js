@@ -87,15 +87,35 @@ function generateFilename() {
 }
 
 function downloadOutputImage() {
-  const text = $('#chatlogInput').val().trim();
-  if (text) {
-    saveToHistory(text);
-    refreshHistoryPanel();
+  // QoL: clear any active selections before generating the image
+  let hadColoringMode = false;
+  try {
+    if (window.ColorPalette && typeof window.ColorPalette.clearSelections === 'function') {
+      window.ColorPalette.clearSelections();
+    } else {
+      // Fallback: remove selection class directly
+      document.querySelectorAll('.selected-for-coloring').forEach(el => el.classList.remove('selected-for-coloring'));
+    }
+    const $out = $("#output");
+    hadColoringMode = $out.hasClass('coloring-mode');
+    if (hadColoringMode) {
+      $out.removeClass('coloring-mode');
+    }
+  } catch (e) {
+    // Non-fatal; continue with export
   }
 
-  const output = $("#output");
+  // Defer the actual export to the next frame so DOM updates (class removals) are applied
+  setTimeout(() => {
+    const text = $('#chatlogInput').val().trim();
+    if (text) {
+      saveToHistory(text);
+      refreshHistoryPanel();
+    }
 
-  showLoadingIndicator();
+    const output = $("#output");
+
+    showLoadingIndicator();
 
   const height = output.prop('scrollHeight') + 100;
   const width = output.width();
@@ -135,6 +155,7 @@ function downloadOutputImage() {
     console.error('domtoimage library not loaded');
     alert('Image generation library not available. Please refresh the page and try again.');
     hideLoadingIndicator();
+    if (hadColoringMode) output.addClass('coloring-mode');
     return;
   }
   
@@ -169,6 +190,7 @@ function downloadOutputImage() {
         console.error('domtoimage library not loaded');
         alert('Image generation library not available. Please refresh the page and try again.');
         hideLoadingIndicator();
+        if (hadColoringMode) output.addClass('coloring-mode');
         return;
       }
       
@@ -202,6 +224,7 @@ function downloadOutputImage() {
       trimmedCanvas.toBlob(function(trimmedBlob) {
         window.saveAs(trimmedBlob, generateFilename());
         hideLoadingIndicator();
+        if (hadColoringMode) output.addClass('coloring-mode');
       });
     };
 
@@ -209,6 +232,7 @@ function downloadOutputImage() {
       console.error("Error loading generated image");
       alert("There was an error processing the generated image. Please try again.");
       hideLoadingIndicator();
+      if (hadColoringMode) output.addClass('coloring-mode');
     };
   }
 
@@ -226,7 +250,10 @@ function downloadOutputImage() {
     
     alert(errorMessage);
     hideLoadingIndicator();
+    const output = $("#output");
+    if (hadColoringMode) output.addClass('coloring-mode');
   }
+  }, 0);
 }
 
 function showLoadingIndicator() {

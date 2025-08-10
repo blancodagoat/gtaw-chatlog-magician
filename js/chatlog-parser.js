@@ -316,9 +316,9 @@ $(document).ready(function() {
             const hasDivInHTML = generatedDiv.html().includes('<div');
             const hasBrInHTML = generatedDiv.html().includes('<br');
             
-            // If the div contains HTML elements, process them for letter-by-letter coloring
+            // If the div contains HTML elements, process them for word-by-word coloring
             if (hasElements || hasSpanInHTML || hasDivInHTML || hasBrInHTML) {
-                // Find all text nodes within existing spans and make them colorable character by character
+                // Find all text nodes within existing spans and make them colorable word by word
                 generatedDiv.find('span').each(function() {
                     const span = $(this);
                     const text = span.text();
@@ -332,25 +332,16 @@ $(document).ready(function() {
                     const existingClasses = span.attr('class') || '';
                     const classArray = existingClasses.split(/\s+/).filter(cls => cls !== 'colorable');
                     
-                    // Split the text into individual characters and wrap each in a colorable span
-                    const characters = text.split('');
-                    const html = characters.map(char => {
-                        // Convert curly apostrophes to straight apostrophes
-                        if (char === '' || char === '' || char === '' || char === '' || char.charCodeAt(0) === 8217 || char.charCodeAt(0) === 8216) {
-                            char = "'";
-                        }
-                        
-                        // More comprehensive check: any character that looks like an apostrophe but isn't a straight apostrophe
-                        if (char !== "'" && char.charCodeAt(0) !== 39 && (char.charCodeAt(0) >= 8216 && char.charCodeAt(0) <= 8219)) {
-                            char = "'";
-                        }
-                        
-                        // Preserve whitespace as-is, wrap other characters in colorable spans with existing classes
-                        if (/\s/.test(char)) return char;
-                        return `<span class="${classArray.join(' ')} colorable">${char}</span>`;
+                    // Split the text into words and whitespace and wrap each word in a colorable span
+                    const tokens = text.split(/(\s+)/g);
+                    const html = tokens.map(token => {
+                        if (token === '') return '';
+                        if (/^\s+$/.test(token)) return token;
+                        const normalized = token.replace(/[\u2018\u2019\u2032\u2035]/g, "'");
+                        return `<span class="${classArray.join(' ')} colorable">${normalized}</span>`;
                     }).join('');
                     
-                    // Replace the span's content with the character-by-character HTML
+                    // Replace the span's content with the word-by-word HTML
                     span.html(html);
                 });
                 return;
@@ -378,31 +369,20 @@ $(document).ready(function() {
                 }
             }
             
-            // Process the collected text nodes
+            // Process the collected text nodes (word-by-word)
             nodesToProcess.forEach(textNode => {
                 const text = textNode.textContent;
                 const parent = textNode.parentNode;
                 
                 const temp = document.createElement('div');
                 
-                // Split into individual characters for letter-by-letter selection
-                const characters = text.split('');
-                
-                const html = characters.map(char => {
-                    // Convert curly apostrophes to straight apostrophes
-                    // Check for various curly apostrophe Unicode characters
-                    if (char === '' || char === '' || char === '' || char === '' || char.charCodeAt(0) === 8217 || char.charCodeAt(0) === 8216) {
-                        char = "'";
-                    }
-                    
-                    // More comprehensive check: any character that looks like an apostrophe but isn't a straight apostrophe
-                    if (char !== "'" && char.charCodeAt(0) !== 39 && (char.charCodeAt(0) >= 8216 && char.charCodeAt(0) <= 8219)) {
-                        char = "'";
-                    }
-                    
-                    // Preserve whitespace as-is, wrap other characters in colorable spans
-                    if (/\s/.test(char)) return char;
-                    return `<span class="colorable">${char}</span>`;
+                // Split into words and whitespace for word-by-word selection
+                const tokens = text.split(/(\s+)/g);
+                const html = tokens.map(token => {
+                    if (token === '') return '';
+                    if (/^\s+$/.test(token)) return token;
+                    const normalized = token.replace(/[\u2018\u2019\u2032\u2035]/g, "'");
+                    return `<span class="colorable">${normalized}</span>`;
                 }).join('');
                 
                 temp.innerHTML = html;
@@ -416,7 +396,7 @@ $(document).ready(function() {
             });
         });
         
-        // NEW: Make ALL remaining text colorable, even if not recognized by parser
+        // NEW: Make ALL remaining text colorable, word-by-word, even if not recognized by parser
         $output.find('.generated').each(function() {
             const generatedDiv = $(this);
             
@@ -429,23 +409,13 @@ $(document).ready(function() {
             const textContent = generatedDiv.text().trim();
             if (textContent.length === 0) return;
             
-            // Split into individual characters for letter-by-letter selection
-            const characters = textContent.split('');
-            
-            const html = characters.map(char => {
-                // Convert curly apostrophes to straight apostrophes
-                if (char === '' || char === '' || char === '' || char === '' || char.charCodeAt(0) === 8217 || char.charCodeAt(0) === 8216) {
-                    char = "'";
-                }
-                
-                // More comprehensive check: any character that looks like an apostrophe but isn't a straight apostrophe
-                if (char !== "'" && char.charCodeAt(0) !== 39 && (char.charCodeAt(0) >= 8216 && char.charCodeAt(0) <= 8219)) {
-                    char = "'";
-                }
-                
-                // Preserve whitespace as-is, wrap other characters in colorable spans
-                if (/\s/.test(char)) return char;
-                return `<span class="colorable unrecognized">${char}</span>`;
+            // Split into words and whitespace for word-by-word selection
+            const tokens = textContent.split(/(\s+)/g);
+            const html = tokens.map(token => {
+                if (token === '') return '';
+                if (/^\s+$/.test(token)) return token;
+                const normalized = token.replace(/[\u2018\u2019\u2032\u2035]/g, "'");
+                return `<span class="colorable unrecognized">${normalized}</span>`;
             }).join('');
             
             // Apply line breaks to the HTML with individual character spans
@@ -1028,13 +998,14 @@ $(document).ready(function() {
     }
 
     function wrapSpan(className, content) {
-        // Convert curly apostrophes to straight apostrophes
+        // Normalize apostrophes
         content = content.replace(/['''']/g, "'");
         
-        const words = content.split(/(\s+)/g);
+        const tokens = content.split(/(\s+)/g);
         let html = '';
         let censoring = false;
         let censorBuffer = '';
+        let visibleBuffer = '';
 
         const flushCensor = () => {
             if (censorBuffer.length > 0) {
@@ -1043,30 +1014,47 @@ $(document).ready(function() {
             }
         };
 
-        words.forEach(word => {
-            if (word === '') return;
-            if (/^\s+$/.test(word)) {
+        const flushVisible = () => {
+            if (visibleBuffer.length > 0) {
+                html += `<span class="${className} colorable">${visibleBuffer}</span>`;
+                visibleBuffer = '';
+            }
+        };
+
+        tokens.forEach(token => {
+            if (token === '') return;
+            if (/^\s+$/.test(token)) {
+                // On whitespace, flush any visible buffer and pass whitespace through
                 if (censoring) {
-                    censorBuffer += word;
+                    censorBuffer += token;
                 } else {
-                    html += word;
+                    flushVisible();
+                    html += token;
                 }
                 return;
             }
 
-            for (const char of word) {
+            // Process non-whitespace token character-by-character to handle censorship toggles
+            for (const char of token) {
                 if (char === '÷') {
                     if (censoring) {
+                        // closing delimiter
                         flushCensor();
                         censoring = false;
                     } else {
+                        // opening delimiter
+                        flushVisible();
                         censoring = true;
                     }
                 } else if (censoring) {
                     censorBuffer += char;
                 } else {
-                    html += `<span class="${className} colorable">${char}</span>`;
+                    visibleBuffer += char;
                 }
+            }
+            // At end of token (word), flush visible as a single word span
+            if (!censoring) {
+                flushVisible();
             }
         });
 

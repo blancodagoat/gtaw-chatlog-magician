@@ -1,5 +1,28 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-08-10',
+        title: 'UX: Word-based Text Selection for Coloring',
+        categories: {
+            'User Experience': [
+                'Switched selection granularity from character-by-character to word-by-word for easier selection and coloring',
+                'Drag-select now selects entire words, improving speed and accuracy when applying colors',
+                'Selections are now automatically cleared when downloading an image to avoid selection highlights in exports'
+            ],
+            'Image Export': [
+                'Temporarily disables coloring mode and removes selection outlines before export, restoring them after the image is saved',
+                'Defers export by one frame to ensure DOM updates are applied before capture (prevents visual artifacts)'
+            ],
+            'Text Coloring System': [
+                'Updated makeTextColorable to generate word-level .colorable spans for both existing spans and plain text nodes',
+                'Adjusted fallback processing to wrap unrecognized text by word while preserving whitespace and line breaks'
+            ],
+            'Censorship & Formatting': [
+                'Preserved censorship handling (÷…÷) while grouping visible text into single word spans',
+                'Maintained existing formatting and line-breaking behavior with addLineBreaksAndHandleSpans'
+            ]
+        }
+    },
+    {
         date: '2025-08-07',
         title: 'New Feature: Character Name Coloring Toggle & Enhanced Low Voice Logic',
         categories: {

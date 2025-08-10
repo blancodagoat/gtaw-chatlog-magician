@@ -366,7 +366,9 @@
 
     window.ColorPalette = {
         init: init,
-        toggleColoringMode: toggleColoringMode
+        toggleColoringMode: toggleColoringMode,
+        // Expose a method to clear all selections from outside (e.g., before export)
+        clearSelections: clearAllSelections
     };
 
 })(jQuery);
