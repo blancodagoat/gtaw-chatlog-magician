@@ -20,18 +20,18 @@
         $output = $("#output");
         $toggleColorPaletteBtn = $("#toggleColorPalette");
 
-        $toggleColorPaletteBtn.click(toggleColoringMode);
-        $colorPalette.on("click", ".color-item", applyColorToSelection);
-        $output.on("click", ".colorable", handleTextElementClick);
-        $output.on("mousedown", ".colorable", handleDragStart);
-        $output.on("mouseup", ".colorable", handleDragEnd);
-        $output.on("mouseover", ".colorable", handleDragOver);
+        $toggleColorPaletteBtn.off('click.colorPalette').on('click.colorPalette', toggleColoringMode);
+        $colorPalette.off('click.colorPalette').on("click.colorPalette", ".color-item", applyColorToSelection);
+        $output.off('click.colorPalette').on("click.colorPalette", ".colorable", handleTextElementClick);
+        $output.off('mousedown.colorPalette').on("mousedown.colorPalette", ".colorable", handleDragStart);
+        $output.off('mouseup.colorPalette').on("mouseup.colorPalette", ".colorable", handleDragEnd);
+        $output.off('mouseover.colorPalette').on("mouseover.colorPalette", ".colorable", handleDragOver);
         
         // Add global mouse up handler to ensure drag state is reset
-        $(document).on("mouseup", handleGlobalMouseUp);
+        $(document).off('mouseup.colorPalette').on("mouseup.colorPalette", handleGlobalMouseUp);
 
         // Add click handler to clear selections when clicking outside selected elements
-        $output.on("click", function(e) {
+        $output.off('click.clearOutside.colorPalette').on("click.clearOutside.colorPalette", function(e) {
             if (!coloringMode) return;
             
             // Don't clear selections if we just finished dragging
@@ -48,7 +48,7 @@
         });
         
         // Add mouseleave handler to reset drag state if mouse leaves the output area
-        $output.on("mouseleave", function(e) {
+        $output.off('mouseleave.colorPalette').on("mouseleave.colorPalette", function(e) {
             if (!coloringMode) return;
             
             if (isDragging) {
@@ -62,7 +62,7 @@
         });
 
         // Add keyboard shortcuts
-        $(document).on("keydown", function(e) {
+        $(document).off('keydown.colorPalette').on("keydown.colorPalette", function(e) {
             if (!coloringMode) return;
             
             if (e.key === "Escape") {
@@ -81,7 +81,7 @@
         });
 
         // Prevent default text selection in coloring mode
-        $output.on("selectstart", ".colorable", function(e) {
+        $output.off('selectstart.colorPalette', ".colorable").on("selectstart.colorPalette", ".colorable", function(e) {
             if (coloringMode) {
                 e.preventDefault();
                 return false;
@@ -89,7 +89,7 @@
         });
 
         setupClosePaletteHandler();
-        $(window).on('resize', updateColorPalettePosition);
+        $(window).off('resize.colorPalette').on('resize.colorPalette', updateColorPalettePosition);
     }
 
     function toggleColoringMode() {
@@ -109,7 +109,8 @@
             document.body.style.mozUserSelect = 'none';
             document.body.style.msUserSelect = 'none';
 
-            alert("Click on text to select it. Use Ctrl+click for multiple selections or drag to select multiple items. Click 'Color Text' button again to exit coloring mode.");
+            // Replace blocking alert with non-blocking toast
+            showToast("Coloring mode: Click words to select. Ctrl+click or drag for multi-select. Click the button again to exit.");
 
             setTimeout(function() {
                 makeTextColorable();
@@ -139,6 +140,16 @@
 
             setupClosePaletteHandler();
         }
+    }
+
+    function showToast(message) {
+        const existing = document.querySelector('.color-applied-feedback');
+        if (existing) existing.remove();
+        const toast = $(`<div class="color-applied-feedback">${message}</div>`);
+        $('body').append(toast);
+        setTimeout(() => {
+            toast.fadeOut(300, function() { $(this).remove(); });
+        }, 1500);
     }
 
     function setupClosePaletteHandler() {

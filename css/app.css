@@ -1,11 +1,34 @@
 body {
-	font-family: Arial, sans-serif;
-	width: 100%;
-	background: #1a1a1a;
-	margin: 0;
-	color: #fff;
-	background-image: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-	min-height: 100vh;
+    font-family: Arial, sans-serif;
+    width: 100%;
+    background: var(--bg);
+    margin: 0;
+    color: var(--text);
+    background-image: none;
+    min-height: 100vh;
+}
+
+/* Design tokens for colors, motion, elevation */
+:root {
+    --bg: #0B0F14;
+    --surface: #0F1623;
+    --surface-2: #111827;
+    --text: #E5E7EB;
+    --muted: #9CA3AF;
+    --primary: #3896F3;
+    --secondary: #A78BFA;
+    --accent: #22D3EE;
+    --accent-2: #F472B6;
+    --success: #22C55E;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --elev-1: 0 6px 16px rgba(0,0,0,.28);
+    --elev-2: 0 12px 32px rgba(0,0,0,.36);
+    --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-hover: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --dur-hover: 180ms;
+    --dur-press: 100ms;
+    --dur-panel: 300ms;
 }
 
 html::-webkit-scrollbar {
@@ -31,15 +54,15 @@ html::-webkit-scrollbar {
 }
 
 .textarea-input {
-	font-family: Arial, sans-serif;
+    font-family: Arial, sans-serif;
 	-webkit-font-smoothing: none !important;
 	width: 100%;
 	border-radius: 8px;
 	resize: none;
 	margin-top: 20px;
-	background-color: rgba(255, 255, 255, 0.05);
-	color: #fff;
-	border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 	padding: 1.2rem;
 	margin-bottom: 5px;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -184,11 +207,11 @@ html::-webkit-scrollbar {
 	font-size: 12px;
 	margin-top: 20px;
 	padding: 20px;
-	background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(17, 24, 39, 0.55);
 	border-radius: 8px;
 	-webkit-backdrop-filter: blur(5px);
 	backdrop-filter: blur(5px);
-	transition: all 0.3s ease;
+	transition: all var(--dur-panel) var(--ease-spring);
 }
 
 .output.processing {
@@ -210,6 +233,47 @@ html::-webkit-scrollbar {
 	animation: slideInRight 0.3s ease-out;
 }
 
+/* Loading overlay extracted from inline styles */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.loading-dialog {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.loading-dialog .spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 2s linear infinite;
+  margin: 0 auto 10px;
+}
+
+.loading-dialog .loading-text {
+  margin: 0; 
+  color: #333;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 @keyframes slideInRight {
 	from {
 		transform: translateX(100%);
@@ -227,17 +291,18 @@ html::-webkit-scrollbar {
 }
 
 .button {
-	padding: 0.7rem 1.2rem;
-	font-size: 16px;
-	border-radius: 0.5rem;
-	background-color: #2d2d2d;
-	color: #fff;
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	cursor: pointer;
-	height: 50%;
-	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	position: relative;
-	overflow: hidden;
+    padding: 0.7rem 1.2rem;
+    font-size: 16px;
+    border-radius: 0.5rem;
+    background-color: rgba(255,255,255,0.08);
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    height: 50%;
+    transition: transform var(--dur-hover) var(--ease-hover), box-shadow var(--dur-hover), background var(--dur-hover);
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--elev-1);
 }
 
 .button::before {
@@ -256,12 +321,9 @@ html::-webkit-scrollbar {
 	transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.button:hover {
-	background-color: #3d3d3d;
-	box-shadow: 0 4px 15px rgba(255, 165, 0, 0.2);
-	transform: translateY(-2px);
-	border-color: rgba(255, 165, 0, 0.3);
-}
+.button:hover { transform: translateY(-2px) scale(1.03); box-shadow: var(--elev-2); background: rgba(255,255,255,0.18); }
+.button:active { transform: scale(0.98); transition-duration: var(--dur-press); }
+.button:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(34,211,238,0.4), var(--elev-2); }
 
 .button:hover::before {
 	left: 100%;
@@ -455,21 +517,9 @@ html::-webkit-scrollbar {
 	margin-bottom: 0;
 }
 
-.logo-overlay {
-	position: absolute;
-	top: 0px;
-	left: 7px;
-	width: 30px;
-	height: auto;
-	pointer-events: none;
-	z-index: -1;
-}
-
-.logo-overlay img {
-	opacity: 60%;
-	max-width: auto;
-	max-height: auto;
-}
+/* Legacy .logo-overlay removed from textarea to avoid blur; keep selectors harmless */
+.logo-overlay { display: none !important; }
+.logo-overlay img { display: none !important; }
 
 
 
@@ -815,7 +865,7 @@ html::-webkit-scrollbar {
 	height: 100vh;
 	background: rgba(45, 45, 45, 0.95);
 	box-shadow: -2px 0 20px rgba(0, 0, 0, 0.3);
-	transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	transition: right var(--dur-panel) var(--ease-spring);
 	z-index: 1000;
 	display: block !important;
 	border-left: 1px solid rgba(255, 255, 255, 0.1);
@@ -918,7 +968,7 @@ html::-webkit-scrollbar {
 	height: 100vh;
 	background: rgba(45, 45, 45, 0.95);
 	box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
-	transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	transition: left var(--dur-panel) var(--ease-spring);
 	z-index: 1002;
 	border-right: 1px solid rgba(255, 255, 255, 0.1);
 	overflow: hidden;

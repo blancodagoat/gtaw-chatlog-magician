@@ -12,6 +12,12 @@ const CHANGELOG_ENTRIES = [
                 'Temporarily disables coloring mode and removes selection outlines before export, restoring them after the image is saved',
                 'Defers export by one frame to ensure DOM updates are applied before capture (prevents visual artifacts)'
             ],
+            'Theme & UI': [
+                'Changed site background to a solid dark color for maximum text clarity (removed gradients)',
+                'Removed blurred logo from inside the input; disabled legacy .logo-overlay styles',
+                'Reordered stylesheet loading so app.css overrides modern.css correctly',
+                'Slightly stronger button hover and selection visuals for better affordance'
+            ],
             'Text Coloring System': [
                 'Updated makeTextColorable to generate word-level .colorable spans for both existing spans and plain text nodes',
                 'Adjusted fallback processing to wrap unrecognized text by word while preserving whitespace and line breaks'
@@ -19,6 +25,14 @@ const CHANGELOG_ENTRIES = [
             'Censorship & Formatting': [
                 'Preserved censorship handling (÷…÷) while grouping visible text into single word spans',
                 'Maintained existing formatting and line-breaking behavior with addLineBreaksAndHandleSpans'
+            ],
+            'Maintenance': [
+                'Fixed invalid nested CSS in color palette export styles',
+                'Namespaced and deduplicated event listeners for coloring UI',
+                'Replaced blocking alerts with non-blocking toast',
+                'Moved loading overlay styles from inline to CSS classes',
+                'Excluded selection elements from dom-to-image capture via filter',
+                'Escaped raw HTML in wrapping to prevent tag injection in spans'
             ]
         }
     },

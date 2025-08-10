@@ -997,9 +997,14 @@ $(document).ready(function() {
         return line;
     }
 
+    function escapeHTML(text) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
     function wrapSpan(className, content) {
-        // Normalize apostrophes
-        content = content.replace(/['''']/g, "'");
+        // Normalize apostrophes and escape HTML to prevent tag injection
+        content = escapeHTML(content.replace(/['''']/g, "'"));
         
         const tokens = content.split(/(\s+)/g);
         let html = '';

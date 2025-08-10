@@ -131,6 +131,10 @@ function downloadOutputImage() {
       style: {
         transform: 'scale(1)',
         transformOrigin: "top left",
+      },
+      filter: function(node) {
+        if (node.classList && node.classList.contains('selected-for-coloring')) return false;
+        return true;
       }
     }) : {
       width: width,
@@ -145,6 +149,7 @@ function downloadOutputImage() {
              node.href.includes('fonts.googleapis.com'))) {
           return false;
         }
+        if (node.classList && node.classList.contains('selected-for-coloring')) return false;
         return true;
       },
       imagePlaceholder: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y0ZjRmNCIvPjwvc3ZnPg=='
@@ -257,45 +262,14 @@ function downloadOutputImage() {
 }
 
 function showLoadingIndicator() {
-
   if ($('#loadingIndicator').length === 0) {
     $('body').append(`
-      <div id="loadingIndicator" style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-      ">
-        <div style="
-          background-color: #fff;
-          padding: 20px;
-          border-radius: 5px;
-          text-align: center;
-        ">
-          <div class="spinner" style="
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 2s linear infinite;
-            margin: 0 auto 10px;
-          "></div>
-          <p style="margin: 0; color: #333;">Generating image...</p>
+      <div id="loadingIndicator" class="loading-overlay">
+        <div class="loading-dialog">
+          <div class="spinner"></div>
+          <p class="loading-text">Generating image...</p>
         </div>
       </div>
-      <style>
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      </style>
     `);
   } else {
     $('#loadingIndicator').show();

@@ -15,12 +15,12 @@
 }
 
 .color-palette-header {
-    color: #fff;
+    color: var(--text);
     font-size: 14px;
     font-weight: 500;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     text-align: center;
 }
 
@@ -44,9 +44,10 @@
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid transparent;
-    transition: all 0.2s ease;
+    transition: transform var(--dur-hover) var(--ease-hover), box-shadow var(--dur-hover);
     background: currentColor;
     position: relative;
+    box-shadow: 0 0 0 0 rgba(255,255,255,0);
 }
 
 .color-item::after {
@@ -95,11 +96,9 @@
     transition-delay: 0.1s;
 }
 
-.color-item:hover {
-    transform: scale(1.1);
-    border-color: rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
-}
+.color-item:hover { transform: scale(1.12); box-shadow: 0 0 16px 0 currentColor, 0 0 2px 1px rgba(255,255,255,0.15); }
+.color-item.is-selected { animation: ringPulse 2s var(--ease-spring) infinite; }
+@keyframes ringPulse { 0%{ box-shadow:0 0 0 0 currentColor } 70%{ box-shadow:0 0 0 8px rgba(255,255,255,0) } 100%{ box-shadow:0 0 0 0 rgba(255,255,255,0) } }
 
 /* Color classes matching modern.css variables */
 .me { color: #c2a3da; }          /* Purple for /me actions */
@@ -140,7 +139,7 @@
 }
 
 .selected-for-coloring {
-    background-color: rgba(255, 255, 255, 0.2) !important;
+    background-color: rgba(255, 255, 255, 0.25) !important;
     outline: 2px solid rgba(255, 255, 255, 0.5);
     box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
     transform: scale(1.02);
@@ -159,16 +158,15 @@
     }
 }
 
-.dom-to-image {
-    .coloring-mode .colorable:hover,
-    .selected-for-coloring {
-        background-color: transparent !important;
-        outline: none !important;
-    }
-    
-    #colorPalette {
-        display: none !important;
-    }
+/* Export context: if a wrapper with .dom-to-image is used, ensure selections are invisible */
+.dom-to-image .coloring-mode .colorable:hover,
+.dom-to-image .selected-for-coloring {
+    background-color: transparent !important;
+    outline: none !important;
+}
+
+.dom-to-image #colorPalette {
+    display: none !important;
 }
 
 .color-applied-feedback {
