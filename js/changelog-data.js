@@ -1,12 +1,28 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-08-11',
+        title: 'UI: Output font toggle, lighter background, outline fix',
+        categories: {
+            'User Experience': [
+                'Added output font toggle (Default ↔ Trebuchet MS Bold) with local preference'
+            ],
+            'Theme & UI': [
+                'Lightened site background to improve visibility of line breaks in black text mode'
+            ],
+            'Typography': [
+                'Improved output text outline to prevent small gaps (8-direction text-shadow)'
+            ]
+        }
+    },
+    {
         date: '2025-08-10',
         title: 'UX: Word-based Text Selection for Coloring',
         categories: {
             'User Experience': [
                 'Switched selection granularity from character-by-character to word-by-word for easier selection and coloring',
                 'Drag-select now selects entire words, improving speed and accuracy when applying colors',
-                'Selections are now automatically cleared when downloading an image to avoid selection highlights in exports'
+                'Selections are now automatically cleared when downloading an image to avoid selection highlights in exports',
+                'Added output font toggle (Default ↔ Trebuchet MS Bold) with preference saved locally'
             ],
             'Image Export': [
                 'Temporarily disables coloring mode and removes selection outlines before export, restoring them after the image is saved',
@@ -16,11 +32,13 @@ const CHANGELOG_ENTRIES = [
                 'Changed site background to a solid dark color for maximum text clarity (removed gradients)',
                 'Removed blurred logo from inside the input; disabled legacy .logo-overlay styles',
                 'Reordered stylesheet loading so app.css overrides modern.css correctly',
-                'Slightly stronger button hover and selection visuals for better affordance'
+                'Slightly stronger button hover and selection visuals for better affordance',
+                'Lightened global background and output surface to improve visibility of line breaks'
             ],
             'Text Coloring System': [
                 'Updated makeTextColorable to generate word-level .colorable spans for both existing spans and plain text nodes',
-                'Adjusted fallback processing to wrap unrecognized text by word while preserving whitespace and line breaks'
+                'Adjusted fallback processing to wrap unrecognized text by word while preserving whitespace and line breaks',
+                'Fixed narrative lines being colored lightgrey by only applying character-name says-coloring when a "says" pattern is present'
             ],
             'Censorship & Formatting': [
                 'Preserved censorship handling (÷…÷) while grouping visible text into single word spans',
@@ -32,7 +50,10 @@ const CHANGELOG_ENTRIES = [
                 'Replaced blocking alerts with non-blocking toast',
                 'Moved loading overlay styles from inline to CSS classes',
                 'Excluded selection elements from dom-to-image capture via filter',
-                'Escaped raw HTML in wrapping to prevent tag injection in spans'
+                'Escaped raw HTML in wrapping to prevent tag injection in spans',
+                'Improved output text outline using 8-direction text-shadow to prevent small gaps',
+                'Avoided intrusive native text-stroke to keep the outline outside the glyph fill',
+                'Map Trebuchet MS Bold via local() only; no external font files included'
             ]
         }
     },

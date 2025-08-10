@@ -10,7 +10,8 @@ body {
 
 /* Design tokens for colors, motion, elevation */
 :root {
-    --bg: #0B0F14;
+    /* Lighten the global background for better contrast with black output background */
+    --bg: #141a22;
     --surface: #0F1623;
     --surface-2: #111827;
     --text: #E5E7EB;
@@ -29,6 +30,15 @@ body {
     --dur-hover: 180ms;
     --dur-press: 100ms;
     --dur-panel: 300ms;
+}
+
+/* Use system Trebuchet MS Bold without bundling any font files */
+@font-face {
+    font-family: 'Trebuchet MS';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Trebuchet MS Bold'), local('TrebuchetMS-Bold');
+    font-display: swap;
 }
 
 html::-webkit-scrollbar {
@@ -130,6 +140,32 @@ html::-webkit-scrollbar {
 	overflow: visible;
 }
 
+/* Output font toggle */
+.output-font-trebuchet,
+#output.output-font-trebuchet {
+    font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 700;
+}
+
+/* Attention animation for Buy Me a Coffee button */
+.bmc-btn { display: inline-block; }
+.bmc-attn { animation: bmcShake 600ms var(--ease-spring); }
+@keyframes bmcShake {
+  0% { transform: translateX(0); }
+  10% { transform: translateX(-3px); }
+  20% { transform: translateX(3px); }
+  30% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  50% { transform: translateX(-2px); }
+  60% { transform: translateX(2px); }
+  70% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+  100% { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce){
+  .bmc-attn { animation: none; }
+}
+
 .me {
 	color: #c2a3da;
 }
@@ -200,19 +236,32 @@ html::-webkit-scrollbar {
 	line-height: 1.5;
 	-webkit-font-smoothing: none !important;
 	-moz-osx-font-smoothing: none !important;
+	text-rendering: optimizeSpeed;
 	font-weight: 700;
 	color: #fff;
-	text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+	/* Fill all 8 directions to avoid tiny gaps in the faux stroke */
+	text-shadow:
+	  0 1px 0 #000,
+	  0 -1px 0 #000,
+	  1px 0 0 #000,
+	 -1px 0 0 #000,
+	 -1px -1px 0 #000,
+	  1px -1px 0 #000,
+	 -1px 1px 0 #000,
+	  1px 1px 0 #000;
 	letter-spacing: 0.2px;
 	font-size: 12px;
 	margin-top: 20px;
 	padding: 20px;
-    background-color: rgba(17, 24, 39, 0.55);
+    /* Slightly lighter surface so new line breaks are easier to see even with black text background */
+    background-color: rgba(24, 32, 44, 0.6);
 	border-radius: 8px;
 	-webkit-backdrop-filter: blur(5px);
 	backdrop-filter: blur(5px);
 	transition: all var(--dur-panel) var(--ease-spring);
 }
+
+/* Use multi-direction text-shadow only to keep outline outside the fill */
 
 .output.processing {
 	opacity: 0.8;

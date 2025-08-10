@@ -777,4 +777,40 @@ $(document).ready(function() {
       tab.setAttribute('aria-label', 'Open changelog');
     }
   });
+
+  // Toggle output font between default and Trebuchet MS
+  $('#toggleOutputFont').on('click', function() {
+    const $out = $('#output');
+    const isTrebuchet = $out.toggleClass('output-font-trebuchet').hasClass('output-font-trebuchet');
+    $(this).text('Font: ' + (isTrebuchet ? 'Trebuchet MS' : 'Default'));
+    try {
+      localStorage.setItem('outputFontTrebuchet', isTrebuchet ? '1' : '0');
+    } catch (e) {}
+  });
+
+  // Restore saved output font preference
+  try {
+    const saved = localStorage.getItem('outputFontTrebuchet');
+    if (saved === '1') {
+      $('#output').addClass('output-font-trebuchet');
+      $('#toggleOutputFont').text('Font: Trebuchet MS');
+    }
+  } catch (e) {}
+
+  // Randomly shake the Buy Me a Coffee button to draw attention (non-intrusive)
+  (function initBmcNudge(){
+    function nudgeOnce(){
+      const btn = document.querySelector('.bmc-btn');
+      if (!btn) return;
+      btn.classList.add('bmc-attn');
+      setTimeout(()=>btn.classList.remove('bmc-attn'), 800);
+    }
+    function scheduleNext(){
+      // random between 20s and 60s
+      const ms = 20000 + Math.random()*40000;
+      setTimeout(()=>{ nudgeOnce(); scheduleNext(); }, ms);
+    }
+    // start after initial delay to avoid on-load distraction
+    setTimeout(scheduleNext, 15000);
+  })();
 });
