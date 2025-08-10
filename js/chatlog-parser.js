@@ -464,7 +464,8 @@ $(document).ready(function() {
         }
 
         const currentCharacterName = $("#characterNameInput").val().toLowerCase().trim();
-        if (currentCharacterName && currentCharacterName !== "") {
+        // Only apply character-name based says coloring when the line actually contains a "says" pattern
+        if (currentCharacterName && currentCharacterName !== "" && /\bsays\b/.test(lowerLine)) {
             // Remove [!] if present for name detection
             const lineWithoutExclamation = cleanLine.replace(/^\[!\]\s*/, '');
             
