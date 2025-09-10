@@ -668,10 +668,8 @@ $(document).ready(function() {
 
   refreshHistoryPanel();
 
-  function toggleHistoryPanel() {
-    const panel = document.getElementById('historyPanel');
-    panel.classList.toggle('open');
-  }
+  // Removed duplicate toggleHistoryPanel definition. The global function in this file
+  // already controls accessibility attributes and tab visibility.
 
   $('#font-label').on('input', function() {
     const value = parseInt($(this).val());
@@ -746,11 +744,8 @@ $(document).ready(function() {
     function() { $(this).css('transform', 'translateY(0)'); }
   );
 
-  $(document).on('click', function(e) {
-    if (!$(e.target).closest('#historyPanel, #chatlogInput').length) {
-      $('#historyPanel').hide();
-    }
-  });
+  // Removed conflicting click-outside handler that force-hides the panel.
+  // History panel visibility is controlled by the toggle with ARIA updates.
 
   $(document).on('click', '.history-item', function() {
     const index = $(this).data('index');

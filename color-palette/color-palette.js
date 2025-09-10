@@ -155,10 +155,9 @@
     function setupClosePaletteHandler() {
         $(document).off('click.closePalette').on('click.closePalette', function(e) {
             if (!coloringMode) return;
+            // Hide palette when clicking outside while staying in coloring mode
             if (!$(e.target).closest('#colorPalette, #toggleColorPalette').length) {
-                if (!coloringMode) {
-                    $colorPalette.hide();
-                }
+                $colorPalette.hide();
             }
         });
     }

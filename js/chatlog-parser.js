@@ -432,20 +432,19 @@ $(document).ready(function() {
     window.makeTextColorable = makeTextColorable;
 
     function applyUserCensorship(line) {
-        // Use a more robust approach that handles browser compatibility issues
-        // Replace ÷ with a more reliable delimiter and handle edge cases
+        // Replace ÷...÷ with a hidden span while safely escaping user content
         try {
             return line.replace(/÷(.*?)÷/g, (match, p1) => {
-                // Ensure we're not duplicating content
                 if (p1 && p1.trim()) {
-                    return `<span class="hidden censored-content" data-original="${p1.replace(/"/g, '&quot;')}">${p1}</span>`;
+                    // Escape for both attribute and element text contexts
+                    const safeText = escapeHTML(p1);
+                    return `<span class="hidden censored-content" data-original="${safeText}">${safeText}</span>`;
                 }
-                return match; // Return original if no content to censor
+                return match;
             });
         } catch (error) {
-            // Fallback for browsers with regex issues
             console.warn('Censorship regex failed, using fallback method:', error);
-            return line.replace(/÷/g, '÷'); // Just return the line as-is if regex fails
+            return line;
         }
     }
 
