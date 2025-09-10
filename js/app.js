@@ -18,48 +18,52 @@ function trimCanvas(canvas) {
     left = null,
     right = null;
 
-  for (let y = 0; y < canvas.height; y++) {
-    for (let x = 0; x < canvas.width; x++) {
-      let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-      if (alpha > 0) {
+  // Optimize by using Uint32Array view for faster alpha checking
+  const uint32View = new Uint32Array(pixels.buffer);
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Find top - scan rows from top
+  findTop: for (let y = 0; y < height; y++) {
+    const rowStart = y * width;
+    for (let x = 0; x < width; x++) {
+      // Check alpha channel (most significant byte in little-endian)
+      if ((uint32View[rowStart + x] & 0xFF000000) !== 0) {
         top = y;
-        break;
+        break findTop;
       }
     }
-    if (top !== null) break;
   }
 
-  for (let y = canvas.height - 1; y >= 0; y--) {
-    for (let x = 0; x < canvas.width; x++) {
-      let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-      if (alpha > 0) {
+  // Find bottom - scan rows from bottom
+  findBottom: for (let y = height - 1; y >= 0; y--) {
+    const rowStart = y * width;
+    for (let x = 0; x < width; x++) {
+      if ((uint32View[rowStart + x] & 0xFF000000) !== 0) {
         bottom = y;
-        break;
+        break findBottom;
       }
     }
-    if (bottom !== null) break;
   }
 
-  for (let x = 0; x < canvas.width; x++) {
-    for (let y = 0; y < canvas.height; y++) {
-      let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-      if (alpha > 0) {
+  // Find left - scan columns from left
+  findLeft: for (let x = 0; x < width; x++) {
+    for (let y = 0; y < height; y++) {
+      if ((uint32View[y * width + x] & 0xFF000000) !== 0) {
         left = x;
-        break;
+        break findLeft;
       }
     }
-    if (left !== null) break;
   }
 
-  for (let x = canvas.width - 1; x >= 0; x--) {
-    for (let y = 0; y < canvas.height; y++) {
-      let alpha = pixels[(y * canvas.width + x) * 4 + 3];
-      if (alpha > 0) {
+  // Find right - scan columns from right
+  findRight: for (let x = width - 1; x >= 0; x--) {
+    for (let y = 0; y < height; y++) {
+      if ((uint32View[y * width + x] & 0xFF000000) !== 0) {
         right = x;
-        break;
+        break findRight;
       }
     }
-    if (right !== null) break;
   }
 
   if (top !== null && bottom !== null && left !== null && right !== null) {
@@ -155,7 +159,7 @@ function downloadOutputImage() {
       imagePlaceholder: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y0ZjRmNCIvPjwvc3ZnPg=='
     };
 
-  // Try with original output first
+  // Check if domtoimage is loaded before trying to use it
   if (typeof domtoimage === 'undefined') {
     console.error('domtoimage library not loaded');
     alert('Image generation library not available. Please refresh the page and try again.');
@@ -164,7 +168,9 @@ function downloadOutputImage() {
     return;
   }
   
-  domtoimage.toBlob(output[0], domtoimageOptions).then(function(blob) {
+  // Wrap in try-catch for additional safety
+  try {
+    domtoimage.toBlob(output[0], domtoimageOptions).then(function(blob) {
     output.css('padding-bottom', originalPadding);
     processGeneratedBlob(blob);
   }).catch(function(error) {
@@ -210,6 +216,10 @@ function downloadOutputImage() {
       handleImageGenerationError(error);
     }
   });
+  } catch (error) {
+    console.error('Unexpected error in image generation:', error);
+    handleImageGenerationError(error);
+  }
 
   function processGeneratedBlob(blob) {
     const img = new Image();
@@ -668,11 +678,6 @@ $(document).ready(function() {
 
   refreshHistoryPanel();
 
-  function toggleHistoryPanel() {
-    const panel = document.getElementById('historyPanel');
-    panel.classList.toggle('open');
-  }
-
   $('#font-label').on('input', function() {
     const value = parseInt($(this).val());
     // Remove font size limitations - allow any positive value
@@ -798,6 +803,7 @@ $(document).ready(function() {
   } catch (e) {}
 
   // Randomly shake the Buy Me a Coffee button to draw attention (non-intrusive)
+  let bmcNudgeTimeout;
   (function initBmcNudge(){
     function nudgeOnce(){
       const btn = document.querySelector('.bmc-btn');
@@ -808,9 +814,39 @@ $(document).ready(function() {
     function scheduleNext(){
       // random between 20s and 60s
       const ms = 20000 + Math.random()*40000;
-      setTimeout(()=>{ nudgeOnce(); scheduleNext(); }, ms);
+      bmcNudgeTimeout = setTimeout(()=>{ nudgeOnce(); scheduleNext(); }, ms);
     }
     // start after initial delay to avoid on-load distraction
-    setTimeout(scheduleNext, 15000);
+    bmcNudgeTimeout = setTimeout(scheduleNext, 15000);
   })();
+  
+  // Cleanup function for removing event listeners
+  window.cleanupChatlogMagician = function() {
+    // Clear timeouts
+    if (bmcNudgeTimeout) clearTimeout(bmcNudgeTimeout);
+    if (processingTimeout) clearTimeout(processingTimeout);
+    
+    // Remove event listeners
+    $('#font-label').off('input');
+    $('#lineLengthInput').off('input');
+    $('#characterNameInput').off('input');
+    $('#chatlogInput').off('input');
+    $("#downloadOutputTransparent").off('click');
+    $("#toggleBackground").off('click');
+    $('#censorCharButton').off('click');
+    $('#toggleOutputFont').off('click');
+    $('#addCharacterBtn').off('click');
+    $('#showCharacterListBtn').off('click');
+    $(document).off('click', '.character-name-select');
+    $(document).off('click', '.remove-character-btn');
+    $(document).off('click', '.history-item');
+    document.removeEventListener('keydown', handleKeyboardShortcuts);
+    
+    // Cleanup color palette if it exists
+    if (window.ColorPalette && typeof window.ColorPalette.cleanup === 'function') {
+      window.ColorPalette.cleanup();
+    }
+    
+    console.log('Chatlog Magician cleanup completed');
+  };
 });

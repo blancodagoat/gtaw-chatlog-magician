@@ -19,8 +19,12 @@ $(document).ready(function() {
     $toggleCensorshipBtn.click(toggleCensorship);
     $toggleCharacterNameColoringBtn.click(toggleCharacterNameColoring);
     $censorCharButton.click(copyCensorChar);
-    $lineLengthInput.on("input", processOutput);
-    $characterNameInput.on("input", applyFilter);
+    // Use debounce for inputs that trigger processOutput to avoid excessive processing
+    const debouncedProcessOutput = debounce(processOutput, 300);
+    const debouncedApplyFilter = debounce(applyFilter, 200);
+    
+    $lineLengthInput.on("input", debouncedProcessOutput);
+    $characterNameInput.on("input", debouncedApplyFilter);
     $textarea.off("input").on("input", throttle(processOutput, 200));
 
     function toggleBackground() {
@@ -162,13 +166,14 @@ $(document).ready(function() {
     }
 
     function processOutput() {
-        const chatText = $textarea.val();
-        const chatLines = chatText.split("\n")
-                                  .map(removeTimestamps)
-                                  .map(replaceDashes)
-                                  .map(replaceCurlyApostrophes);
+        try {
+            const chatText = $textarea.val();
+            const chatLines = chatText.split("\n")
+                                      .map(removeTimestamps)
+                                      .map(replaceDashes)
+                                      .map(replaceCurlyApostrophes);
 
-        const fragment = document.createDocumentFragment();
+            const fragment = document.createDocumentFragment();
 
         chatLines.forEach((line) => {
             // Skip animation stop messages
@@ -295,6 +300,11 @@ $(document).ready(function() {
         cleanUp();
 
         makeTextColorable();
+        } catch (error) {
+            console.error('Error processing output:', error);
+            // Show user-friendly error message
+            $output.html('<div class="error-message">Error processing chat log. Please check the format and try again.</div>');
+        }
     }
 
     // Make processOutput globally accessible
@@ -454,6 +464,8 @@ $(document).ready(function() {
     }
 
     function formatLineWithFilter(line) {
+        // Escape HTML in the line first to prevent XSS
+        line = escapeHTML(line);
         // Strip censorship markers for formatting logic
         const cleanLine = line.replace(/÷(.*?)÷/g, '$1');
         const lowerLine = cleanLine.toLowerCase();
@@ -1004,8 +1016,10 @@ $(document).ready(function() {
     }
 
     function wrapSpan(className, content) {
-        // Normalize apostrophes and escape HTML to prevent tag injection
-        content = escapeHTML(content.replace(/['''']/g, "'"));
+        // Always escape HTML first to prevent tag injection
+        content = escapeHTML(content);
+        // Then normalize apostrophes
+        content = content.replace(/['''']/g, "'");
         
         const tokens = content.split(/(\s+)/g);
         let html = '';

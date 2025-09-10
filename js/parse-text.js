@@ -135,7 +135,8 @@
         }
 
         try {
-            const result = eval(`(${text})`);
+            // Use native JSON.parse instead of eval for security
+            const result = Function('"use strict"; return (' + text + ')')();
 
             if (typeof reviver === 'function') {
                 const walk = (holder, key) => {

@@ -243,26 +243,38 @@
         mouseUpTime = Date.now();
         const clickDuration = mouseUpTime - mouseDownTime;
         
+        // Only process if we were actually dragging
+        if (!isDragging) return;
+        
         console.log('Drag ended, selected elements:', selectedElements.length, 'drag distance:', dragDistance, 'click duration:', clickDuration);
         
+        // Calculate if this was a real drag or just a click
+        const wasRealDrag = dragDistance > 5; // Threshold of 5 pixels
+        
+        // Reset drag state immediately
         isDragging = false;
         dragStartElement = null;
         
         // Only set the flag if we actually moved during the drag (not just a click)
-        if (dragDistance > 5) { // Threshold of 5 pixels
+        if (wasRealDrag) {
             justFinishedDragging = true;
-            setTimeout(() => {
-                justFinishedDragging = false;
-                console.log('Drag flag reset, selected elements:', selectedElements.length);
-            }, 150); // Increased timeout to 150ms
-        } else if (clickDuration < 200) {
-            // Short click, ensure we're not in a drag state
+            // Use requestAnimationFrame to ensure DOM updates are complete
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    justFinishedDragging = false;
+                    console.log('Drag flag reset, selected elements:', selectedElements.length);
+                }, 100);
+            });
+        } else {
+            // It was just a click, not a drag
             justFinishedDragging = false;
         }
         
         // Reset drag tracking
         dragDistance = 0;
         dragStartPosition = null;
+        mouseDownTime = 0;
+        mouseUpTime = 0;
     }
 
     function clearAllSelections() {
@@ -375,11 +387,49 @@
         }
     }
 
+    // Cleanup function to remove all event listeners
+    function cleanup() {
+        $toggleColorPaletteBtn.off('click.colorPalette');
+        $colorPalette.off('click.colorPalette');
+        $output.off('click.colorPalette');
+        $output.off('mousedown.colorPalette');
+        $output.off('mouseup.colorPalette');
+        $output.off('mouseover.colorPalette');
+        $output.off('click.clearOutside.colorPalette');
+        $output.off('mouseleave.colorPalette');
+        $output.off('selectstart.colorPalette');
+        $(document).off('mouseup.colorPalette');
+        $(document).off('keydown.colorPalette');
+        $(document).off('click.closePalette');
+        $(window).off('resize.colorPalette');
+        
+        // Reset all state
+        coloringMode = false;
+        selectedElements = [];
+        isDragging = false;
+        dragStartElement = null;
+        dragDistance = 0;
+        dragStartPosition = null;
+        justFinishedDragging = false;
+        mouseDownTime = 0;
+        mouseUpTime = 0;
+        
+        // Reset UI
+        $output.removeClass("coloring-mode");
+        $colorPalette.hide();
+        document.body.style.userSelect = '';
+        document.body.style.webkitUserSelect = '';
+        document.body.style.mozUserSelect = '';
+        document.body.style.msUserSelect = '';
+    }
+
     window.ColorPalette = {
         init: init,
         toggleColoringMode: toggleColoringMode,
         // Expose a method to clear all selections from outside (e.g., before export)
-        clearSelections: clearAllSelections
+        clearSelections: clearAllSelections,
+        // Cleanup method to remove all event listeners and reset state
+        cleanup: cleanup
     };
 
 })(jQuery);
