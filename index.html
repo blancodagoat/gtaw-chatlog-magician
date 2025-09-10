@@ -23,7 +23,6 @@
   <link rel="stylesheet" href="css/app.css" />
   <link rel="stylesheet" href="css/fontawesome.min.css" />
   <link rel="stylesheet" href="color-palette/color-palette.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="icon" href="favicon.png" type="image/png" />
 
   <!-- Error handling and cross-origin fixes -->
@@ -99,7 +98,7 @@
                     <button id="toggleCharacterNameColoring" class="button" aria-label="Toggle character name coloring" title="Disable character name detection coloring">Name Colors</button>
                     <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character" title="Copy ÷ character">÷</button>
                     <button id="toggleColorPalette" class="button" aria-label="Toggle color palette" title="Click text to color">Color Text</button>
-                    <div class="button" style="display: inline-flex; align-items: center; padding: 0.5em 1em; height: 38px;">
+                    <div id="bmc-container" class="button" style="display: inline-flex; align-items: center; padding: 0.5em 1em; height: 38px;">
                      <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="blancodagoat" data-color="#000000" data-emoji="" data-font="Cookie" data-text="Buy me a pizza" data-outline-color="#ffffff" data-font-color="#ffffff" data-coffee-color="#FFDD00" data-size="small"></script>
                    </div>
                  </div>
@@ -110,7 +109,7 @@
      </div>
 
      <!-- Third-party scripts -->
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/4.0.0-beta.2/jquery.min.js" defer></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" defer></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.9.0/js/foundation.min.js" defer></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/3.5.0/dom-to-image-more.min.js" defer></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
@@ -129,7 +128,7 @@
           tabindex="0" 
           aria-label="Open chat history" 
           aria-expanded="false">
-       <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+       <i class="fas fa-history" aria-hidden="true"></i>
      </div>
 
      <div id="historyPanel" 

@@ -668,10 +668,7 @@ $(document).ready(function() {
 
   refreshHistoryPanel();
 
-  function toggleHistoryPanel() {
-    const panel = document.getElementById('historyPanel');
-    panel.classList.toggle('open');
-  }
+  // removed duplicate toggleHistoryPanel; using global function defined above
 
   $('#font-label').on('input', function() {
     const value = parseInt($(this).val());
@@ -748,7 +745,8 @@ $(document).ready(function() {
 
   $(document).on('click', function(e) {
     if (!$(e.target).closest('#historyPanel, #chatlogInput').length) {
-      $('#historyPanel').hide();
+      const panel = document.getElementById('historyPanel');
+      if (panel.classList.contains('open')) toggleHistoryPanel();
     }
   });
 
@@ -757,7 +755,8 @@ $(document).ready(function() {
     const history = loadHistory();
     if (history[index]) {
       $('#chatlogInput').val(history[index]).trigger('input');
-      $('#historyPanel').hide();
+      const panel = document.getElementById('historyPanel');
+      if (panel.classList.contains('open')) toggleHistoryPanel();
     }
   });
 
