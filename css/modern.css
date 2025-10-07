@@ -154,6 +154,28 @@ html::-webkit-scrollbar {
   padding: var(--spacing-lg);
 }
 
+/* Size-aware line-height adjustments for optical comfort */
+.output.is-small {
+  line-height: 1.5; /* More breathing room for small text */
+}
+
+.output.is-large {
+  line-height: 1.35; /* Tighter for large text */
+}
+
+/* Enable font smoothing for smaller font sizes (13px and below) to make them appear more rounded */
+.output.font-smoothed {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: auto !important;
+  text-rendering: optimizeLegibility;
+  /* Additional properties to improve font rendering at small sizes */
+  font-variant-ligatures: normal;
+  font-feature-settings: "kern" 1;
+  -webkit-font-feature-settings: "kern" 1;
+  /* Ensure consistent rendering across browsers */
+  -webkit-text-stroke: 0.01em transparent;
+}
+
 .me { color: var(--me-color); }
 .ame { color: var(--ame-color); }
 .darkgrey { color: var(--darkgrey-color); }

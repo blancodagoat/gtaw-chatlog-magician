@@ -5,8 +5,70 @@ let lastProcessedText = '';
 let processingTimeout = null;
 
 function updateFontSize() {
-  const fontSize = $('#font-label').val() + 'px';
-  $('#output').css('font-size', fontSize);
+  const fontSize = parseInt($('#font-label').val());
+  $('#output').css('font-size', fontSize + 'px');
+  
+  // Apply font smoothing for smaller sizes (13px and below) to make them more rounded
+  if (fontSize <= 13) {
+    $('#output').addClass('font-smoothed');
+  } else {
+    $('#output').removeClass('font-smoothed');
+  }
+  
+  // Apply size-aware line-height classes
+  applySizeClasses(fontSize);
+  
+  // Store the font size in localStorage
+  localStorage.setItem('chatlogFontSize', fontSize.toString());
+}
+
+// Typographic Golden Meta: Hand-picked scale optimized for readability
+// Based on Major Third ratio (≈1.25×) but adjusted for typographic best practices
+const TYPOGRAPHIC_SCALE = [8, 10, 12, 15, 19, 24];
+
+function isTypographicGolden(fontSize) {
+  return TYPOGRAPHIC_SCALE.includes(fontSize);
+}
+
+function getNextGoldenSize(currentSize, direction = 'up') {
+  const index = TYPOGRAPHIC_SCALE.indexOf(currentSize);
+  if (index === -1) return currentSize; // Not a golden size
+  
+  if (direction === 'up' && index < TYPOGRAPHIC_SCALE.length - 1) {
+    return TYPOGRAPHIC_SCALE[index + 1];
+  } else if (direction === 'down' && index > 0) {
+    return TYPOGRAPHIC_SCALE[index - 1];
+  }
+  return currentSize;
+}
+
+function nearestGolden(n) {
+  return TYPOGRAPHIC_SCALE.reduce((best, v) =>
+    Math.abs(v - n) < Math.abs(best - n) ? v : best
+  , TYPOGRAPHIC_SCALE[0]);
+}
+
+function percentDelta(a, b) { 
+  return ((b - a) / a * 100).toFixed(1); 
+}
+
+function goldenHintHTML(scale) {
+  return scale.map(s => `${s}px`).join(' → ');
+}
+
+function applySizeClasses(px) {
+  $('#output').toggleClass('is-small', px <= 12);
+  $('#output').toggleClass('is-large', px >= 20);
+}
+
+// Debug function to print scale's % deltas (handy for meta inspection)
+function printScaleDeltas() {
+  console.table(
+    TYPOGRAPHIC_SCALE.slice(0, -1).map((s, i) => {
+      const t = TYPOGRAPHIC_SCALE[i+1];
+      return { from: s, to: t, percent: +(((t-s)/s)*100).toFixed(1) };
+    })
+  );
 }
 
 function trimCanvas(canvas) {
@@ -658,9 +720,13 @@ $(document).ready(function() {
     }
   });
 
+  // Initialize font size from localStorage or default to 12px
   $('#font-label').val(localStorage.getItem('chatlogFontSize') || 12);
   $('#lineLengthInput').val(localStorage.getItem('chatlogLineLength') || 77);
   $('#characterNameInput').val(localStorage.getItem('chatlogCharacterName') || '');
+
+  // Update golden hint
+  $('.golden-sizes-hint').html(goldenHintHTML(TYPOGRAPHIC_SCALE));
 
   updateFontSize();
 
@@ -675,10 +741,11 @@ $(document).ready(function() {
 
   $('#font-label').on('input', function() {
     const value = parseInt($(this).val());
-    // Remove font size limitations - allow any positive value
-    if (value < 1) $(this).val(1);
+    // Ensure value is within valid range
+    if (value < 8) $(this).val(8);
+    if (value > 24) $(this).val(24);
     
-    localStorage.setItem('chatlogFontSize', $(this).val());
+    // Font size is now stored automatically in updateFontSize()
     updateFontSize();
     
     // Reprocess output to recalculate line breaks with new font size
@@ -688,6 +755,8 @@ $(document).ready(function() {
     
     showAutoSaveIndicator();
   });
+
+
 
   $('#lineLengthInput').on('input', function() {
     const value = parseInt($(this).val());

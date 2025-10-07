@@ -233,7 +233,7 @@ html::-webkit-scrollbar {
 }
 
 .output {
-	line-height: 1.5;
+	line-height: 1.45; /* Default line-height, adjusted by size classes */
 	-webkit-font-smoothing: none !important;
 	-moz-osx-font-smoothing: none !important;
 	text-rendering: optimizeSpeed;
@@ -259,6 +259,28 @@ html::-webkit-scrollbar {
 	-webkit-backdrop-filter: blur(5px);
 	backdrop-filter: blur(5px);
 	transition: all var(--dur-panel) var(--ease-spring);
+}
+
+/* Size-aware line-height adjustments for optical comfort */
+.output.is-small {
+	line-height: 1.5; /* More breathing room for small text */
+}
+
+.output.is-large {
+	line-height: 1.35; /* Tighter for large text */
+}
+
+/* Enable font smoothing for smaller font sizes (13px and below) to make them appear more rounded */
+.output.font-smoothed {
+	-webkit-font-smoothing: antialiased !important;
+	-moz-osx-font-smoothing: auto !important;
+	text-rendering: optimizeLegibility;
+	/* Additional properties to improve font rendering at small sizes */
+	font-variant-ligatures: normal;
+	font-feature-settings: "kern" 1;
+	-webkit-font-feature-settings: "kern" 1;
+	/* Ensure consistent rendering across browsers */
+	-webkit-text-stroke: 0.01em transparent;
 }
 
 /* Use multi-direction text-shadow only to keep outline outside the fill */
@@ -410,10 +432,16 @@ html::-webkit-scrollbar {
 	color: #fff;
 }
 
+
 .input-group input::placeholder,
 .cell input::placeholder {
 	color: rgba(255, 255, 255, 0.7);
 }
+
+.golden-sizes-hint {
+	display: none;
+}
+
 
 .input-group input:hover,
 .cell input:hover {
