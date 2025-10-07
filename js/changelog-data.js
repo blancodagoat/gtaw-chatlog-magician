@@ -1,7 +1,7 @@
 const CHANGELOG_ENTRIES = [
     {
         date: '2025-10-07',
-        title: 'Typography: Font Rendering & Size System Improvements',
+        title: 'Typography: Font Rendering Improvements',
         categories: {
             'Typography': [
                 'Fixed font rendering issue where smaller sizes (13px and below) appeared pixelated and squared',
@@ -9,17 +9,10 @@ const CHANGELOG_ENTRIES = [
                 'Implemented size-aware line-height adjustments (1.5 for ≤12px, 1.45 default, 1.35 for ≥20px)',
                 'Enhanced font rendering with kerning, ligatures, and subpixel optimization for better readability'
             ],
-            'User Experience': [
-                'Simplified font size input to clean number input (8-24px range)',
-                'Removed automatic snapping to "golden" sizes - font sizes now stay exactly as set',
-                'Hidden typographic scale hints from UI to reduce visual clutter',
-                'Maintained all font smoothing improvements while keeping interface simple'
-            ],
             'Technical Improvements': [
                 'Added font smoothing CSS with cross-browser compatibility (-webkit-font-smoothing, -moz-osx-font-smoothing)',
                 'Implemented size-aware CSS classes (.is-small, .is-large) for responsive typography',
-                'Enhanced font rendering with text-stroke optimization and geometric precision',
-                'Maintained backward compatibility with existing font size system'
+                'Enhanced font rendering with text-stroke optimization and geometric precision'
             ]
         }
     },
