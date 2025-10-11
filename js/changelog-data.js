@@ -46,13 +46,16 @@ const CHANGELOG_ENTRIES = [
                 'Added Vercel serverless function (api/report-bug.js) for private webhook proxy',
                 'Updated GitHub issue templates to integrate with "Report Bug" button workflow',
                 'Configured security headers: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy',
-                'Set up environment variable support for private webhook URLs in Vercel'
+                'Set up environment variable support for private webhook URLs in Vercel',
+                'Fixed config.js 404 error by removing script tag - error logger now uses built-in defaults seamlessly'
             ],
             'User Experience': [
                 'Enhanced bug reporting - users can now send detailed error reports with one click',
                 'Session tracking with unique session IDs for better issue correlation',
                 'Performance metrics captured automatically (page load time, memory usage)',
-                'Browser and system information automatically included in error reports'
+                'Browser and system information automatically included in error reports',
+                'Replaced all blocking alert() pop-ups with non-blocking toast notifications for better UX',
+                'Bug report button now shows instant feedback without interrupting user workflow'
             ]
         }
     },
