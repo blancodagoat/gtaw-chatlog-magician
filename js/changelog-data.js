@@ -3,59 +3,41 @@ const CHANGELOG_ENTRIES = [
         date: '2025-10-11',
         title: 'Production Hardening: Security, XSS Protection & Code Quality',
         categories: {
-            'Critical Security Fixes': [
-                'Removed dangerous eval() vulnerability by deleting js/parse-text.js (XSS and arbitrary code execution risk eliminated)',
-                'Added SRI (Subresource Integrity) hashes to all 5 CDN resources for supply chain attack protection',
-                'Implemented comprehensive XSS protection with 64 escapeHTML() sanitization points across chatlog-parser.js',
-                'Validated and sanitized hex color codes before inline style injection',
-                'Fixed aria-hidden accessibility bug that was blocking focus on history/changelog panels'
+            'Security Fixes': [
+                'Removed eval() vulnerability (deleted js/parse-text.js)',
+                'Added SRI hashes to all CDN resources',
+                'Implemented XSS protection with 64 sanitization points',
+                'Fixed aria-hidden accessibility bug'
             ],
-            'Code Quality & Maintainability': [
-                'Extracted 27+ magic numbers into named CONFIG constants for better maintainability',
-                'Added JSDoc documentation to 15+ key functions with parameter types and descriptions',
-                'Implemented DEBUG_MODE flag in 3 files for clean production console (set to false)',
-                'Removed duplicate toggleHistoryPanel() function',
-                'Fixed CSS vendor prefix order (-webkit- before standard properties)',
-                'Removed font toggle feature - now using default font only for consistency'
+            'Code Quality': [
+                'Extracted magic numbers into CONFIG constants',
+                'Added JSDoc documentation to key functions',
+                'Implemented DEBUG_MODE flags for clean console',
+                'Removed font toggle feature (default font only)'
             ],
             'Memory Management': [
-                'Added ColorPalette.destroy() method to properly clean up event listeners',
-                'Implemented namespaced event listeners throughout (.colorPalette, .closePalette)',
-                'Fixed memory leak prevention by properly removing all event listeners when not needed',
-                'Enhanced state reset functionality to prevent memory accumulation during long sessions'
+                'Added ColorPalette.destroy() method for cleanup',
+                'Implemented namespaced event listeners',
+                'Fixed memory leak prevention'
             ],
             'Error Logging & Debugging': [
-                'Created comprehensive error logging system (js/error-logger.js) with auto-save to localStorage',
-                'Added "Report Bug" button (red with bug icon) for automated one-click bug reporting',
-                'Implemented automated bug reporting with Discord webhook integration - reports sent instantly to developer',
-                'Added Vercel serverless function (/api/report-bug) to keep webhook URLs private and secure',
-                'Created multi-tier fallback system: Discord webhook → Email → Manual clipboard copy',
-                'Error reports include session ID, browser info, performance metrics, and full error logs with stack traces',
-                'Integrated error-handler.js with ErrorLogger to capture all errors automatically',
-                'Added rate limiting (5 reports per session, 60s cooldown) to prevent spam and abuse',
-                'Rich Discord embeds with color-coding (red for errors, orange for feedback) and organized fields',
-                'Simplified fallback system: Discord webhook → Clipboard copy (email fallback removed)',
-                'Added developer console commands: ErrorLogger.sendReport(), copyReport(), downloadReport(), getLog(), clearLog()',
-                'Error reports persist across page reloads for better debugging of intermittent issues',
-                'Configuration system (js/config.js) with .gitignore protection for sensitive webhook URLs'
+                'Added automated bug reporting system with Discord webhook integration',
+                'Created Vercel serverless function to keep webhook URLs private',
+                'Implemented fallback system: Discord webhook → Clipboard copy',
+                'Added rate limiting (5 reports/session, 60s cooldown) and session tracking',
+                'Replaced blocking alerts with non-blocking toast notifications'
             ],
             'Infrastructure & Deployment': [
-                'Created package.json for proper dependency management and npm scripts',
-                'Added comprehensive .gitignore for clean repository management (excludes js/config.js for webhook privacy)',
-                'Created vercel.json with security headers and caching strategy for Vercel production deployment',
-                'Added Vercel serverless function (api/report-bug.js) for private webhook proxy',
-                'Updated GitHub issue templates to integrate with "Report Bug" button workflow',
-                'Configured security headers: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy',
-                'Set up environment variable support for private webhook URLs in Vercel',
-                'Fixed config.js 404 error by removing script tag - error logger now uses built-in defaults seamlessly'
+                'Added package.json and .gitignore for proper dependency management',
+                'Created vercel.json with security headers for Vercel deployment',
+                'Added Vercel serverless function for private webhook proxy',
+                'Removed GitHub Pages workflows (Vercel-only deployment)',
+                'Fixed config.js 404 error by removing script tag'
             ],
             'User Experience': [
-                'Enhanced bug reporting - users can now send detailed error reports with one click',
-                'Session tracking with unique session IDs for better issue correlation',
-                'Performance metrics captured automatically (page load time, memory usage)',
-                'Browser and system information automatically included in error reports',
-                'Replaced all blocking alert() pop-ups with non-blocking toast notifications for better UX',
-                'Bug report button now shows instant feedback without interrupting user workflow'
+                'One-click bug reporting with instant feedback',
+                'Non-blocking toast notifications (no more pop-up alerts)',
+                'Session tracking and performance metrics for better debugging'
             ]
         }
     },
