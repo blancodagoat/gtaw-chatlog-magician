@@ -34,7 +34,7 @@ const CHANGELOG_ENTRIES = [
                 'Integrated error-handler.js with ErrorLogger to capture all errors automatically',
                 'Added rate limiting (5 reports per session, 60s cooldown) to prevent spam and abuse',
                 'Rich Discord embeds with color-coding (red for errors, orange for feedback) and organized fields',
-                'Email fallback via FormSubmit.co for users without Discord setup',
+                'Simplified fallback system: Discord webhook → Clipboard copy (email fallback removed)',
                 'Added developer console commands: ErrorLogger.sendReport(), copyReport(), downloadReport(), getLog(), clearLog()',
                 'Error reports persist across page reloads for better debugging of intermittent issues',
                 'Configuration system (js/config.js) with .gitignore protection for sensitive webhook URLs'

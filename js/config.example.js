@@ -9,7 +9,6 @@
  * 2. Add your Discord webhook to Vercel Environment Variables:
  *    - Vercel Dashboard → Settings → Environment Variables
  *    - Add: DISCORD_WEBHOOK_URL = your_webhook_url
- *    - Add: DEVELOPER_EMAIL = your_email (optional fallback)
  * 
  * 3. Deploy to Vercel:
  *    git push origin main
@@ -26,12 +25,6 @@ const BUG_REPORT_CONFIG = {
   // Leave empty - webhook is in Vercel environment variables (secure!)
   DISCORD_WEBHOOK_URL: '',
   
-  // Your email for bug reports (uses FormSubmit.co - free service)
-  // Used as fallback if Discord fails
-  DEVELOPER_EMAIL: '', // e.g. 'youremail@gmail.com'
-  
-  // FormSubmit.co endpoint (free service for static sites)
-  FORMSUBMIT_ENDPOINT: 'https://formsubmit.co/',
   
   // Rate limiting to prevent spam
   RATE_LIMIT: {
@@ -41,13 +34,10 @@ const BUG_REPORT_CONFIG = {
   },
   
   // What to do if auto-send fails
-  FALLBACK_TO_MANUAL_COPY: true,      // Show copy dialog if auto-send fails
+  FALLBACK_TO_MANUAL_COPY: true,      // Copy to clipboard if auto-send fails
   
   // Show success message after sending
   SHOW_SUCCESS_MESSAGE: true,
-  
-  // Include chat log content in report (might be long)
-  INCLUDE_CHATLOG_IN_REPORT: false,   // Set to true to include user's chat log text
 };
 
 // Make config globally available

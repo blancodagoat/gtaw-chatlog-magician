@@ -342,8 +342,6 @@
     const defaults = {
       USE_SERVERLESS_PROXY: true,  // Default to serverless proxy (Vercel)
       DISCORD_WEBHOOK_URL: '',
-      DEVELOPER_EMAIL: '',
-      FORMSUBMIT_ENDPOINT: 'https://formsubmit.co/',
       RATE_LIMIT: {
         ENABLED: true,
         MAX_REPORTS_PER_SESSION: 5,
@@ -393,8 +391,8 @@
         })
         .catch(err => {
           console.error('Serverless function failed:', err);
-          // Try email fallback
-          tryEmailFallback(report, config);
+          // Fallback to clipboard copy
+          copyReportToClipboard(report);
         });
     }
     // Try Discord webhook directly (if configured and public)
@@ -409,34 +407,14 @@
         })
         .catch(err => {
           console.error('Discord webhook failed:', err);
-          // Try email fallback
-          tryEmailFallback(report, config);
-        });
-    } 
-    // Try email if no Discord webhook
-    else if (config.DEVELOPER_EMAIL && config.DEVELOPER_EMAIL.trim() !== '') {
-      sendToEmail(report, config.DEVELOPER_EMAIL, config.FORMSUBMIT_ENDPOINT)
-        .then(() => {
-          hideLoadingIndicator();
-          if (config.SHOW_SUCCESS_MESSAGE) {
-            showToast('Bug report sent via email! Thank you!', 'success');
-          }
-          updateRateLimit();
-        })
-        .catch(err => {
-          console.error('Email send failed:', err);
-          hideLoadingIndicator();
-          // Fallback to manual copy
-          if (config.FALLBACK_TO_MANUAL_COPY) {
-            showToast('Auto-send failed. Report copied to clipboard.', 'warning', 4000);
-            copyReportToClipboard();
-          }
+          // Fallback to clipboard copy
+          copyReportToClipboard(report);
         });
     }
     // No auto-send configured, use manual copy
     else {
       hideLoadingIndicator();
-      copyReportToClipboard();
+      copyReportToClipboard(report);
     }
   }
 
@@ -540,56 +518,6 @@
     });
   }
 
-  /**
-   * Sends report via email using FormSubmit.co
-   */
-  function sendToEmail(report, email, endpoint) {
-    const formData = new FormData();
-    formData.append('_subject', '🐛 Bug Report - Chatlog Magician');
-    formData.append('_template', 'box'); // Use FormSubmit's styled template
-    formData.append('_captcha', 'false'); // Disable captcha for better UX
-    formData.append('Session_ID', errorLog.sessionId);
-    formData.append('Browser', errorLog.userAgent);
-    formData.append('Error_Count', errorLog.errors.length);
-    formData.append('Full_Report', report);
-
-    return fetch(endpoint + email, {
-      method: 'POST',
-      body: formData
-    }).then(response => {
-      if (!response.ok) {
-        throw new Error('Email send failed: ' + response.status);
-      }
-      return response;
-    });
-  }
-
-  /**
-   * Tries email fallback if Discord fails
-   */
-  function tryEmailFallback(report, config) {
-    if (config.DEVELOPER_EMAIL && config.DEVELOPER_EMAIL.trim() !== '') {
-      sendToEmail(report, config.DEVELOPER_EMAIL, config.FORMSUBMIT_ENDPOINT)
-        .then(() => {
-          hideLoadingIndicator();
-          showToast('Report sent via email! (Discord fallback)', 'success');
-          updateRateLimit();
-        })
-        .catch(() => {
-          hideLoadingIndicator();
-          // Both failed, use manual copy
-          if (config.FALLBACK_TO_MANUAL_COPY) {
-            showToast('Auto-send failed. Report copied to clipboard.', 'warning', 4000);
-            copyReportToClipboard();
-          }
-        });
-    } else {
-      hideLoadingIndicator();
-      if (config.FALLBACK_TO_MANUAL_COPY) {
-        copyReportToClipboard();
-      }
-    }
-  }
 
   /**
    * Rate limiting to prevent spam
