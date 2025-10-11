@@ -1,0 +1,41 @@
+{
+  "name": "gtaw-chatlog-magician",
+  "version": "1.0.0",
+  "description": "Convert GTA World chat logs into beautifully formatted images",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080 -o",
+    "test": "echo \"No tests yet - run npm run test:setup to add testing\" && exit 0",
+    "test:setup": "npm install --save-dev vitest @vitest/ui && echo \"Testing setup complete! Add tests in /tests directory\"",
+    "lint": "echo \"Linting setup needed - run npm run lint:setup\"",
+    "lint:setup": "npm install --save-dev eslint prettier && npx eslint --init",
+    "format": "echo \"Prettier setup needed - run npm run lint:setup first\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/blancoleopardo/gtaw-chatlog-magician"
+  },
+  "keywords": [
+    "gtaw",
+    "gta-world",
+    "chatlog",
+    "roleplay",
+    "image-converter",
+    "screenshot-tool"
+  ],
+  "author": "blancodagoat, asapdev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/blancoleopardo/gtaw-chatlog-magician/issues"
+  },
+  "homepage": "https://github.com/blancoleopardo/gtaw-chatlog-magician#readme",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
+

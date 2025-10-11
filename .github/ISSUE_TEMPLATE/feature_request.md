@@ -1,20 +1,39 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
+name: Feature Request
+about: Suggest a new feature or improvement
+title: '[FEATURE] '
+labels: 'enhancement'
 assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## ✨ Feature Request
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+### What's the feature?
+<!-- A clear one-line summary -->
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+### 💡 The Problem
+<!-- What problem does this solve? What's frustrating? -->
+
+
+### 🎯 Proposed Solution
+<!-- How would this feature work? Be specific! -->
+
+
+### 🔄 Alternative Solutions
+<!-- What other ways could we solve this? -->
+
+
+### 📸 Mockups / Examples (Optional)
+<!-- Any screenshots, examples from other tools, or design ideas? -->
+
+
+### 🎨 Use Case
+<!-- How would you use this feature in your daily RP? -->
+
+
+### ✅ Checklist
+- [ ] I checked existing issues to avoid duplicates
+- [ ] This feature would benefit other users, not just me
+- [ ] I described a specific solution

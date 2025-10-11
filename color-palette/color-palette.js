@@ -1,6 +1,19 @@
 (function($) {
     'use strict';
 
+    // Debug mode - set to false for production
+    const DEBUG_MODE = false;
+
+    // Configuration constants for color palette interactions
+    const CONFIG = {
+        DRAG_DISTANCE_THRESHOLD_PX: 5,    // Minimum pixels to register as drag
+        DRAG_FLAG_RESET_MS: 150,          // Delay before resetting drag flag
+        CLICK_DURATION_THRESHOLD_MS: 200, // Max duration to register as click
+        COLOR_FEEDBACK_DURATION_MS: 1000, // How long to show color applied message
+        TOAST_DURATION_MS: 1500,          // How long to show toast notifications
+        TOAST_FADEOUT_MS: 300             // Fadeout animation duration
+    };
+
     let coloringMode = false;
     let selectedElements = [];
     let isDragging = false;
@@ -36,13 +49,13 @@
             
             // Don't clear selections if we just finished dragging
             if (justFinishedDragging) {
-                console.log('Preventing selection clear due to recent drag');
+                if (DEBUG_MODE) console.log('Preventing selection clear due to recent drag');
                 return;
             }
             
             // If clicking on the output area but not on a colorable element, clear selections
             if (!$(e.target).hasClass('colorable') && !$(e.target).closest('.colorable').length) {
-                console.log('Clearing selections due to click outside colorable elements');
+                if (DEBUG_MODE) console.log('Clearing selections due to click outside colorable elements');
                 clearAllSelections();
             }
         });
@@ -52,7 +65,7 @@
             if (!coloringMode) return;
             
             if (isDragging) {
-                console.log('Mouse left output area while dragging, resetting state');
+                if (DEBUG_MODE) console.log('Mouse left output area while dragging, resetting state');
                 isDragging = false;
                 dragStartElement = null;
                 dragDistance = 0;
@@ -148,8 +161,8 @@
         const toast = $(`<div class="color-applied-feedback">${message}</div>`);
         $('body').append(toast);
         setTimeout(() => {
-            toast.fadeOut(300, function() { $(this).remove(); });
-        }, 1500);
+            toast.fadeOut(CONFIG.TOAST_FADEOUT_MS, function() { $(this).remove(); });
+        }, CONFIG.TOAST_DURATION_MS);
     }
 
     function setupClosePaletteHandler() {
@@ -243,19 +256,19 @@
         mouseUpTime = Date.now();
         const clickDuration = mouseUpTime - mouseDownTime;
         
-        console.log('Drag ended, selected elements:', selectedElements.length, 'drag distance:', dragDistance, 'click duration:', clickDuration);
+        if (DEBUG_MODE) console.log('Drag ended, selected elements:', selectedElements.length, 'drag distance:', dragDistance, 'click duration:', clickDuration);
         
         isDragging = false;
         dragStartElement = null;
         
         // Only set the flag if we actually moved during the drag (not just a click)
-        if (dragDistance > 5) { // Threshold of 5 pixels
+        if (dragDistance > CONFIG.DRAG_DISTANCE_THRESHOLD_PX) {
             justFinishedDragging = true;
             setTimeout(() => {
                 justFinishedDragging = false;
-                console.log('Drag flag reset, selected elements:', selectedElements.length);
-            }, 150); // Increased timeout to 150ms
-        } else if (clickDuration < 200) {
+                if (DEBUG_MODE) console.log('Drag flag reset, selected elements:', selectedElements.length);
+            }, CONFIG.DRAG_FLAG_RESET_MS);
+        } else if (clickDuration < CONFIG.CLICK_DURATION_THRESHOLD_MS) {
             // Short click, ensure we're not in a drag state
             justFinishedDragging = false;
         }
@@ -283,7 +296,7 @@
         
         // If we're still in a dragging state but mouse is up, reset everything
         if (isDragging) {
-            console.log('Global mouse up detected while dragging, resetting state');
+            if (DEBUG_MODE) console.log('Global mouse up detected while dragging, resetting state');
             isDragging = false;
             dragStartElement = null;
             dragDistance = 0;
@@ -341,12 +354,12 @@
         const feedback = $(`<div class="color-applied-feedback">Applied ${colorClass}</div>`);
         $('body').append(feedback);
         
-        // Remove after 1 second
+        // Remove after configured duration
         setTimeout(() => {
-            feedback.fadeOut(300, function() {
+            feedback.fadeOut(CONFIG.TOAST_FADEOUT_MS, function() {
                 $(this).remove();
             });
-        }, 1000);
+        }, CONFIG.COLOR_FEEDBACK_DURATION_MS);
     }
 
     function updateColorPalettePosition() {
@@ -375,11 +388,49 @@
         }
     }
 
+    /**
+     * Cleans up all event listeners and resets state
+     * Call this when the color palette is no longer needed
+     */
+    function destroy() {
+        // Remove all namespaced event listeners
+        $toggleColorPaletteBtn.off('click.colorPalette');
+        $colorPalette.off('click.colorPalette');
+        $output.off('click.colorPalette');
+        $output.off('mousedown.colorPalette');
+        $output.off('mouseup.colorPalette');
+        $output.off('mouseover.colorPalette');
+        $output.off('click.clearOutside.colorPalette');
+        $output.off('mouseleave.colorPalette');
+        $(document).off('mouseup.colorPalette');
+        $(document).off('keydown.colorPalette');
+        $output.off('selectstart.colorPalette');
+        $(document).off('click.closePalette');
+        $(window).off('resize.colorPalette');
+        
+        // Reset state
+        coloringMode = false;
+        selectedElements = [];
+        isDragging = false;
+        dragStartElement = null;
+        dragDistance = 0;
+        dragStartPosition = null;
+        justFinishedDragging = false;
+        mouseDownTime = 0;
+        mouseUpTime = 0;
+        
+        // Hide palette
+        $colorPalette.hide();
+        $output.removeClass('coloring-mode');
+        
+        if (DEBUG_MODE) console.log('ColorPalette destroyed and cleaned up');
+    }
+
     window.ColorPalette = {
         init: init,
         toggleColoringMode: toggleColoringMode,
-        // Expose a method to clear all selections from outside (e.g., before export)
-        clearSelections: clearAllSelections
+        clearSelections: clearAllSelections,
+        destroy: destroy
     };
 
 })(jQuery);

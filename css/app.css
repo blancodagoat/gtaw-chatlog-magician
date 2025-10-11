@@ -32,15 +32,6 @@ body {
     --dur-panel: 300ms;
 }
 
-/* Use system Trebuchet MS Bold without bundling any font files */
-@font-face {
-    font-family: 'Trebuchet MS';
-    font-style: normal;
-    font-weight: 700;
-    src: local('Trebuchet MS Bold'), local('TrebuchetMS-Bold');
-    font-display: swap;
-}
-
 html::-webkit-scrollbar {
 	width: 0px;
 	background-color: transparent;
@@ -138,13 +129,6 @@ html::-webkit-scrollbar {
 	background-color: transparent;
 	box-sizing: border-box;
 	overflow: visible;
-}
-
-/* Output font toggle */
-.output-font-trebuchet,
-#output.output-font-trebuchet {
-    font-family: 'Trebuchet MS', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-weight: 700;
 }
 
 /* Attention animation for Buy Me a Coffee button */
@@ -277,8 +261,8 @@ html::-webkit-scrollbar {
 	text-rendering: optimizeLegibility;
 	/* Additional properties to improve font rendering at small sizes */
 	font-variant-ligatures: normal;
-	font-feature-settings: "kern" 1;
 	-webkit-font-feature-settings: "kern" 1;
+	font-feature-settings: "kern" 1;
 	/* Ensure consistent rendering across browsers */
 	-webkit-text-stroke: 0.01em transparent;
 }

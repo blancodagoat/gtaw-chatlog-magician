@@ -170,8 +170,8 @@ html::-webkit-scrollbar {
   text-rendering: optimizeLegibility;
   /* Additional properties to improve font rendering at small sizes */
   font-variant-ligatures: normal;
-  font-feature-settings: "kern" 1;
   -webkit-font-feature-settings: "kern" 1;
+  font-feature-settings: "kern" 1;
   /* Ensure consistent rendering across browsers */
   -webkit-text-stroke: 0.01em transparent;
 }

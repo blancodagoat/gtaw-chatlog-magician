@@ -1,15 +1,49 @@
 $(document).foundation();
 
+// Debug mode - set to false for production
+const DEBUG_MODE = false;
+
+// Configuration constants
+const CONFIG = {
+    FONT_SIZE_SMALL_THRESHOLD: 13,      // Font sizes <= this get smoothing
+    FONT_SIZE_MIN: 8,                   // Minimum allowed font size
+    FONT_SIZE_MAX: 24,                  // Maximum allowed font size
+    FONT_SIZE_DEFAULT: 12,              // Default font size
+    LINE_LENGTH_MIN: 1,                 // Minimum line length
+    LINE_LENGTH_DEFAULT: 77,            // Default line length
+    MAX_HISTORY_ITEMS: 20,              // Maximum history items to store
+    PROCESSING_DEBOUNCE_MS: 300,        // Debounce delay for text processing
+    COPY_FEEDBACK_DURATION_MS: 1500,    // How long to show copy feedback
+    AUTO_SAVE_INDICATOR_MS: 2000,       // How long to show auto-save indicator
+    DRAG_FLAG_RESET_MS: 150,            // Delay before resetting drag flag
+    LINE_HEIGHT_SMALL: 1.5,             // Line height for small fonts
+    LINE_HEIGHT_DEFAULT: 1.45,          // Default line height
+    LINE_HEIGHT_LARGE: 1.35,            // Line height for large fonts
+    FONT_SIZE_LARGE_THRESHOLD: 20,      // Font sizes >= this are considered large
+    BMC_NUDGE_INITIAL_DELAY_MS: 15000,  // Initial delay for BMC button nudge
+    BMC_NUDGE_MIN_INTERVAL_MS: 20000,   // Min time between BMC nudges
+    BMC_NUDGE_MAX_INTERVAL_MS: 60000,   // Max time between BMC nudges
+    BMC_NUDGE_ANIMATION_MS: 800         // Duration of BMC nudge animation
+};
+
+// Typographic Golden Scale - Hand-picked sizes optimized for readability
+const TYPOGRAPHIC_SCALE = [8, 10, 12, 15, 19, 24];
+
 let scaleEnabled = false;
 let lastProcessedText = '';
 let processingTimeout = null;
 
+/**
+ * Updates the font size of the output display and applies appropriate styling
+ * Stores the font size in localStorage for persistence
+ * @returns {void}
+ */
 function updateFontSize() {
   const fontSize = parseInt($('#font-label').val());
   $('#output').css('font-size', fontSize + 'px');
   
-  // Apply font smoothing for smaller sizes (13px and below) to make them more rounded
-  if (fontSize <= 13) {
+  // Apply font smoothing for smaller sizes to make them more rounded
+  if (fontSize <= CONFIG.FONT_SIZE_SMALL_THRESHOLD) {
     $('#output').addClass('font-smoothed');
   } else {
     $('#output').removeClass('font-smoothed');
@@ -22,14 +56,22 @@ function updateFontSize() {
   localStorage.setItem('chatlogFontSize', fontSize.toString());
 }
 
-// Typographic Golden Meta: Hand-picked scale optimized for readability
-// Based on Major Third ratio (≈1.25×) but adjusted for typographic best practices
-const TYPOGRAPHIC_SCALE = [8, 10, 12, 15, 19, 24];
 
+/**
+ * Checks if a font size is part of the typographic golden scale
+ * @param {number} fontSize - The font size to check
+ * @returns {boolean} True if the size is in the golden scale
+ */
 function isTypographicGolden(fontSize) {
   return TYPOGRAPHIC_SCALE.includes(fontSize);
 }
 
+/**
+ * Gets the next size in the typographic golden scale
+ * @param {number} currentSize - The current font size
+ * @param {string} direction - Direction to move ('up' or 'down')
+ * @returns {number} The next golden size, or current size if at boundary
+ */
 function getNextGoldenSize(currentSize, direction = 'up') {
   const index = TYPOGRAPHIC_SCALE.indexOf(currentSize);
   if (index === -1) return currentSize; // Not a golden size
@@ -42,6 +84,11 @@ function getNextGoldenSize(currentSize, direction = 'up') {
   return currentSize;
 }
 
+/**
+ * Finds the nearest typographic golden size to a given number
+ * @param {number} n - The number to find nearest golden size for
+ * @returns {number} The closest golden scale size
+ */
 function nearestGolden(n) {
   return TYPOGRAPHIC_SCALE.reduce((best, v) =>
     Math.abs(v - n) < Math.abs(best - n) ? v : best
@@ -57,8 +104,8 @@ function goldenHintHTML(scale) {
 }
 
 function applySizeClasses(px) {
-  $('#output').toggleClass('is-small', px <= 12);
-  $('#output').toggleClass('is-large', px >= 20);
+  $('#output').toggleClass('is-small', px <= CONFIG.FONT_SIZE_DEFAULT);
+  $('#output').toggleClass('is-large', px >= CONFIG.FONT_SIZE_LARGE_THRESHOLD);
 }
 
 // Debug function to print scale's % deltas (handy for meta inspection)
@@ -71,6 +118,12 @@ function printScaleDeltas() {
   );
 }
 
+/**
+ * Trims transparent pixels from the edges of a canvas
+ * Used to create tighter crops of the generated chat log images
+ * @param {HTMLCanvasElement} canvas - The canvas to trim
+ * @returns {HTMLCanvasElement} A new canvas with trimmed content
+ */
 function trimCanvas(canvas) {
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -138,6 +191,11 @@ function trimCanvas(canvas) {
   }
 }
 
+/**
+ * Generates a filename for the downloaded chat log image
+ * Format: MM-DD-YYYY_HH-MM-SS_chatlog.png
+ * @returns {string} The generated filename
+ */
 function generateFilename() {
   return new Date()
     .toLocaleString()
@@ -148,6 +206,12 @@ function generateFilename() {
     .replaceAll(":", "-") + "_chatlog.png";
 }
 
+/**
+ * Exports the formatted chat log as a PNG image
+ * Handles cleanup of UI elements, canvas generation, and file download
+ * Saves the current chat log to history automatically
+ * @returns {void}
+ */
 function downloadOutputImage() {
   // QoL: clear any active selections before generating the image
   let hadColoringMode = false;
@@ -358,6 +422,10 @@ function showAutoSaveIndicator() {
   }, 2000);
 }
 
+/**
+ * Toggles the black background on the output display
+ * @returns {void}
+ */
 function toggleBackground() {
   $("#output").toggleClass("background-active");
   if (typeof processOutput === 'function') {
@@ -378,9 +446,16 @@ function autoResizeTextarea() {
     if (typeof processOutput === 'function') {
       processOutput();
     }
-  }, 300);
+  }, CONFIG.PROCESSING_DEBOUNCE_MS);
 }
 
+/**
+ * Copies text to clipboard with fallback for older browsers
+ * Shows visual feedback on the button element
+ * @param {string} text - The text to copy to clipboard
+ * @param {HTMLElement} button - The button element to show feedback on
+ * @returns {void}
+ */
 function copyToClipboard(text, button) {
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -435,7 +510,7 @@ function showCopySuccess(button) {
 
   setTimeout(() => {
     $btn.css("background-color", originalBg).text(originalText);
-  }, 1500);
+  }, CONFIG.COPY_FEEDBACK_DURATION_MS);
 }
 
 function showCopyError(button) {
@@ -447,7 +522,7 @@ function showCopyError(button) {
 
   setTimeout(() => {
     $btn.css("background-color", originalBg).text(originalText);
-  }, 1500);
+  }, CONFIG.COPY_FEEDBACK_DURATION_MS);
 }
 
 function handleKeyboardShortcuts(e) {
@@ -466,6 +541,13 @@ function initTooltips() {
   );
 }
 
+/**
+ * Saves a chat log to local storage history
+ * Maintains a maximum of CONFIG.MAX_HISTORY_ITEMS entries
+ * Handles quota exceeded errors gracefully
+ * @param {string} text - The chat log text to save
+ * @returns {void}
+ */
 function saveToHistory(text) {
   try {
     if (!text || !text.trim()) return;
@@ -488,7 +570,7 @@ function saveToHistory(text) {
     history = history.filter(item => item !== text);
     history.unshift(text);
 
-    const MAX_HISTORY = 20;
+    const MAX_HISTORY = CONFIG.MAX_HISTORY_ITEMS;
     if (history.length > MAX_HISTORY) {
       history = history.slice(0, MAX_HISTORY);
     }
@@ -513,6 +595,10 @@ function saveToHistory(text) {
   }
 }
 
+/**
+ * Loads chat log history from local storage
+ * @returns {Array<string>} Array of historical chat log texts
+ */
 function loadHistory() {
   try {
     const history = JSON.parse(localStorage.getItem('chatlogHistory') || '[]');
@@ -528,7 +614,8 @@ function toggleHistoryPanel() {
   const isOpen = panel.classList.contains('open');
 
   panel.classList.toggle('open');
-  panel.setAttribute('aria-hidden', !isOpen);
+  // After toggle, the state is opposite of isOpen, so aria-hidden should match the old state
+  panel.setAttribute('aria-hidden', isOpen);
 
   const tab = document.querySelector('.history-tab');
   tab.setAttribute('aria-expanded', !isOpen);
@@ -566,6 +653,10 @@ document.addEventListener('click', (e) => {
   }
 });
 
+/**
+ * Clears all chat log history after user confirmation
+ * @returns {void}
+ */
 function clearHistory() {
   if (confirm('Are you sure you want to clear all chat history?')) {
     localStorage.removeItem('chatlogHistory');
@@ -573,6 +664,11 @@ function clearHistory() {
   }
 }
 
+/**
+ * Refreshes the history panel UI with current history items
+ * Applies formatting to each history item for preview
+ * @returns {void}
+ */
 function refreshHistoryPanel() {
   const $historyItems = $('.history-items');
   const $loading = $('<div class="history-loading">Loading history...</div>');
@@ -620,6 +716,11 @@ function refreshHistoryPanel() {
   }
 }
 
+/**
+ * Escapes HTML special characters to prevent XSS attacks
+ * @param {string} unsafe - The string containing potentially unsafe HTML
+ * @returns {string} The escaped string safe for HTML insertion
+ */
 function escapeHtml(unsafe) {
   return unsafe
     .replace(/&/g, "&amp;")
@@ -634,7 +735,8 @@ function toggleChangelogPanel() {
     const isOpen = panel.classList.contains('open');
 
     panel.classList.toggle('open');
-    panel.setAttribute('aria-hidden', !isOpen);
+    // After toggle, the state is opposite of isOpen, so aria-hidden should match the old state
+    panel.setAttribute('aria-hidden', isOpen);
 
     const tab = document.querySelector('.changelog-tab');
     tab.setAttribute('aria-expanded', !isOpen);
@@ -720,9 +822,9 @@ $(document).ready(function() {
     }
   });
 
-  // Initialize font size from localStorage or default to 12px
-  $('#font-label').val(localStorage.getItem('chatlogFontSize') || 12);
-  $('#lineLengthInput').val(localStorage.getItem('chatlogLineLength') || 77);
+  // Initialize font size from localStorage or default
+  $('#font-label').val(localStorage.getItem('chatlogFontSize') || CONFIG.FONT_SIZE_DEFAULT);
+  $('#lineLengthInput').val(localStorage.getItem('chatlogLineLength') || CONFIG.LINE_LENGTH_DEFAULT);
   $('#characterNameInput').val(localStorage.getItem('chatlogCharacterName') || '');
 
   // Update golden hint
@@ -734,16 +836,13 @@ $(document).ready(function() {
 
   refreshHistoryPanel();
 
-  function toggleHistoryPanel() {
-    const panel = document.getElementById('historyPanel');
-    panel.classList.toggle('open');
-  }
+  // toggleHistoryPanel() is already defined globally above
 
   $('#font-label').on('input', function() {
     const value = parseInt($(this).val());
     // Ensure value is within valid range
-    if (value < 8) $(this).val(8);
-    if (value > 24) $(this).val(24);
+    if (value < CONFIG.FONT_SIZE_MIN) $(this).val(CONFIG.FONT_SIZE_MIN);
+    if (value > CONFIG.FONT_SIZE_MAX) $(this).val(CONFIG.FONT_SIZE_MAX);
     
     // Font size is now stored automatically in updateFontSize()
     updateFontSize();
@@ -761,7 +860,7 @@ $(document).ready(function() {
   $('#lineLengthInput').on('input', function() {
     const value = parseInt($(this).val());
     // Remove line length limitations - allow any positive value
-    if (value < 1) $(this).val(1);
+    if (value < CONFIG.LINE_LENGTH_MIN) $(this).val(CONFIG.LINE_LENGTH_MIN);
     
     localStorage.setItem('chatlogLineLength', $(this).val());
     if (typeof processOutput === 'function') {
@@ -796,6 +895,15 @@ $(document).ready(function() {
 
   $("#downloadOutputTransparent").click(downloadOutputImage);
   $("#toggleBackground").click(toggleBackground);
+  
+  // Error report button - Auto-sends to Discord/Email
+  $("#copyErrorReport").click(function() {
+    if (window.ErrorLogger) {
+      window.ErrorLogger.sendReport();
+    } else {
+      alert('Error logger not loaded. Please refresh the page and try again.');
+    }
+  });
 
   const textarea = document.querySelector('.textarea-input');
   textarea.addEventListener('input', autoResizeTextarea);
@@ -847,39 +955,21 @@ $(document).ready(function() {
     }
   });
 
-  // Toggle output font between default and Trebuchet MS
-  $('#toggleOutputFont').on('click', function() {
-    const $out = $('#output');
-    const isTrebuchet = $out.toggleClass('output-font-trebuchet').hasClass('output-font-trebuchet');
-    $(this).text('Font: ' + (isTrebuchet ? 'Trebuchet MS' : 'Default'));
-    try {
-      localStorage.setItem('outputFontTrebuchet', isTrebuchet ? '1' : '0');
-    } catch (e) {}
-  });
-
-  // Restore saved output font preference
-  try {
-    const saved = localStorage.getItem('outputFontTrebuchet');
-    if (saved === '1') {
-      $('#output').addClass('output-font-trebuchet');
-      $('#toggleOutputFont').text('Font: Trebuchet MS');
-    }
-  } catch (e) {}
-
   // Randomly shake the Buy Me a Coffee button to draw attention (non-intrusive)
   (function initBmcNudge(){
     function nudgeOnce(){
       const btn = document.querySelector('.bmc-btn');
       if (!btn) return;
       btn.classList.add('bmc-attn');
-      setTimeout(()=>btn.classList.remove('bmc-attn'), 800);
+      setTimeout(()=>btn.classList.remove('bmc-attn'), CONFIG.BMC_NUDGE_ANIMATION_MS);
     }
     function scheduleNext(){
-      // random between 20s and 60s
-      const ms = 20000 + Math.random()*40000;
+      // random between min and max interval
+      const ms = CONFIG.BMC_NUDGE_MIN_INTERVAL_MS + 
+                 Math.random() * (CONFIG.BMC_NUDGE_MAX_INTERVAL_MS - CONFIG.BMC_NUDGE_MIN_INTERVAL_MS);
       setTimeout(()=>{ nudgeOnce(); scheduleNext(); }, ms);
     }
     // start after initial delay to avoid on-load distraction
-    setTimeout(scheduleNext, 15000);
+    setTimeout(scheduleNext, CONFIG.BMC_NUDGE_INITIAL_DELAY_MS);
   })();
 });

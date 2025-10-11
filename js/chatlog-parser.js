@@ -1,5 +1,8 @@
 $(document).ready(function() {
 
+    // Debug mode - set to false for production
+    const DEBUG_MODE = false;
+
     let applyBackground = false;
     let applyCensorship = false;
     let disableCharacterNameColoring = false;
@@ -425,7 +428,7 @@ $(document).ready(function() {
             generatedDiv.html(htmlWithLineBreaks);
         });
         
-        console.log("Made text colorable - total colorable elements: " + $output.find('.colorable').length);
+        if (DEBUG_MODE) console.log("Made text colorable - total colorable elements: " + $output.find('.colorable').length);
     }
 
     // Make makeTextColorable globally accessible for the color palette
@@ -740,8 +743,8 @@ $(document).ready(function() {
         const corpseDamagePattern = /^(.+?) \((ID)\) damages:/;
         const corpseDamageMatch = line.match(corpseDamagePattern);
         if (corpseDamageMatch) {
-            const namePart = corpseDamageMatch[1];
-            const restOfLine = line.slice(namePart.length);
+            const namePart = escapeHTML(corpseDamageMatch[1]);
+            const restOfLine = escapeHTML(line.slice(corpseDamageMatch[1].length));
             return `<span class="blue">${namePart}</span><span class="white">${restOfLine}</span>`;
         }
 
@@ -749,11 +752,11 @@ $(document).ready(function() {
         const youBeenShotMatch = line.match(youBeenShotPattern);
         if (youBeenShotMatch) {
             const [_, text, text2, numbers, numbers2] = youBeenShotMatch;
-            return `<span class="death">You've been shot</span> <span class="white"> in the </span> <span class="death">${text}</span> <span class="white"> with a </span> <span class="death">${text2}</span> <span class="white"> for </span> <span class="death">${numbers}</span> <span class="white"> damage. ((Health : </span> <span class="death">${numbers2}</span> <span class="white">))</span>`;
+            return `<span class="death">You've been shot</span> <span class="white"> in the </span> <span class="death">${escapeHTML(text)}</span> <span class="white"> with a </span> <span class="death">${escapeHTML(text2)}</span> <span class="white"> for </span> <span class="death">${escapeHTML(numbers)}</span> <span class="white"> damage. ((Health : </span> <span class="death">${escapeHTML(numbers2)}</span> <span class="white">))</span>`;
         }
 
         if (line === "********** EMERGENCY CALL **********") {
-            return '<span class="blue">' + line + '</span>';
+            return '<span class="blue">' + escapeHTML(line) + '</span>';
         }
 
         if (line.includes("[POLICE MDC]")) {
@@ -916,8 +919,8 @@ $(document).ready(function() {
         const emergencyCallPattern = /^(Log Number|Phone Number|Location|Situation):\s*(.*)$/;
         const emergencyMatch = line.match(emergencyCallPattern);
         if (emergencyMatch) {
-            const key = emergencyMatch[1];
-            const value = emergencyMatch[2];
+            const key = escapeHTML(emergencyMatch[1]);
+            const value = escapeHTML(emergencyMatch[2]);
             return '<span class="blue">' + key + ': </span><span class="white">' + value + '</span>';
         }
 
@@ -993,7 +996,7 @@ $(document).ready(function() {
         const pattern = /(You have) (.*?) (left in jail\.)/;
         const match = line.match(pattern);
         if (match) {
-            return `<span class="white">${match[1]}</span> <span class="green">${match[2]}</span> <span class="white">${match[3]}</span>`;
+            return `<span class="white">${escapeHTML(match[1])}</span> <span class="green">${escapeHTML(match[2])}</span> <span class="white">${escapeHTML(match[3])}</span>`;
         }
         return line;
     }
@@ -1156,7 +1159,7 @@ $(document).ready(function() {
         const match = line.match(groupWhisperPattern);
         if (match) {
             const splitIndex = match.index + match[0].length;
-            return `<span class="orange">${line.slice(0, splitIndex)}</span><span class="whisper">${line.slice(splitIndex)}</span>`;
+            return `<span class="orange">${escapeHTML(line.slice(0, splitIndex))}</span><span class="whisper">${escapeHTML(line.slice(splitIndex))}</span>`;
         }
 
         return wrapSpan("whisper", line);
@@ -1192,14 +1195,14 @@ $(document).ready(function() {
         if (moneyMatch) {
             const objectMatch = line.match(/from the (.+)\.$/i);
             return objectMatch ?
-                `<span class="orange">Info:</span> <span class="white">You took</span> <span class="green">$${moneyMatch[1]}</span> <span class="white">from the ${objectMatch[1]}</span>.` :
+                `<span class="orange">Info:</span> <span class="white">You took</span> <span class="green">$${escapeHTML(moneyMatch[1])}</span> <span class="white">from the ${escapeHTML(objectMatch[1])}</span>.` :
                 line;
         }
 
         if (itemMatch) {
-            const itemName = itemMatch[1];
-            const itemQuantity = itemMatch[2];
-            const fromObject = itemMatch[3];
+            const itemName = escapeHTML(itemMatch[1]);
+            const itemQuantity = escapeHTML(itemMatch[2]);
+            const fromObject = escapeHTML(itemMatch[3]);
 
             return `<span class="orange">Info:</span> <span class="white">You took</span> <span class="white">${itemName}</span> <span class="white">(${itemQuantity})</span> <span class="white">from ${fromObject}</span>.`;
         }
@@ -1234,7 +1237,7 @@ $(document).ready(function() {
         line = line.replace('[INFO]', '<span class="green">[INFO]</span>');
 
         const infoTag = '<span class="green">[INFO]</span>';
-        const restOfLine = line.replace(/\[INFO\]/, '').trim();
+        const restOfLine = escapeHTML(line.replace(/\[INFO\]/, '').trim());
         return infoTag + ' <span class="white">' + restOfLine + '</span>';
     }
 
@@ -1244,14 +1247,14 @@ $(document).ready(function() {
 
         const match = line.match(/\(([^)]+)\) Incoming call from (.+)\. Use (.+) to answer or (.+) to decline\./);
         if (match) {
-            const parenthetical = match[1];
-            const caller = match[2];
-            const pickupCommand = match[3];
-            const hangupCommand = match[4];
+            const parenthetical = escapeHTML(match[1]);
+            const caller = escapeHTML(match[2]);
+            const pickupCommand = escapeHTML(match[3]);
+            const hangupCommand = escapeHTML(match[4]);
 
             return '<span class="yellow">(' + parenthetical + ')</span> <span class="white">Incoming call from </span><span class="yellow">' + caller + '</span><span class="white">. Use ' + pickupCommand + ' to answer or ' + hangupCommand + ' to decline.</span>';
         } else {
-            return '<span class="white">' + line + '</span>';
+            return '<span class="white">' + escapeHTML(line) + '</span>';
         }
     }
 
@@ -1281,10 +1284,10 @@ $(document).ready(function() {
         const match = line.match(pattern);
 
         if (match) {
-            const contactName = match[1];
-            const numbers = match[2];
-            const sender = match[3];
-            const acceptCommand = match[4];
+            const contactName = escapeHTML(match[1]);
+            const numbers = escapeHTML(match[2]);
+            const sender = escapeHTML(match[3]);
+            const acceptCommand = escapeHTML(match[4]);
 
             return '<span class="blue">[INFO]</span> <span class="white">You have received a contact (' + contactName + ', ' + numbers + ') from ' + sender + '. Use ' + acceptCommand + ' to accept it.</span>';
         } else {
@@ -1298,10 +1301,10 @@ $(document).ready(function() {
         const match = line.match(pattern);
 
         if (match) {
-            const contactName = match[1];
-            const numbers = match[2];
-            const sender = match[3];
-            const acceptCommand = match[4];
+            const contactName = escapeHTML(match[1]);
+            const numbers = escapeHTML(match[2]);
+            const sender = escapeHTML(match[3]);
+            const acceptCommand = escapeHTML(match[4]);
 
             return '<span class="blue">[INFO]</span> <span class="white">You have received a contact (' + contactName + ', ' + numbers + ') from ' + sender + '. Use ' + acceptCommand + ' to accept it.</span>';
         } else {
@@ -1315,8 +1318,8 @@ $(document).ready(function() {
         const match = line.match(pattern);
 
         if (match) {
-            const receiver = match[1];
-            const name = match[2];
+            const receiver = escapeHTML(match[1]);
+            const name = escapeHTML(match[2]);
 
             return '<span class="blue">[INFO]</span> <span class="white">You have shared your number with ' + receiver + ' under the name ' + name + '.</span>';
         } else {
@@ -1330,9 +1333,9 @@ $(document).ready(function() {
         const match = line.match(pattern);
 
         if (match) {
-            const contactName = match[1];
-            const numbers = match[2];
-            const receiver = match[3];
+            const contactName = escapeHTML(match[1]);
+            const numbers = escapeHTML(match[2]);
+            const receiver = escapeHTML(match[3]);
 
             return '<span class="blue">[INFO]</span> <span class="white">You have shared ' + contactName + ' (' + numbers + ') with ' + receiver + '.</span>';
         } else {
@@ -1344,17 +1347,20 @@ $(document).ready(function() {
         const vesselTrafficPattern = /\*\*\s*\[CH: VTS - Vessel Traffic Service\]/;
 
         if (vesselTrafficPattern.test(line)) {
-            return `<span class="vesseltraffic">${line}</span>`;
+            return `<span class="vesseltraffic">${escapeHTML(line)}</span>`;
         }
 
         return line;
     }
 
     function formatIntercom(line) {
-        return line.replace(
-            /\[(.*?) intercom\]: (.*)/i,
-            '<span class="blue">[$1 Intercom]: $2</span>'
-        );
+        const match = line.match(/\[(.*?) intercom\]: (.*)/i);
+        if (match) {
+            const location = escapeHTML(match[1]);
+            const message = escapeHTML(match[2]);
+            return `<span class="blue">[${location} Intercom]: ${message}</span>`;
+        }
+        return line;
     }
 
     function formatPhoneCursor(line) {
@@ -1362,49 +1368,60 @@ $(document).ready(function() {
     }
 
     function formatShown(line) {
-        return `<span class="green">${line.replace(
-            /their (.+)\./,
-            'their <span class="white">$1</span>.'
-        )}</span>`;
+        const match = line.match(/^(.+) has shown you their (.+)\.$/);
+        if (match) {
+            const person = escapeHTML(match[1]);
+            const item = escapeHTML(match[2]);
+            return `<span class="green">${person} has shown you their <span class="white">${item}</span>.</span>`;
+        }
+        return `<span class="green">${escapeHTML(line)}</span>`;
     }
 
     function replaceColorCodes(str) {
+        // Validate and sanitize hex color codes
         return str
             .replace(
                 /\{([A-Fa-f0-9]{6})\}/g,
-                (_match, p1) => '<span style="color: #' + p1 + ';">'
+                (_match, p1) => {
+                    // p1 is already validated by regex to be 6 hex chars, but sanitize anyway
+                    const safeColor = p1.replace(/[^A-Fa-f0-9]/g, '').substr(0, 6);
+                    return '<span style="color: #' + safeColor + ';">';
+                }
             )
             .replace(/\{\/([A-Fa-f0-9]{6})\}/g, "</span>");
     }
 
     function colorMoneyLine(line) {
-        return line
-            .replace(
-                /You have received (\$\d+(?:,\d{3})*(?:\.\d{1,3})?)/,
-                '<span class="white">You have received </span><span class="green">$1</span>'
-            )
-            .replace(
-                /from (.+) on your bank account\./,
-                '<span class="white">from </span><span class="white">$1</span><span class="white"> on your bank account.</span>'
-            );
+        const moneyMatch = line.match(/You have received (\$\d+(?:,\d{3})*(?:\.\d{1,3})?)/);
+        const fromMatch = line.match(/from (.+) on your bank account\./);
+        
+        if (moneyMatch && fromMatch) {
+            const amount = escapeHTML(moneyMatch[1]);
+            const source = escapeHTML(fromMatch[1]);
+            return '<span class="white">You have received </span><span class="green">' + amount + '</span><span class="white"> from </span><span class="white">' + source + '</span><span class="white"> on your bank account.</span>';
+        }
+        return line;
     }
 
     function colorLocationLine(line) {
-        return line.replace(
-            /(You received a location from) (#\d+)(. Use )(\/removelocation)( to delete the marker\.)/,
-            '<span class="green">$1 </span>' +
-            '<span class="yellow">$2</span>' +
-            '<span class="green">$3</span>' +
-            '<span class="death">$4</span>' +
-            '<span class="green">$5</span>'
-        );
+        const match = line.match(/(You received a location from) (#\d+)(. Use )(\/removelocation)( to delete the marker\.)/);
+        if (match) {
+            return '<span class="green">' + escapeHTML(match[1]) + ' </span>' +
+                   '<span class="yellow">' + escapeHTML(match[2]) + '</span>' +
+                   '<span class="green">' + escapeHTML(match[3]) + '</span>' +
+                   '<span class="death">' + escapeHTML(match[4]) + '</span>' +
+                   '<span class="green">' + escapeHTML(match[5]) + '</span>';
+        }
+        return line;
     }
 
     function formatRobbery(line) {
-        return line
-            .replace(/\/arob/, '<span class="blue">/arob</span>')
-            .replace(/\/report/, '<span class="death">/report</span>')
-            .replace(/You're being robbed, use (.+?) to show your inventory/, '<span class="white">You\'re being robbed, use </span><span class="blue">$1</span><span class="white"> to show your inventory</span>');
+        const match = line.match(/You're being robbed, use (.+?) to show your inventory/);
+        if (match) {
+            const command = escapeHTML(match[1]);
+            return '<span class="white">You\'re being robbed, use </span><span class="blue">' + command + '</span><span class="white"> to show your inventory</span>';
+        }
+        return line;
     }
 
     function formatDrugLab() {
@@ -1414,7 +1431,7 @@ $(document).ready(function() {
     function formatCharacterKill(line) {
         return (
             '<span class="blue">[Character kill]</span> <span class="death">' +
-            line.slice(16) +
+            escapeHTML(line.slice(16)) +
             "</span>"
         );
     }
@@ -1424,9 +1441,9 @@ $(document).ready(function() {
         const match = line.match(drugCutPattern);
 
         if (match) {
-            const drugName = match[1];
-            const firstAmount = match[2];
-            const secondAmount = match[3];
+            const drugName = escapeHTML(match[1]);
+            const firstAmount = escapeHTML(match[2]);
+            const secondAmount = escapeHTML(match[3]);
 
             return (
                 `<span class="white">You've cut </span>` +
@@ -1444,9 +1461,9 @@ $(document).ready(function() {
         const match = line.match(robberyPattern);
 
         if (match) {
-            const textBeforeAmount = match[1];
-            const amount = match[2];
-            const textAfterAmount = match[3];
+            const textBeforeAmount = escapeHTML(match[1]);
+            const amount = escapeHTML(match[2]);
+            const textAfterAmount = escapeHTML(match[3]);
 
             return `<span class="green">[PROPERTY ROBBERY]</span>${textBeforeAmount}<span class="green">${amount}</span>${textAfterAmount}`;
         }
@@ -1459,7 +1476,7 @@ $(document).ready(function() {
         const match = line.match(pattern);
 
         if (match) {
-            const drugName = match[1];
+            const drugName = escapeHTML(match[1]);
             return `<span class="white">You've just taken </span><span class="green">${drugName}</span><span class="white">! You will feel the effects of the drug soon.</span>`;
         }
 
@@ -1469,20 +1486,19 @@ $(document).ready(function() {
     function formatPrisonPA(line) {
         const pattern = /^\*\* \[PRISON PA\].*\*\*$/;
         if (pattern.test(line)) {
-            return `<span class="blue">${line}</span>`;
+            return `<span class="blue">${escapeHTML(line)}</span>`;
         }
         return line;
     }
 
     function formatCashTap(line) {
         if (line.includes("[CASHTAP]")) {
-            return line.replace(
-                /\[CASHTAP\]/g,
-                '<span class="green">[CASHTAP]</span>'
-            ).replace(
-                /^(.*?)(<span class="green">\[CASHTAP\]<\/span>)(.*)$/,
-                '<span class="white">$1</span>$2<span class="white">$3</span>'
-            );
+            const parts = line.split('[CASHTAP]');
+            if (parts.length === 2) {
+                const before = escapeHTML(parts[0]);
+                const after = escapeHTML(parts[1]);
+                return '<span class="white">' + before + '</span><span class="green">[CASHTAP]</span><span class="white">' + after + '</span>';
+            }
         }
         return line;
     }
@@ -1494,13 +1510,12 @@ $(document).ready(function() {
      */
     function formatPoliceMDC(line) {
         if (line.includes("[POLICE MDC]")) {
-            return line.replace(
-                /\[POLICE MDC\]/g,
-                '<span class="blue">[POLICE MDC]</span>'
-            ).replace(
-                /^(.*?)(<span class="blue">\[POLICE MDC\]<\/span>)(.*)$/,
-                '<span class="white">$1</span>$2<span class="white">$3</span>'
-            );
+            const parts = line.split('[POLICE MDC]');
+            if (parts.length === 2) {
+                const before = escapeHTML(parts[0]);
+                const after = escapeHTML(parts[1]);
+                return '<span class="white">' + before + '</span><span class="blue">[POLICE MDC]</span><span class="white">' + after + '</span>';
+            }
         }
         return line;
     }
@@ -1514,8 +1529,9 @@ $(document).ready(function() {
 
             const nameEnd = rest.indexOf(" offers");
             const name = rest.substring(0, nameEnd);
+            const middlePart = rest.substring(nameEnd, rest.lastIndexOf(money));
 
-            return wrapSpan("orange", "Info:") + wrapSpan("yellow", name) + rest.substring(nameEnd, rest.lastIndexOf(money)) + wrapSpan("green", money) + "!";
+            return wrapSpan("orange", "Info:") + wrapSpan("yellow", name) + escapeHTML(middlePart) + wrapSpan("green", money) + "!";
         }
 
         if (line.includes("swiped your card through the reader")) {
@@ -1523,8 +1539,9 @@ $(document).ready(function() {
             const businessStart = rest.indexOf("reader of ") + "reader of ".length;
             const businessEnd = rest.indexOf(" for an amount");
             const business = rest.substring(businessStart, businessEnd);
+            const prefixPart = rest.substring(0, businessStart);
 
-            return wrapSpan("orange", "Info:") + rest.substring(0, businessStart) + wrapSpan("yellow", business) + " for an amount of " + wrapSpan("green", money) + "!";
+            return wrapSpan("orange", "Info:") + escapeHTML(prefixPart) + wrapSpan("yellow", business) + " for an amount of " + wrapSpan("green", money) + "!";
         }
 
         if (line.includes("offered your card reader to")) {
@@ -1532,8 +1549,9 @@ $(document).ready(function() {
             const nameStart = rest.indexOf("reader to ") + "reader to ".length;
             const nameEnd = rest.indexOf(" for an amount");
             const name = rest.substring(nameStart, nameEnd);
+            const prefixPart = rest.substring(0, nameStart);
 
-            return wrapSpan("orange", "Info:") + rest.substring(0, nameStart) + wrapSpan("yellow", name) + " for an amount of " + wrapSpan("green", money) + ". Wait for them to accept!";
+            return wrapSpan("orange", "Info:") + escapeHTML(prefixPart) + wrapSpan("yellow", name) + " for an amount of " + wrapSpan("green", money) + ". Wait for them to accept!";
         }
 
         if (line.includes("accepted the card payment of")) {
@@ -1541,8 +1559,9 @@ $(document).ready(function() {
             const nameStart = rest.indexOf("payment of ") + "payment of ".length;
             const nameEnd = rest.indexOf(" for an amount");
             const name = rest.substring(nameStart, nameEnd);
+            const prefixPart = rest.substring(0, nameStart);
 
-            return wrapSpan("orange", "Info:") + rest.substring(0, nameStart) + wrapSpan("yellow", name) + " for an amount of " + wrapSpan("green", money) + "!";
+            return wrapSpan("orange", "Info:") + escapeHTML(prefixPart) + wrapSpan("yellow", name) + " for an amount of " + wrapSpan("green", money) + "!";
         }
     }
 

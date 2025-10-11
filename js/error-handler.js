@@ -28,33 +28,46 @@
   };
 
   window.addEventListener('error', function(event) {
-    if (shouldIgnoreError(event.message)) {
-      event.preventDefault();
-      return true;
-    }
-
-    console.log('Error caught by handler:', {
+    const errorInfo = {
       message: event.error?.message || event.message,
       filename: event.filename,
       lineno: event.lineno,
       colno: event.colno,
       stack: event.error?.stack
-    });
+    };
+
+    // Log to ErrorLogger even if we suppress it from console
+    if (window.ErrorLogger) {
+      window.ErrorLogger.logInfo('Error captured: ' + errorInfo.message, errorInfo);
+    }
+
+    if (shouldIgnoreError(event.message)) {
+      event.preventDefault();
+      return true;
+    }
+
+    console.log('Error caught by handler:', errorInfo);
   });
 
   window.addEventListener('unhandledrejection', function(event) {
     const errorMessage = event.reason?.message || String(event.reason);
+    const errorInfo = {
+      reason: event.reason,
+      message: errorMessage,
+      stack: event.reason?.stack
+    };
+
+    // Log to ErrorLogger even if we suppress it from console
+    if (window.ErrorLogger) {
+      window.ErrorLogger.logInfo('Promise rejection: ' + errorMessage, errorInfo);
+    }
 
     if (shouldIgnoreError(errorMessage)) {
       event.preventDefault();
       return true;
     }
 
-    console.log('Unhandled promise rejection:', {
-      reason: event.reason,
-      message: errorMessage,
-      stack: event.reason?.stack
-    });
+    console.log('Unhandled promise rejection:', errorInfo);
   });
 
   const originalConsoleError = console.error;
