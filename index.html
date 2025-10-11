@@ -29,7 +29,7 @@
   <link rel="icon" href="favicon.png" type="image/png" />
 
   <!-- Error handling and cross-origin fixes -->
-  <script src="js/config.js" defer></script>
+  <script src="js/config.js" defer onerror="console.log('Using default config (config.js not found - this is expected when using Vercel environment variables)')"></script>
   <script src="js/error-logger.js" defer></script>
   <script src="js/error-handler.js" defer></script>
   <script src="js/cross-origin-fix.js" defer></script>

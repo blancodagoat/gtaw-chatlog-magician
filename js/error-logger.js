@@ -335,16 +335,41 @@
   }
 
   /**
+   * Gets configuration with safe defaults
+   */
+  function getConfig() {
+    // Use default config if window.BUG_REPORT_CONFIG is not loaded
+    const defaults = {
+      USE_SERVERLESS_PROXY: true,  // Default to serverless proxy (Vercel)
+      DISCORD_WEBHOOK_URL: '',
+      DEVELOPER_EMAIL: '',
+      FORMSUBMIT_ENDPOINT: 'https://formsubmit.co/',
+      RATE_LIMIT: {
+        ENABLED: true,
+        MAX_REPORTS_PER_SESSION: 5,
+        COOLDOWN_SECONDS: 60,
+      },
+      FALLBACK_TO_MANUAL_COPY: true,
+      SHOW_SUCCESS_MESSAGE: true,
+      INCLUDE_CHATLOG_IN_REPORT: false,
+    };
+    
+    return window.BUG_REPORT_CONFIG || defaults;
+  }
+
+  /**
    * Auto-sends bug report via Discord webhook or email
    */
   function autoSendReport() {
+    const config = getConfig();
+    
     // Check rate limiting
     if (!checkRateLimit()) {
       showToast(
         'Please wait before sending another report. Limit: ' + 
-        window.BUG_REPORT_CONFIG.RATE_LIMIT.MAX_REPORTS_PER_SESSION + 
+        config.RATE_LIMIT.MAX_REPORTS_PER_SESSION + 
         ' per session, ' + 
-        window.BUG_REPORT_CONFIG.RATE_LIMIT.COOLDOWN_SECONDS + 's cooldown.',
+        config.RATE_LIMIT.COOLDOWN_SECONDS + 's cooldown.',
         'warning',
         4000
       );
@@ -352,7 +377,6 @@
     }
 
     const report = generateReport();
-    const config = window.BUG_REPORT_CONFIG || {};
 
     // Show loading indicator
     showLoadingIndicator('Sending bug report...');
@@ -573,7 +597,7 @@
   const rateLimitKey = 'bug_report_rate_limit';
   
   function checkRateLimit() {
-    const config = window.BUG_REPORT_CONFIG || {};
+    const config = getConfig();
     if (!config.RATE_LIMIT || !config.RATE_LIMIT.ENABLED) return true;
 
     try {
@@ -601,7 +625,7 @@
   }
 
   function updateRateLimit() {
-    const config = window.BUG_REPORT_CONFIG || {};
+    const config = getConfig();
     if (!config.RATE_LIMIT || !config.RATE_LIMIT.ENABLED) return;
 
     try {
