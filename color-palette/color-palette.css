@@ -1,0 +1,211 @@
+#colorPalette {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    display: none;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    min-width: 200px;
+}
+
+.color-palette-header {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    text-align: center;
+}
+
+.color-palette-header .selection-counter {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: normal;
+    margin-top: 4px;
+}
+
+.color-palette-items {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 4px;
+}
+
+.color-item {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform var(--dur-hover) var(--ease-hover), box-shadow var(--dur-hover);
+    background: currentColor;
+    position: relative;
+    box-shadow: 0 0 0 0 rgba(255,255,255,0);
+}
+
+.color-item::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10000;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.color-item::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.95);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10000;
+    margin-bottom: 4px;
+}
+
+.color-item:hover::before {
+    opacity: 1;
+    transition-delay: 0.1s;
+}
+
+.color-item:hover::after {
+    opacity: 1;
+    transition-delay: 0.1s;
+}
+
+.color-item:hover { transform: scale(1.12); box-shadow: 0 0 16px 0 currentColor, 0 0 2px 1px rgba(255,255,255,0.15); }
+.color-item.is-selected { animation: ringPulse 2s var(--ease-spring) infinite; }
+@keyframes ringPulse { 0%{ box-shadow:0 0 0 0 currentColor } 70%{ box-shadow:0 0 0 8px rgba(255,255,255,0) } 100%{ box-shadow:0 0 0 0 rgba(255,255,255,0) } }
+
+/* Color classes matching modern.css variables */
+.me { color: #c2a3da; }          /* Purple for /me actions */
+.ame { color: #c2a3da; }         /* Purple for /ame actions */
+.darkgrey { color: #5a5a5b; }    /* Dark grey for [lower] */
+.grey { color: #939799; }        /* Grey for [low] */
+.lightgrey { color: #c6c4c4; }   /* Light grey for normal text */
+.death { color: #f00000; }       /* Bright red for death/failures */
+.yellow { color: #fbf724; }      /* Yellow for important info */
+.green { color: #56d64b; }       /* Green for success */
+.orange { color: #eda841; }      /* Orange for warnings */
+.blue { color: #3896f3; }        /* Blue for info */
+.white { color: #f1f1f1; }       /* White for normal text */
+.radioColor { color: #ffec8b; }  /* Light yellow for radio */
+.radioColor2 { color: #a19558; } /* Dark yellow for radio */
+.depColor { color: #ccca15; }    /* Yellow-green for department */
+.vesseltraffic { color: #33C1C9; } /* Cyan for vessel traffic */
+.toyou { color: #ff00bc; }       /* Pink for [!] messages */
+
+.coloring-mode {
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+.coloring-mode .colorable {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+.coloring-mode .colorable:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.selected-for-coloring {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+}
+
+@media print {
+    .coloring-mode .colorable:hover,
+    .selected-for-coloring {
+        background-color: transparent !important;
+        outline: none !important;
+    }
+    
+    #colorPalette {
+        display: none !important;
+    }
+}
+
+/* Export context: if a wrapper with .dom-to-image is used, ensure selections are invisible */
+.dom-to-image .coloring-mode .colorable:hover,
+.dom-to-image .selected-for-coloring {
+    background-color: transparent !important;
+    outline: none !important;
+}
+
+.dom-to-image #colorPalette {
+    display: none !important;
+}
+
+.color-applied-feedback {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: rgba(56, 150, 243, 0.9);
+	color: white;
+	padding: 8px 16px;
+	border-radius: 6px;
+	font-size: 14px;
+	z-index: 10001;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	animation: fadeInOut 1s ease-in-out;
+}
+
+@keyframes fadeInOut {
+	0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+	20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+	80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+	100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}
+
+@media (max-width: 768px) {
+    #colorPalette {
+        right: 10px;
+        bottom: 10px;
+        padding: 8px;
+        min-width: 180px;
+    }
+
+    .color-item {
+        width: 32px;
+        height: 32px;
+    }
+
+    .color-palette-header {
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+}
