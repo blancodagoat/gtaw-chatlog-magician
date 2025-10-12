@@ -676,6 +676,22 @@ $(document).ready(function() {
             return wrapSpan("green", line);
         }
 
+        // Handle weapon unlock messages: "You've unlocked the Rifle TacticalRifle to Automatic Fire."
+        if (lowerLine.startsWith("you've unlocked the ")) {
+            const unlockPattern = /^(You've unlocked the )([^"]+?)( to )([^.]+)(\.?)$/i;
+            const match = line.match(unlockPattern);
+            if (match) {
+                const [_, prefix, weaponName, toText, fireMode, period] = match;
+                return wrapSpan("white", prefix) + 
+                       wrapSpan("green", weaponName) + 
+                       wrapSpan("white", toText) + 
+                       wrapSpan("green", fireMode) + 
+                       wrapSpan("white", period || ".");
+            }
+            // Fallback: color the entire line green if pattern doesn't match exactly
+            return wrapSpan("green", line);
+        }
+
         if (line.match(/^___Description of .+___$/)) {
             return wrapSpan("blue", line);
         }
