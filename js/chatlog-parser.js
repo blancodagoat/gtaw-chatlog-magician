@@ -676,6 +676,13 @@ $(document).ready(function() {
             return wrapSpan("green", line);
         }
 
+        // You've unlocked the <something> to <something>.
+        // Example: "You've unlocked the Rifle TacticalRifle to Automatic Fire."
+        // Entire message should be green; variables can change.
+        if (/^you'?ve unlocked(?: the)? .+ to .+\.?$/i.test(line)) {
+            return wrapSpan("green", line.endsWith(".") ? line : line + ".");
+        }
+
         if (line.match(/^___Description of .+___$/)) {
             return wrapSpan("blue", line);
         }
