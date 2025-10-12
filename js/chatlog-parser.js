@@ -522,6 +522,12 @@ $(document).ready(function() {
             return wrapSpan("blue", line);
         }
 
+        // You've unlocked the <Weapon> to <Mode>. -> all green
+        // Accept both "You've unlocked" and "You have unlocked", and optional "the"
+        if (/^You(?:'ve| have) unlocked (?:the )?.+ to .+\.?$/i.test(line)) {
+            return wrapSpan("green", line);
+        }
+
         if (line.startsWith("You seized")) {
             const match = line.match(/^(You seized )(.+?)( from )(.+)$/);
             if (match) {
