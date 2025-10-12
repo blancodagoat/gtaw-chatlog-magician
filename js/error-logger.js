@@ -17,9 +17,9 @@
     errors: [],
     warnings: [],
     info: [],
-    networkErrors: [],      // NEW: Track failed requests
-    resourceErrors: [],     // NEW: Track failed resources
-    userActions: [],        // NEW: Track user interactions (breadcrumbs)
+    networkIssues: [],      // Track failed requests
+    resourceIssues: [],     // Track failed resources
+    userActivity: [],       // Track user interactions (breadcrumbs)
     performance: {}
   };
 
@@ -187,7 +187,7 @@
     return originalFetch.apply(this, args)
       .then(response => {
         if (!response.ok) {
-          addLogEntry('networkErrors', `Failed fetch: ${url}`, {
+          addLogEntry('networkIssues', `Failed fetch: ${url}`, {
             status: response.status,
             statusText: response.statusText,
             url: url,
@@ -197,7 +197,7 @@
         return response;
       })
       .catch(error => {
-        addLogEntry('networkErrors', `Network error: ${url}`, {
+        addLogEntry('networkIssues', `Network error: ${url}`, {
           error: error.message,
           url: url,
           stack: error.stack
@@ -212,7 +212,7 @@
   window.addEventListener('error', function(event) {
     if (event.target !== window && event.target.tagName) {
       // Resource loading error
-      addLogEntry('resourceErrors', `Failed to load ${event.target.tagName}`, {
+      addLogEntry('resourceIssues', `Failed to load ${event.target.tagName}`, {
         tagName: event.target.tagName,
         src: event.target.src || event.target.href,
         currentSrc: event.target.currentSrc
@@ -224,7 +224,7 @@
    * Track user actions (breadcrumbs) for debugging context
    */
   function trackUserAction(action, details = {}) {
-    addLogEntry('userActions', action, {
+    addLogEntry('userActivity', action, {
       ...details,
       timestamp: timestamp()
     });
@@ -370,10 +370,10 @@
       report.push('');
     }
 
-    // Network Errors
-    if (errorLog.networkErrors && errorLog.networkErrors.length > 0) {
-      report.push('NETWORK ERRORS (' + errorLog.networkErrors.length + '):');
-      errorLog.networkErrors.slice(-10).forEach((err, i) => {
+    // Network Issues
+    if (errorLog.networkIssues && errorLog.networkIssues.length > 0) {
+      report.push('NETWORK ISSUES (' + errorLog.networkIssues.length + '):');
+      errorLog.networkIssues.slice(-10).forEach((err, i) => {
         report.push('  ' + (i + 1) + '. [' + err.timestamp + '] ' + err.message);
         if (err.details) {
           report.push('     Status: ' + (err.details.status || 'N/A'));
@@ -381,26 +381,35 @@
         }
       });
       report.push('');
+    } else {
+      report.push('NETWORK ISSUES: None ✓');
+      report.push('');
     }
 
-    // Resource Errors
-    if (errorLog.resourceErrors && errorLog.resourceErrors.length > 0) {
-      report.push('RESOURCE ERRORS (' + errorLog.resourceErrors.length + '):');
-      errorLog.resourceErrors.slice(-10).forEach((err, i) => {
+    // Resource Issues
+    if (errorLog.resourceIssues && errorLog.resourceIssues.length > 0) {
+      report.push('RESOURCE ISSUES (' + errorLog.resourceIssues.length + '):');
+      errorLog.resourceIssues.slice(-10).forEach((err, i) => {
         report.push('  ' + (i + 1) + '. [' + err.timestamp + '] ' + err.message);
         if (err.details && err.details.src) {
           report.push('     Source: ' + err.details.src);
         }
       });
       report.push('');
+    } else {
+      report.push('RESOURCE ISSUES: None ✓');
+      report.push('');
     }
 
-    // User Actions (Breadcrumbs - Last 10)
-    if (errorLog.userActions && errorLog.userActions.length > 0) {
-      report.push('USER ACTIONS (Last 10):');
-      errorLog.userActions.slice(-10).forEach((action, i) => {
+    // User Activity (Breadcrumbs - Last 10)
+    if (errorLog.userActivity && errorLog.userActivity.length > 0) {
+      report.push('USER ACTIVITY (Last 10):');
+      errorLog.userActivity.slice(-10).forEach((action, i) => {
         report.push('  ' + (i + 1) + '. [' + action.timestamp + '] ' + action.message);
       });
+      report.push('');
+    } else {
+      report.push('USER ACTIVITY: None ✓');
       report.push('');
     }
 
@@ -565,6 +574,10 @@
       errorCount: errorLog.errors.length,
       warningCount: errorLog.warnings.length,
       errors: errorLog.errors,
+      warnings: errorLog.warnings,
+      networkIssues: errorLog.networkIssues,
+      resourceIssues: errorLog.resourceIssues,
+      userActivity: errorLog.userActivity,
       performance: errorLog.performance,
       fullReport: report
     };
@@ -637,7 +650,7 @@
       username: 'Bug Reporter',
       avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
       embeds: [embed],
-      content: '**New bug report received!**\n\n```\n' + report.substr(0, 1800) + '\n...\n```'
+      content: '**GTAW Chatlog Magician - Error Report**\n\n```\n' + report.substr(0, 1800) + '\n...\n```'
     };
 
     return fetch(webhookUrl, {
