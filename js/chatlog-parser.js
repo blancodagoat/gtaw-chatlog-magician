@@ -676,6 +676,10 @@ $(document).ready(function() {
             return wrapSpan("green", line);
         }
 
+        if (lowerLine.startsWith("you've unlocked the")) {
+            return wrapSpan("green", line);
+        }
+
         if (line.match(/^___Description of .+___$/)) {
             return wrapSpan("blue", line);
         }
