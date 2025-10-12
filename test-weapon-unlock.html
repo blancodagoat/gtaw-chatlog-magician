@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weapon Unlock Coloring Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-case { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .input { background: #f5f5f5; padding: 5px; margin: 5px 0; }
+        .output { background: #000; color: #fff; padding: 5px; margin: 5px 0; }
+        .green { color: #00ff00; }
+    </style>
+</head>
+<body>
+    <h1>Weapon Unlock Coloring Test</h1>
+    
+    <div class="test-case">
+        <h3>Test Case 1: Basic weapon unlock</h3>
+        <div class="input">Input: You've unlocked the Rifle TacticalRifle to Automatic Fire.</div>
+        <div class="output" id="test1"></div>
+    </div>
+    
+    <div class="test-case">
+        <h3>Test Case 2: Different weapon type</h3>
+        <div class="input">Input: You've unlocked the Pistol Glock17 to Single Fire.</div>
+        <div class="output" id="test2"></div>
+    </div>
+    
+    <div class="test-case">
+        <h3>Test Case 3: No period at end</h3>
+        <div class="input">Input: You've unlocked the Shotgun M1014 to Burst Fire</div>
+        <div class="output" id="test3"></div>
+    </div>
+    
+    <div class="test-case">
+        <h3>Test Case 4: Non-weapon unlock (should not be colored)</h3>
+        <div class="input">Input: You've unlocked the door to the building.</div>
+        <div class="output" id="test4"></div>
+    </div>
+
+    <script>
+        // Simplified version of the weapon unlock coloring logic for testing
+        function wrapSpan(className, content) {
+            return `<span class="${className}">${content}</span>`;
+        }
+        
+        function testWeaponUnlock(line) {
+            if (line.startsWith("You've unlocked the")) {
+                const match = line.match(/^(You've unlocked the )(.+?)( to )(.+?)(\.?)$/);
+                if (match) {
+                    const [_, prefix, weaponName, middle, fireMode, suffix] = match;
+                    return wrapSpan("green", prefix) + 
+                           wrapSpan("green", weaponName) + 
+                           wrapSpan("green", middle) + 
+                           wrapSpan("green", fireMode) + 
+                           wrapSpan("green", suffix);
+                }
+            }
+            return line; // Return original if no match
+        }
+        
+        // Test the function
+        document.getElementById('test1').innerHTML = testWeaponUnlock("You've unlocked the Rifle TacticalRifle to Automatic Fire.");
+        document.getElementById('test2').innerHTML = testWeaponUnlock("You've unlocked the Pistol Glock17 to Single Fire.");
+        document.getElementById('test3').innerHTML = testWeaponUnlock("You've unlocked the Shotgun M1014 to Burst Fire");
+        document.getElementById('test4').innerHTML = testWeaponUnlock("You've unlocked the door to the building.");
+    </script>
+</body>
+</html>

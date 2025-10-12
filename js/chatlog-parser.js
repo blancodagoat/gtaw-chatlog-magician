@@ -948,6 +948,19 @@ $(document).ready(function() {
             }
         }
 
+        // Handle weapon unlock messages
+        if (line.startsWith("You've unlocked the")) {
+            const match = line.match(/^(You've unlocked the )(.+?)( to )(.+?)(\.?)$/);
+            if (match) {
+                const [_, prefix, weaponName, middle, fireMode, suffix] = match;
+                return wrapSpan("green", prefix) + 
+                       wrapSpan("green", weaponName) + 
+                       wrapSpan("green", middle) + 
+                       wrapSpan("green", fireMode) + 
+                       wrapSpan("green", suffix);
+            }
+        }
+
         return null;
     }
 
