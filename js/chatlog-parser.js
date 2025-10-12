@@ -522,6 +522,14 @@ $(document).ready(function() {
             return wrapSpan("blue", line);
         }
 
+        if (line.startsWith("You've unlocked")) {
+            // Handle weapon unlock messages - format: You've unlocked the [WeaponType] [WeaponName] to [FireMode]
+            const unlockMatch = line.match(/^You've unlocked the .+ to .+\.?$/);
+            if (unlockMatch) {
+                return wrapSpan("green", line);
+            }
+        }
+
         if (line.startsWith("You seized")) {
             const match = line.match(/^(You seized )(.+?)( from )(.+)$/);
             if (match) {
