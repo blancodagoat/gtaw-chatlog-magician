@@ -896,14 +896,8 @@ $(document).ready(function() {
   $("#downloadOutputTransparent").click(downloadOutputImage);
   $("#toggleBackground").click(toggleBackground);
   
-  // Error report button - Auto-sends to Discord/Email
-  $("#copyErrorReport").click(function() {
-    if (window.ErrorLogger) {
-      window.ErrorLogger.sendReport();
-    } else {
-      alert('Error logger not loaded. Please refresh the page and try again.');
-    }
-  });
+  // Bug report button removed - automated error detection now handles this
+  // See js/error-analyzer.js for automatic error detection and reporting
 
   const textarea = document.querySelector('.textarea-input');
   textarea.addEventListener('input', autoResizeTextarea);

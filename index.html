@@ -32,6 +32,7 @@
   <!-- Config is loaded via defaults in error-logger.js or Vercel environment variables -->
   <script src="js/error-logger.js" defer></script>
   <script src="js/error-handler.js" defer></script>
+  <script src="js/error-analyzer.js" defer></script>
   <script src="js/cross-origin-fix.js" defer></script>
   <script src="js/cors-handler.js" defer></script>
 
@@ -103,9 +104,7 @@
                     <button id="toggleCharacterNameColoring" class="button" aria-label="Toggle character name coloring" title="Disable character name detection coloring">Name Colors</button>
                     <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character" title="Copy ÷ character">÷</button>
                     <button id="toggleColorPalette" class="button" aria-label="Toggle color palette" title="Click text to color">Color Text</button>
-                    <button id="copyErrorReport" class="button secondary" aria-label="Copy error report" title="Copy error report to send to developer" style="background-color: #e74c3c;">
-                      <i class="fas fa-bug" aria-hidden="true"></i> Report Bug
-                    </button>
+                    <!-- Bug report button removed - automated error detection now handles this -->
                     <div class="button" style="display: inline-flex; align-items: center; padding: 0.5em 1em; height: 38px;">
                      <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="blancodagoat" data-color="#000000" data-emoji="" data-font="Cookie" data-text="Buy me a pizza" data-outline-color="#ffffff" data-font-color="#ffffff" data-coffee-color="#FFDD00" data-size="small"></script>
                    </div>

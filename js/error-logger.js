@@ -914,27 +914,135 @@
     window.addEventListener('load', capturePerformance);
   }
 
+  /**
+   * Enhanced sendReport for automated error analyzer integration
+   * Returns a promise for better async handling
+   */
+  function sendReportAsync(options = {}) {
+    return new Promise((resolve, reject) => {
+      const config = getConfig();
+      
+      // Check rate limiting
+      if (!checkRateLimit()) {
+        const message = 'Rate limit exceeded';
+        if (!options.silent) {
+          showToast(
+            'Please wait before sending another report. Limit: ' + 
+            config.RATE_LIMIT.MAX_REPORTS_PER_SESSION + 
+            ' per session, ' + 
+            config.RATE_LIMIT.COOLDOWN_SECONDS + 's cooldown.',
+            'warning',
+            4000
+          );
+        }
+        reject(new Error(message));
+        return;
+      }
+
+      const report = generateReport();
+
+      // Show loading indicator only if not silent
+      if (!options.silent) {
+        showLoadingIndicator('Sending automated error report...');
+      }
+
+      // Try serverless function first (keeps webhook private)
+      if (config.USE_SERVERLESS_PROXY) {
+        sendViaServerless(report)
+          .then(() => {
+            hideLoadingIndicator();
+            if (config.SHOW_SUCCESS_MESSAGE && !options.silent) {
+              showToast('Error report sent successfully', 'success');
+            }
+            updateRateLimit();
+            resolve({ success: true, method: 'serverless' });
+          })
+          .catch(err => {
+            console.error('Serverless function failed:', err);
+            hideLoadingIndicator();
+            // Don't fallback to clipboard for automated reports
+            reject(err);
+          });
+      }
+      // Try Discord webhook directly (if configured and public)
+      else if (config.DISCORD_WEBHOOK_URL && config.DISCORD_WEBHOOK_URL.trim() !== '') {
+        sendToDiscord(report, config.DISCORD_WEBHOOK_URL)
+          .then(() => {
+            hideLoadingIndicator();
+            if (config.SHOW_SUCCESS_MESSAGE && !options.silent) {
+              showToast('Error report sent successfully', 'success');
+            }
+            updateRateLimit();
+            resolve({ success: true, method: 'discord' });
+          })
+          .catch(err => {
+            console.error('Discord webhook failed:', err);
+            hideLoadingIndicator();
+            reject(err);
+          });
+      }
+      // No auto-send configured
+      else {
+        hideLoadingIndicator();
+        const error = new Error('No reporting method configured');
+        reject(error);
+      }
+    });
+  }
+
   // Expose API globally
   window.ErrorLogger = {
     getLog: () => errorLog,
     generateReport: generateReport,
-    sendReport: autoSendReport,           // Primary: Auto-send to Discord/Email
+    sendReport: autoSendReport,           // Legacy: Auto-send to Discord/Email (with UI feedback)
+    sendReportAsync: sendReportAsync,     // New: Promise-based for automation (optional silent mode)
     copyReport: copyReportToClipboard,    // Fallback: Manual copy
     downloadReport: downloadReport,
     clearLog: clearLog,
     logError: (msg, details) => addLogEntry('errors', msg, details),
     logWarning: (msg, details) => addLogEntry('warnings', msg, details),
-    logInfo: (msg, details) => addLogEntry('info', msg, details)
+    logInfo: (msg, details) => addLogEntry('info', msg, details),
+    
+    // New: Check if rate limiting would allow a report
+    canSendReport: () => checkRateLimit(),
+    
+    // New: Get rate limit status
+    getRateLimitStatus: () => {
+      const config = getConfig();
+      if (!config.RATE_LIMIT || !config.RATE_LIMIT.ENABLED) {
+        return { limited: false };
+      }
+      
+      try {
+        const data = JSON.parse(localStorage.getItem(rateLimitKey) || '{}');
+        const now = Date.now();
+        
+        return {
+          limited: !checkRateLimit(),
+          lastReport: data.lastReport ? new Date(data.lastReport).toISOString() : null,
+          reportCount: data.reportCount || 0,
+          maxReports: config.RATE_LIMIT.MAX_REPORTS_PER_SESSION,
+          cooldownSeconds: config.RATE_LIMIT.COOLDOWN_SECONDS,
+          cooldownRemaining: data.lastReport ? 
+            Math.max(0, Math.ceil((config.RATE_LIMIT.COOLDOWN_SECONDS * 1000 - (now - data.lastReport)) / 1000)) : 
+            0
+        };
+      } catch (e) {
+        return { limited: false };
+      }
+    }
   };
 
   // Show status in console
-  console.info('✓ Error Logger initialized. Use ErrorLogger.sendReport() to auto-send bug reports.');
+  console.info('✓ Error Logger initialized with automated error detection support');
   console.info('  Available commands:');
-  console.info('  - ErrorLogger.sendReport() - Auto-send report (Discord/Email)');
-  console.info('  - ErrorLogger.copyReport() - Copy report to clipboard');
+  console.info('  - ErrorLogger.sendReportAsync({ silent: true }) - Send automated report');
+  console.info('  - ErrorLogger.sendReport() - Manual report with UI feedback');
+  console.info('  - ErrorLogger.canSendReport() - Check rate limit');
   console.info('  - ErrorLogger.downloadReport() - Download as .txt file');
   console.info('  - ErrorLogger.getLog() - View full log');
   console.info('  - ErrorLogger.clearLog() - Clear all logs');
+  console.info('  Note: Automated error detection is active via ErrorAnalyzer');
 
 })();
 
