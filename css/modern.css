@@ -421,3 +421,34 @@ html::-webkit-scrollbar {
     font-size: var(--font-size-md);
   }
 }
+
+/* Load More Button Styling */
+.load-more-container {
+    text-align: center;
+    margin-top: 20px;
+    padding: 10px 0;
+}
+
+.load-more-btn {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.load-more-btn:hover {
+    background: linear-gradient(135deg, #2980b9, #1f618d);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.load-more-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}

@@ -4,6 +4,8 @@ class Changelog {
         this.tab = document.querySelector('.changelog-tab');
         this.items = document.querySelector('.changelog-items');
         this.entries = typeof CHANGELOG_ENTRIES !== 'undefined' ? CHANGELOG_ENTRIES : [];
+        this.itemsPerPage = 3; // Show only 3 recent entries by default
+        this.currentPage = 1;
         this.init();
     }
 
@@ -15,6 +17,13 @@ class Changelog {
     setupEventListeners() {
         // Toggle panel on tab click
         this.tab.addEventListener('click', () => this.togglePanel());
+        
+        // Load more entries when button is clicked
+        this.items.addEventListener('click', (e) => {
+            if (e.target.classList.contains('load-more-btn')) {
+                this.loadMoreEntries();
+            }
+        });
     }
 
     togglePanel() {
@@ -33,6 +42,10 @@ class Changelog {
         this.tab.setAttribute('aria-expanded', 'true');
         this.tab.setAttribute('aria-label', 'Close changelog');
         
+        // Reset pagination when opening panel
+        this.currentPage = 1;
+        this.renderEntries();
+        
         const firstItem = this.panel.querySelector('.changelog-item');
         if (firstItem) firstItem.focus();
     }
@@ -45,10 +58,30 @@ class Changelog {
     }
 
     renderEntries() {
-        this.items.innerHTML = this.entries
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .map(entry => this.createEntryElement(entry))
-            .join('');
+        const sortedEntries = this.entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+        const totalEntries = sortedEntries.length;
+        const entriesToShow = Math.min(this.currentPage * this.itemsPerPage, totalEntries);
+        const visibleEntries = sortedEntries.slice(0, entriesToShow);
+        
+        let html = visibleEntries.map(entry => this.createEntryElement(entry)).join('');
+        
+        // Add "Load More" button if there are more entries
+        if (entriesToShow < totalEntries) {
+            html += `
+                <div class="load-more-container">
+                    <button class="load-more-btn" aria-label="Load more changelog entries">
+                        Load More (${totalEntries - entriesToShow} remaining)
+                    </button>
+                </div>
+            `;
+        }
+        
+        this.items.innerHTML = html;
+    }
+    
+    loadMoreEntries() {
+        this.currentPage++;
+        this.renderEntries();
     }
 
     createEntryElement(entry) {
