@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto Error Detector Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    button.danger {
+      background: #ef4444;
+    }
+    button.danger:hover {
+      background: #dc2626;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      background: #f0f9ff;
+      border: 1px solid #bfdbfe;
+    }
+    h1 {
+      color: #1f2937;
+    }
+    h2 {
+      color: #374151;
+      margin-top: 0;
+    }
+    .log {
+      background: #1f2937;
+      color: #10b981;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🤖 Auto Error Detector Test Page</h1>
+  
+  <div class="test-section">
+    <h2>System Status</h2>
+    <div id="system-status" class="status">Checking...</div>
+    <button onclick="checkStatus()">Refresh Status</button>
+    <button onclick="window.AutoErrorDetector && window.AutoErrorDetector.showHealthDetails()">Show Health Details</button>
+  </div>
+
+  <div class="test-section">
+    <h2>Trigger Test Errors</h2>
+    <p>Click these buttons to trigger different types of errors:</p>
+    
+    <button class="danger" onclick="triggerReferenceError()">Trigger Reference Error</button>
+    <button class="danger" onclick="triggerTypeError()">Trigger Type Error</button>
+    <button class="danger" onclick="triggerNetworkError()">Trigger Network Error</button>
+    <button class="danger" onclick="triggerPromiseRejection()">Trigger Promise Rejection</button>
+    <button class="danger" onclick="triggerMultipleErrors()">Trigger Multiple Errors</button>
+    <button class="danger" onclick="createMemoryLeak()">Create Memory Leak</button>
+    <button class="danger" onclick="causeDOMThrashing()">Cause DOM Thrashing</button>
+  </div>
+
+  <div class="test-section">
+    <h2>Manual Controls</h2>
+    <button onclick="window.AutoErrorDetector && window.AutoErrorDetector.forceReport()">Force Send Report</button>
+    <button onclick="window.AutoErrorDetector && window.AutoErrorDetector.stop()">Stop Detection</button>
+    <button onclick="window.AutoErrorDetector && window.AutoErrorDetector.start()">Start Detection</button>
+    <button onclick="clearConsole()">Clear Console</button>
+  </div>
+
+  <div class="test-section">
+    <h2>Console Output</h2>
+    <div id="console-log" class="log">Console messages will appear here...</div>
+  </div>
+
+  <!-- Load error detection system -->
+  <script src="js/error-logger.js"></script>
+  <script src="js/auto-error-detector.js"></script>
+  
+  <script>
+    // Capture console output
+    const logDiv = document.getElementById('console-log');
+    const originalConsole = {
+      log: console.log,
+      error: console.error,
+      warn: console.warn,
+      info: console.info
+    };
+
+    function addToLog(type, ...args) {
+      const time = new Date().toLocaleTimeString();
+      const message = args.map(arg => 
+        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+      ).join(' ');
+      
+      const color = {
+        error: '#ef4444',
+        warn: '#f59e0b',
+        info: '#3b82f6',
+        log: '#10b981'
+      }[type] || '#10b981';
+      
+      logDiv.innerHTML += `<div style="color: ${color}">[${time}] ${type.toUpperCase()}: ${message}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    console.log = function(...args) {
+      addToLog('log', ...args);
+      return originalConsole.log.apply(console, args);
+    };
+    console.error = function(...args) {
+      addToLog('error', ...args);
+      return originalConsole.error.apply(console, args);
+    };
+    console.warn = function(...args) {
+      addToLog('warn', ...args);
+      return originalConsole.warn.apply(console, args);
+    };
+    console.info = function(...args) {
+      addToLog('info', ...args);
+      return originalConsole.info.apply(console, args);
+    };
+
+    // Test functions
+    function checkStatus() {
+      if (window.AutoErrorDetector) {
+        const status = window.AutoErrorDetector.getStatus();
+        const statusDiv = document.getElementById('system-status');
+        statusDiv.innerHTML = `
+          <strong>Monitoring:</strong> ${status.isMonitoring ? '✅ Active' : '❌ Inactive'}<br>
+          <strong>Health:</strong> ${status.health.status.toUpperCase()}<br>
+          <strong>Errors:</strong> Critical: ${status.errorCounts.critical}, 
+                                  High: ${status.errorCounts.high}, 
+                                  Medium: ${status.errorCounts.medium}, 
+                                  Low: ${status.errorCounts.low}<br>
+          <strong>Total Issues:</strong> ${status.errorCounts.total}
+        `;
+        console.info('Status checked:', status);
+      } else {
+        console.error('AutoErrorDetector not loaded');
+      }
+    }
+
+    function triggerReferenceError() {
+      console.log('Triggering ReferenceError...');
+      try {
+        // This will cause a ReferenceError
+        nonExistentFunction();
+      } catch (e) {
+        // Let it propagate to global handler
+        throw e;
+      }
+    }
+
+    function triggerTypeError() {
+      console.log('Triggering TypeError...');
+      try {
+        // This will cause a TypeError
+        const obj = null;
+        obj.someMethod();
+      } catch (e) {
+        throw e;
+      }
+    }
+
+    function triggerNetworkError() {
+      console.log('Triggering Network Error...');
+      // This will cause a network error
+      fetch('https://nonexistent-domain-12345.com/api/test')
+        .then(res => res.json())
+        .catch(err => console.error('Network error caught:', err));
+    }
+
+    function triggerPromiseRejection() {
+      console.log('Triggering Unhandled Promise Rejection...');
+      // This will cause an unhandled promise rejection
+      new Promise((resolve, reject) => {
+        reject(new Error('Unhandled promise rejection test'));
+      });
+    }
+
+    function triggerMultipleErrors() {
+      console.log('Triggering multiple errors to test auto-reporting...');
+      
+      // Generate multiple errors quickly
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          try {
+            throw new Error(`Test error #${i + 1}`);
+          } catch (e) {
+            console.error(e);
+            // Re-throw to trigger global handler
+            setTimeout(() => { throw e; }, 0);
+          }
+        }, i * 100);
+      }
+    }
+
+    let memoryArray = [];
+    function createMemoryLeak() {
+      console.log('Creating memory leak (allocating 10MB)...');
+      // Allocate ~10MB of memory
+      for (let i = 0; i < 10; i++) {
+        const arr = new Array(1024 * 1024); // ~1MB
+        arr.fill('x');
+        memoryArray.push(arr);
+      }
+      console.log('Memory allocated. Total size:', memoryArray.length, 'MB');
+    }
+
+    function causeDOMThrashing() {
+      console.log('Causing DOM thrashing...');
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      
+      // Add and remove many DOM nodes rapidly
+      for (let i = 0; i < 200; i++) {
+        const div = document.createElement('div');
+        div.textContent = `Node ${i}`;
+        container.appendChild(div);
+      }
+      
+      setTimeout(() => {
+        container.remove();
+        console.log('DOM thrashing complete');
+      }, 100);
+    }
+
+    function clearConsole() {
+      logDiv.innerHTML = '<div style="color: #6b7280">Console cleared</div>';
+      console.log('Console cleared');
+    }
+
+    // Check status on load
+    window.addEventListener('load', () => {
+      setTimeout(checkStatus, 1000);
+      console.info('Test page loaded. Auto Error Detector should be active.');
+      console.info('Click the error buttons to test the detection system.');
+    });
+
+    // Periodically update status
+    setInterval(checkStatus, 10000);
+  </script>
+</body>
+</html>

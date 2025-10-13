@@ -896,14 +896,33 @@ $(document).ready(function() {
   $("#downloadOutputTransparent").click(downloadOutputImage);
   $("#toggleBackground").click(toggleBackground);
   
-  // Error report button - Auto-sends to Discord/Email
-  $("#copyErrorReport").click(function() {
+  // Manual error report button (only shown when auto-detector finds issues)
+  $("#manualErrorReport").click(function() {
     if (window.ErrorLogger) {
       window.ErrorLogger.sendReport();
     } else {
       alert('Error logger not loaded. Please refresh the page and try again.');
     }
   });
+  
+  // Monitor auto-detector status and show manual report button if needed
+  setInterval(function() {
+    if (window.AutoErrorDetector) {
+      const status = window.AutoErrorDetector.getStatus();
+      const manualButton = document.getElementById('manualErrorReport');
+      const statusText = document.getElementById('error-status-text');
+      
+      if (status.health.status !== 'healthy' && status.errorCounts.total > 0) {
+        // Show manual report button when errors are detected
+        if (manualButton) manualButton.style.display = 'inline-flex';
+        if (statusText) statusText.style.display = 'none';
+      } else if (status.isMonitoring) {
+        // Show protection status when monitoring and healthy
+        if (manualButton) manualButton.style.display = 'none';
+        if (statusText) statusText.style.display = 'inline-flex';
+      }
+    }
+  }, 5000); // Check every 5 seconds
 
   const textarea = document.querySelector('.textarea-input');
   textarea.addEventListener('input', autoResizeTextarea);

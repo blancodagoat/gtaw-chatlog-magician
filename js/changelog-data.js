@@ -1,5 +1,50 @@
 const CHANGELOG_ENTRIES = [
     {
+        date: '2025-10-13',
+        title: 'Automatic Error Detection & Analysis System',
+        categories: {
+            'Automatic Error Detection': [
+                'Replaced manual "Report Bug" button with intelligent automatic error detection',
+                'System continuously monitors for JavaScript errors, performance issues, and memory leaks',
+                'Automatically classifies errors by severity (Critical, High, Medium, Low)',
+                'Smart error aggregation and deduplication to prevent duplicate reports',
+                'Automatic reporting when error thresholds are exceeded'
+            ],
+            'Performance Monitoring': [
+                'Real-time FPS tracking with automatic detection of performance drops',
+                'Memory usage monitoring with leak detection (tracks growth over time)',
+                'API latency tracking and network error monitoring',
+                'DOM mutation performance tracking to detect thrashing',
+                'Resource loading failure detection (images, scripts, styles)'
+            ],
+            'User Experience': [
+                'Floating health status indicator (bottom-right) shows system health at a glance',
+                'Green = Healthy, Orange = Degraded, Red = Critical Issues',
+                'Click indicator to view detailed health report and metrics',
+                'Manual report button only appears when issues are detected',
+                'Silent operation - no interruptions for technical errors'
+            ],
+            'Configuration & Customization': [
+                'Created auto-detector-config.example.js for customizing thresholds',
+                'Configurable error thresholds, monitoring intervals, and reporting cooldowns',
+                'Support for custom error classification keywords',
+                'Debug mode and console output controls'
+            ],
+            'Technical Implementation': [
+                'Created js/auto-error-detector.js with comprehensive monitoring capabilities',
+                'Integration with existing error-logger.js for unified reporting',
+                'Performance Observer API for long task detection',
+                'MutationObserver for DOM performance monitoring',
+                'Network request interception for API monitoring'
+            ],
+            'Testing & Documentation': [
+                'Added test-auto-detector.html for testing error scenarios',
+                'Updated README with comprehensive documentation',
+                'Console API for manual control (start/stop/status/forceReport)'
+            ]
+        }
+    },
+    {
         date: '2025-10-11',
         title: 'Production Hardening: Security, XSS Protection & Code Quality',
         categories: {
