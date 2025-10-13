@@ -44,7 +44,7 @@ let processingTimeout = null;
  * @returns {void}
  */
 function updateFontSize() {
-  const fontSize = parseInt($('#font-label').val());
+  const fontSize = parseInt($('#font-label').val()) || CONFIG.FONT_SIZE_DEFAULT;
   $('#output').css('font-size', fontSize + 'px');
   
   // Apply font smoothing for smaller sizes to make them more rounded
@@ -58,7 +58,11 @@ function updateFontSize() {
   applySizeClasses(fontSize);
   
   // Store the font size in localStorage
-  localStorage.setItem('chatlogFontSize', fontSize.toString());
+  try {
+    localStorage.setItem('chatlogFontSize', fontSize.toString());
+  } catch (e) {
+    console.warn('Could not save font size to localStorage:', e);
+  }
 }
 
 
@@ -863,7 +867,7 @@ $(document).ready(function() {
   // toggleHistoryPanel() is already defined globally above
 
   $('#font-label').on('input', function() {
-    const value = parseInt($(this).val());
+    const value = parseInt($(this).val()) || CONFIG.FONT_SIZE_DEFAULT;
     // Ensure value is within valid range
     if (value < CONFIG.FONT_SIZE_MIN) $(this).val(CONFIG.FONT_SIZE_MIN);
     if (value > CONFIG.FONT_SIZE_MAX) $(this).val(CONFIG.FONT_SIZE_MAX);
@@ -882,11 +886,15 @@ $(document).ready(function() {
 
 
   $('#lineLengthInput').on('input', function() {
-    const value = parseInt($(this).val());
+    const value = parseInt($(this).val()) || CONFIG.LINE_LENGTH_DEFAULT;
     // Remove line length limitations - allow any positive value
     if (value < CONFIG.LINE_LENGTH_MIN) $(this).val(CONFIG.LINE_LENGTH_MIN);
     
-    localStorage.setItem('chatlogLineLength', $(this).val());
+    try {
+      localStorage.setItem('chatlogLineLength', $(this).val());
+    } catch (e) {
+      console.warn('Could not save line length to localStorage:', e);
+    }
     if (typeof processOutput === 'function') {
       processOutput();
     }
@@ -894,7 +902,11 @@ $(document).ready(function() {
   });
 
   $('#characterNameInput').on('input', function() {
-    localStorage.setItem('chatlogCharacterName', $(this).val());
+    try {
+      localStorage.setItem('chatlogCharacterName', $(this).val());
+    } catch (e) {
+      console.warn('Could not save character name to localStorage:', e);
+    }
     if (typeof applyFilter === 'function') {
       applyFilter();
     }

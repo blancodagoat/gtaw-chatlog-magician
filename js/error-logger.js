@@ -35,7 +35,7 @@
    * Generates a unique session ID
    */
   function generateSessionId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
   }
 
   /**
@@ -43,7 +43,7 @@
    */
   function timestamp() {
     const now = new Date();
-    return now.toISOString().replace('T', ' ').substr(0, 23);
+    return now.toISOString().replace('T', ' ').substring(0, 23);
   }
 
   /**
@@ -234,7 +234,7 @@
   document.addEventListener('click', function(event) {
     const target = event.target.closest('button, a, [role="button"]');
     if (target) {
-      const label = target.textContent?.trim().substr(0, 50) || 
+      const label = target.textContent?.trim().substring(0, 50) || 
                     target.getAttribute('aria-label') || 
                     target.id || 
                     'Unknown button';
@@ -636,7 +636,7 @@
     // Add errors if any
     if (errorCount > 0) {
       const errorSummary = errorLog.errors.slice(0, 3).map((err, i) => 
-        `${i + 1}. ${err.message.substr(0, 100)}`
+        `${i + 1}. ${err.message.substring(0, 100)}`
       ).join('\n');
       embed.fields.push({
         name: '❌ Recent Errors',
@@ -650,7 +650,7 @@
       username: 'Bug Reporter',
       avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
       embeds: [embed],
-      content: '**GTAW Chatlog Magician - Error Report**\n\n```\n' + report.substr(0, 1800) + '\n...\n```'
+      content: '**GTAW Chatlog Magician - Error Report**\n\n```\n' + report.substring(0, 1800) + '\n...\n```'
     };
 
     return fetch(webhookUrl, {

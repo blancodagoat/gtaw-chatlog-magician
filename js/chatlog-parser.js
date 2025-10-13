@@ -138,7 +138,17 @@ $(document).ready(function() {
             // to avoid the wrapSpan function breaking down the HTML
             const restOfLine = lineWithoutExclamation;
             // Return HTML that won't be processed by makeTextColorable
-            return `<span class="toyou colorable">[!]</span> <span class="${mainColor} colorable">${restOfLine}</span>`;
+            // Sanitize user input to prevent XSS
+            const sanitizedRestOfLine = restOfLine.replace(/[<>&"']/g, function(match) {
+                return {
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '&': '&amp;',
+                    '"': '&quot;',
+                    "'": '&#x27;'
+                }[match];
+            });
+            return `<span class="toyou colorable">[!]</span> <span class="${mainColor} colorable">${sanitizedRestOfLine}</span>`;
         }
 
         return wrapSpan(mainColor, line);
@@ -270,7 +280,17 @@ $(document).ready(function() {
                 
                 // Create the properly formatted HTML for [!] lines and apply line breaks
                 // Add colorable class to make spans selectable for letter-by-letter coloring
-                const formattedHTML = `<span class="toyou colorable">[!]</span> <span class="${mainColor} colorable">${lineWithoutExclamation}</span>`;
+                // Sanitize user input to prevent XSS
+                const sanitizedLine = lineWithoutExclamation.replace(/[<>&"']/g, function(match) {
+                    return {
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '&': '&amp;',
+                        '"': '&quot;',
+                        "'": '&#x27;'
+                    }[match];
+                });
+                const formattedHTML = `<span class="toyou colorable">[!]</span> <span class="${mainColor} colorable">${sanitizedLine}</span>`;
                 div.innerHTML = addLineBreaksAndHandleSpans(formattedHTML);
                 // Don't add no-colorable class since we want these spans to be colorable
             } else {
@@ -1390,7 +1410,7 @@ $(document).ready(function() {
                 /\{([A-Fa-f0-9]{6})\}/g,
                 (_match, p1) => {
                     // p1 is already validated by regex to be 6 hex chars, but sanitize anyway
-                    const safeColor = p1.replace(/[^A-Fa-f0-9]/g, '').substr(0, 6);
+                    const safeColor = p1.replace(/[^A-Fa-f0-9]/g, '').substring(0, 6);
                     return '<span style="color: #' + safeColor + ';">';
                 }
             )
@@ -1611,17 +1631,17 @@ $(document).ready(function() {
         }
 
         for (let i = 0; i < text.length; i++) {
-            if (text[i] === "<" && text.substr(i, 5) === "<span") {
+            if (text[i] === "<" && text.substring(i, i + 5) === "<span") {
                 const spanEnd = text.indexOf(">", i);
                 const spanTag = text.substring(i, spanEnd + 1);
                 openSpans.push(spanTag);
                 result += spanTag;
                 i = spanEnd;
-            } else if (text[i] === "<" && text.substr(i, 7) === "</span>") {
+            } else if (text[i] === "<" && text.substring(i, i + 7) === "</span>") {
                 result += "</span>";
                 i += 6;
                 openSpans.pop();
-            } else if (text[i] === "<" && text.substr(i, 4) === "<br") {
+            } else if (text[i] === "<" && text.substring(i, i + 4) === "<br") {
                 // Handle existing <br> tags
                 const brEnd = text.indexOf(">", i);
                 const brTag = text.substring(i, brEnd + 1);
