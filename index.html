@@ -213,5 +213,20 @@
      <script src="js/changelog-data.js" defer></script>
      <script src="js/changelog.js" defer></script>
 
+     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize ColorPalette after all scripts have loaded
+            if (typeof ColorPalette !== 'undefined') {
+                ColorPalette.init();
+            } else {
+                // If ColorPalette isn't ready yet, wait a bit
+                setTimeout(function() {
+                    if (typeof ColorPalette !== 'undefined') {
+                        ColorPalette.init();
+                    }
+                }, 100);
+            }
+        });
+     </script>
  </body>
 </html>
