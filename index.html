@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="author" content="blanco" />
+  <meta name="description" content="Chatlog Magician for GTA World made by Blanco with love!" />
+  <meta name="keywords" content="GTAW, GTAWorld, GTA World, RAGE MP, chatlog magician, chatlog" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+  <meta name="msapplication-navbutton-color" content="#000000" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <title>Chatlog Magician</title>
+
+  <!-- Preload critical assets -->
+  <link rel="preload" href="css/foundation.fixed.css" as="style" />
+  <link rel="preload" href="js/app.js" as="script" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/foundation.fixed.css" />
+  <link rel="stylesheet" href="css/modern.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/fontawesome.min.css" />
+  <link rel="stylesheet" href="color-palette/color-palette.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
+        crossorigin="anonymous" />
+  <link rel="icon" href="favicon.png" type="image/png" />
+
+  <!-- Error handling and cross-origin fixes -->
+  <!-- Config is loaded via defaults in error-logger.js or Vercel environment variables -->
+  <script src="js/error-logger.js" defer></script>
+  <script src="js/error-handler.js" defer></script>
+  <script src="js/cross-origin-fix.js" defer></script>
+  <script src="js/cors-handler.js" defer></script>
+
+  <style>
+   label {
+    display: none;
+   }
+
+   ::-webkit-input-placeholder {
+    color: black;
+   }
+
+   :-ms-input-placeholder {
+    color: black;
+   }
+
+   ::placeholder {
+    color: black;
+   }
+
+   #chatlogInput::placeholder {
+    color: transparent;
+   }
+
+   .button .bmc-btn,
+   .bmc-btn {
+     background-color: transparent !important;
+     min-width: auto !important;
+     height: 38px !important;
+     padding: 0 12px !important;
+     line-height: 1 !important;
+   }
+  </style>
+ </head>
+ <body>
+    <div class="grid-container">
+        <div class="grid-x grid-margin-x">
+           <div class="cell small-12">
+              <div class="grid-x grid-margin-x align-middle">
+                 <div class="cell small-4 medium-2">
+                    <label for="font-label">Font Size:</label>
+                    <input name="font-label" id="font-label" type="number" min="8" max="24" step="1" value="12" aria-label="Font size" />
+                    <div class="golden-sizes-hint">Golden: 8, 10, 12, 15, 19, 24px</div>
+                 </div>
+                 <div class="cell small-4 medium-2">
+                    <label for="lineLengthInput">Line Length:</label>
+                    <input type="number" id="lineLengthInput" min="1" value="77" aria-label="Line length">
+                 </div>
+                 <div class="cell small-8 medium-8">
+                    <label for="characterNameInput">Character Name Filter:</label>
+                    <div class="input-group" style="position: relative;">
+                      <input type="text" id="characterNameInput" placeholder="Enter character name" autocomplete="off" aria-label="Character name filter" />
+                      <div class="input-group-button" style="display: flex; gap: 4px;">
+                        <button class="button small" id="addCharacterBtn" type="button" aria-label="Add character">Add</button>
+                        <button class="button small" id="showCharacterListBtn" type="button" aria-label="Show character list">&#9660;</button>
+                      </div>
+                      <div id="characterNameDropdown" class="character-dropdown" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: #222; color: #fff; border: 1px solid #444; z-index: 1000; max-height: 150px; overflow-y: auto;" role="listbox"></div>
+                    </div>
+                 </div>
+              </div>
+              <label for="chatlogInput">Chat Log:</label>
+              <div class="textarea-container">
+                 <textarea id="chatlogInput" class="form-control textarea-input" rows="15" placeholder="Enter your chat log here..." aria-label="Chat log input"></textarea>
+              </div>
+              <div class="grid-x grid-margin-x align-middle">
+                 <div class="cell auto">
+                    <button id="downloadOutputTransparent" class="button success" aria-label="Download chat log">Download</button>
+                    <button id="toggleBackground" class="button">Toggle Background</button>
+                    <button id="toggleCharacterNameColoring" class="button" aria-label="Toggle character name coloring" title="Disable character name detection coloring">Name Colors</button>
+                    <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character" title="Copy ÷ character">÷</button>
+                    <button id="toggleColorPalette" class="button" aria-label="Toggle color palette" title="Click text to color">Color Text</button>
+                    <button id="copyErrorReport" class="button secondary" aria-label="Copy error report" title="Copy error report to send to developer" style="background-color: #e74c3c;">
+                      <i class="fas fa-bug" aria-hidden="true"></i> Report Bug
+                    </button>
+                    <div class="button" style="display: inline-flex; align-items: center; padding: 0.5em 1em; height: 38px;">
+                     <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="blancodagoat" data-color="#000000" data-emoji="" data-font="Cookie" data-text="Buy me a pizza" data-outline-color="#ffffff" data-font-color="#ffffff" data-coffee-color="#FFDD00" data-size="small"></script>
+                   </div>
+                 </div>
+              </div>
+              <div id="output" class="output" role="region" aria-label="Formatted chat log output"></div>
+           </div>
+        </div>
+     </div>
+
+    <!-- Third-party scripts with fallback handling -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/4.0.0-beta.2/jquery.min.js" 
+            integrity="sha512-JobWAqYk5CSjWuVV3mxgS+MmccJqkrBaDhk8SKS1BW+71dJ9gzascwzW85UwGhxiSyR7Pxhu50k+Nl3+o5I49A==" 
+            crossorigin="anonymous" 
+            defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.9.0/js/foundation.min.js" 
+            integrity="sha512-P4f0g0iAkyfUF2V2VX8dxkoBxPLULaV2TM8HQGXFRb75AzLVAf+sn+MRweu/C81rL2JaYutbY6cWAbmwJbtOcg==" 
+            crossorigin="anonymous" 
+            defer
+            onerror="console.warn('Foundation.js failed to load from CDN')"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/3.5.0/dom-to-image-more.min.js" 
+            integrity="sha512-ECdKPIiMdaihsCUpvDKFdrwwERCqyqojP0H1SV9J9k6/80yAzfHzhcA5xaexoNMR9JZSJ7gmzMkV/08Ie1asmw==" 
+            crossorigin="anonymous" 
+            defer
+            onerror="console.warn('dom-to-image-more.js failed to load from CDN')"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" 
+            integrity="sha512-Qlv6VSKh1gDKGoJbnyA5RMXYcvnpIqhO++MhIM2fStMcGT9i2T//tSwYFlcyoRRDcDZ+TYHpH8azBBCyhpSeqw==" 
+            crossorigin="anonymous" 
+            defer
+            onerror="console.warn('FileSaver.js failed to load from CDN')"></script>
+
+    <!-- Application scripts -->
+    <script src="js/chat.js" defer></script>
+     <script src="color-palette/color-palette.js" defer></script>
+     <script src="js/chatlog-parser.js" defer></script>
+     <script src="js/app.js" defer></script>
+
+     <!-- History panel -->
+     <div class="history-tab" 
+          onclick="toggleHistoryPanel()" 
+          role="button" 
+          tabindex="0" 
+          aria-label="Open chat history" 
+          aria-expanded="false">
+       <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+     </div>
+
+     <div id="historyPanel" 
+          class="history-panel" 
+          role="dialog" 
+          aria-label="Chat history" 
+          aria-hidden="true">
+       <div class="history-header">
+         <h3>Chatlog History</h3>
+       </div>
+       <div class="history-items" role="list"></div>
+     </div>
+
+     <!-- Color Palette -->
+     <div id="colorPalette" class="color-palette" style="display: none;">
+         <div class="color-palette-header">
+             Select Color
+             <div class="selection-counter">0 selected</div>
+         </div>
+         <div class="color-palette-items">
+             <div class="color-item me" data-color="me" data-tooltip="Me/Ame Actions"></div>
+             <div class="color-item ame" data-color="ame" data-tooltip="Me/Ame Actions"></div>
+             <div class="color-item darkgrey" data-color="darkgrey" data-tooltip="Lower Voice"></div>
+             <div class="color-item grey" data-color="grey" data-tooltip="Low Voice"></div>
+             <div class="color-item lightgrey" data-color="lightgrey" data-tooltip="Normal Text"></div>
+             <div class="color-item death" data-color="death" data-tooltip="Death/Failures"></div>
+             <div class="color-item yellow" data-color="yellow" data-tooltip="Important Info"></div>
+             <div class="color-item green" data-color="green" data-tooltip="Success"></div>
+             <div class="color-item orange" data-color="orange" data-tooltip="Warnings"></div>
+             <div class="color-item blue" data-color="blue" data-tooltip="Info"></div>
+             <div class="color-item white" data-color="white" data-tooltip="Normal Text"></div>
+             <div class="color-item radioColor" data-color="radioColor" data-tooltip="Radio (Your Channel)"></div>
+             <div class="color-item radioColor2" data-color="radioColor2" data-tooltip="Radio (Other Channel)"></div>
+             <div class="color-item depColor" data-color="depColor" data-tooltip="Department"></div>
+             <div class="color-item vesseltraffic" data-color="vesseltraffic" data-tooltip="Vessel Traffic"></div>
+             <div class="color-item toyou" data-color="toyou" data-tooltip="Directed at You [!]"></div>
+         </div>
+     </div>
+
+     <!-- Changelog tab -->
+     <div class="changelog-tab" 
+          role="button" 
+          tabindex="0" 
+          aria-label="Open changelog" 
+          aria-expanded="false">
+       <i class="fas fa-list" aria-hidden="true"></i>
+     </div>
+
+     <div id="changelogPanel" 
+          class="changelog-panel" 
+          role="dialog" 
+          aria-label="Changelog" 
+          aria-hidden="true">
+       <div class="changelog-header">
+         <h3>Latest Updates</h3>
+       </div>
+       <div class="changelog-items" role="list"></div>
+     </div>
+
+     <script src="js/changelog-data.js" defer></script>
+     <script src="js/changelog.js" defer></script>
+
+ </body>
+</html>
