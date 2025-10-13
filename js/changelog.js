@@ -21,6 +21,8 @@ class Changelog {
         // Load more entries when button is clicked
         this.items.addEventListener('click', (e) => {
             if (e.target.classList.contains('load-more-btn')) {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent event bubbling to parent elements
                 this.loadMoreEntries();
             }
         });
