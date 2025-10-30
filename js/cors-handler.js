@@ -59,10 +59,13 @@
       }
     },
 
-    // Get dom-to-image options with CORS handling
+    // Get dom-to-image options with CORS handling and safe quality tweaks
     getDomToImageOptions: function(baseOptions = {}) {
       return {
         ...baseOptions,
+        // Use high quality without forcing background or transforms
+        quality: 1.0,
+        cacheBust: false,
         filter: function(node) {
           // Skip problematic external resources
           if (node.tagName === 'LINK' && node.href) {

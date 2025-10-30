@@ -6,7 +6,7 @@ if (typeof window.Foundation !== 'undefined') {
 }
 
 // Debug mode - set to false for production
-const DEBUG_MODE = false;
+const _DEBUG_MODE = false;
 
 // Configuration constants
 const CONFIG = {
@@ -31,10 +31,44 @@ const CONFIG = {
     BMC_NUDGE_ANIMATION_MS: 800         // Duration of BMC nudge animation
 };
 
+// Auto-save toast helper and localStorage instrumentation
+function showAutoSaveIndicator(message) {
+  try {
+    const existing = document.querySelector('.auto-save-indicator');
+    if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.className = 'auto-save-indicator';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    el.innerHTML = '<div class="spinner" aria-hidden="true"></div><p class="loading-text">' + (message || 'Saved') + '</p>';
+    document.body.appendChild(el);
+    setTimeout(() => {
+      el.classList.add('fade-out');
+      setTimeout(() => el.remove(), 600);
+    }, CONFIG.AUTO_SAVE_INDICATOR_MS - 800);
+  } catch (e) {
+    // noop
+  }
+}
+
+try {
+  const __origSet = localStorage.setItem.bind(localStorage);
+  const SAVE_KEYS = new Set(['chatlogFontSize','chatlogLineLength','chatlogCharacterName','chatlogHistory']);
+  localStorage.setItem = function(key, value) {
+    const res = __origSet(key, value);
+    if (SAVE_KEYS.has(String(key))) {
+      showAutoSaveIndicator('Saved');
+    }
+    return res;
+  };
+} catch (e) {
+  // noop
+}
+
 // Typographic Golden Scale - Hand-picked sizes optimized for readability
 const TYPOGRAPHIC_SCALE = [8, 10, 12, 15, 19, 24];
 
-let scaleEnabled = false;
+let _scaleEnabled = false;
 let lastProcessedText = '';
 let processingTimeout = null;
 
@@ -71,7 +105,7 @@ function updateFontSize() {
  * @param {number} fontSize - The font size to check
  * @returns {boolean} True if the size is in the golden scale
  */
-function isTypographicGolden(fontSize) {
+function _isTypographicGolden(fontSize) {
   return TYPOGRAPHIC_SCALE.includes(fontSize);
 }
 
@@ -81,7 +115,7 @@ function isTypographicGolden(fontSize) {
  * @param {string} direction - Direction to move ('up' or 'down')
  * @returns {number} The next golden size, or current size if at boundary
  */
-function getNextGoldenSize(currentSize, direction = 'up') {
+function _getNextGoldenSize(currentSize, direction = 'up') {
   const index = TYPOGRAPHIC_SCALE.indexOf(currentSize);
   if (index === -1) return currentSize; // Not a golden size
   
@@ -98,13 +132,13 @@ function getNextGoldenSize(currentSize, direction = 'up') {
  * @param {number} n - The number to find nearest golden size for
  * @returns {number} The closest golden scale size
  */
-function nearestGolden(n) {
+function _nearestGolden(n) {
   return TYPOGRAPHIC_SCALE.reduce((best, v) =>
     Math.abs(v - n) < Math.abs(best - n) ? v : best
   , TYPOGRAPHIC_SCALE[0]);
 }
 
-function percentDelta(a, b) { 
+function _percentDelta(a, b) { 
   return ((b - a) / a * 100).toFixed(1); 
 }
 
@@ -118,7 +152,7 @@ function applySizeClasses(px) {
 }
 
 // Debug function to print scale's % deltas (handy for meta inspection)
-function printScaleDeltas() {
+function _printScaleDeltas() {
   console.table(
     TYPOGRAPHIC_SCALE.slice(0, -1).map((s, i) => {
       const t = TYPOGRAPHIC_SCALE[i+1];
@@ -415,21 +449,7 @@ function hideLoadingIndicator() {
   $('#loadingIndicator').hide();
 }
 
-function showAutoSaveIndicator() {
-  // Remove existing indicator
-  $('.auto-save-indicator').remove();
-  
-  // Create and show new indicator
-  const indicator = $('<div class="auto-save-indicator">Settings saved</div>');
-  $('body').append(indicator);
-  
-  // Remove after 2 seconds
-  setTimeout(() => {
-    indicator.fadeOut(300, function() {
-      $(this).remove();
-    });
-  }, 2000);
-}
+// Deprecated duplicate kept earlier; this definition is superseded by the top-level implementation
 
 /**
  * Toggles the black background on the output display
@@ -626,6 +646,13 @@ function toggleHistoryPanel() {
   // After toggle, the state is opposite of isOpen, so aria-hidden should match the old state
   panel.setAttribute('aria-hidden', isOpen);
 
+  // Toggle inert on main content when panel is open for a11y
+  const main = document.getElementById('main');
+  if (main) {
+    if (!isOpen) { main.setAttribute('inert', ''); main.setAttribute('aria-hidden', 'true'); }
+    else { main.removeAttribute('inert'); main.removeAttribute('aria-hidden'); }
+  }
+
   const tab = document.querySelector('.history-tab');
   tab.setAttribute('aria-expanded', !isOpen);
   tab.setAttribute('aria-label', isOpen ? 'Open chat history' : 'Close chat history');
@@ -655,10 +682,20 @@ function toggleHistoryPanel() {
 document.addEventListener('click', (e) => {
   const historyPanel = document.getElementById('historyPanel');
   const historyTab = document.querySelector('.history-tab');
-  
+
   if (!e.target.closest('#historyPanel, .history-tab') && historyPanel.classList.contains('open')) {
     // Close the history panel by calling the toggle function
     toggleHistoryPanel();
+  }
+});
+
+// Add keyboard navigation for history panel
+document.addEventListener('keydown', (e) => {
+  const historyPanel = document.getElementById('historyPanel');
+  if (e.key === 'Escape' && historyPanel.classList.contains('open')) {
+    toggleHistoryPanel();
+    // Return focus to the history tab
+    document.querySelector('.history-tab').focus();
   }
 });
 
@@ -746,6 +783,13 @@ function toggleChangelogPanel() {
     panel.classList.toggle('open');
     // After toggle, the state is opposite of isOpen, so aria-hidden should match the old state
     panel.setAttribute('aria-hidden', isOpen);
+
+    // Toggle inert on main content when panel is open for a11y
+    const main = document.getElementById('main');
+    if (main) {
+      if (!isOpen) { main.setAttribute('inert', ''); main.setAttribute('aria-hidden', 'true'); }
+      else { main.removeAttribute('inert'); main.removeAttribute('aria-hidden'); }
+    }
 
     const tab = document.querySelector('.changelog-tab');
     tab.setAttribute('aria-expanded', !isOpen);
@@ -974,21 +1018,49 @@ $(document).ready(function() {
     }
   });
 
-  $('.history-header').append(
-    $('<button class="clear-history-btn" onclick="clearHistory()" aria-label="Clear all history">Clear All</button>')
-  );
+  // Ensure a single Clear All button exists and is wired (no inline handlers)
+  (function ensureClearHistoryButton(){
+    const $header = $('.history-header');
+    if (!$header.length) return;
+    let $btn = $header.find('.clear-history-btn');
+    if (!$btn.length) {
+      $btn = $('<button class="clear-history-btn" aria-label="Clear all history">Clear All</button>');
+      $header.append($btn);
+    }
+    $btn.off('click.clear').on('click.clear', function(e){
+      e.preventDefault();
+      if (typeof window.clearHistory === 'function') {
+        window.clearHistory();
+      }
+    });
+  })();
 
   // Add click-away functionality for changelog panel
   $(document).on('click', function(e) {
     const panel = document.getElementById('changelogPanel');
     const tab = document.querySelector('.changelog-tab');
-    
+
     if (!$(e.target).closest('#changelogPanel, .changelog-tab').length && panel.classList.contains('open')) {
       panel.classList.remove('open');
       panel.setAttribute('aria-hidden', 'true');
       tab.setAttribute('aria-expanded', 'false');
       tab.setAttribute('aria-label', 'Open changelog');
     }
+  });
+
+  // Add keyboard navigation for changelog panel
+  document.addEventListener('keydown', (e) => {
+    const changelogPanel = document.getElementById('changelogPanel');
+    if (e.key === 'Escape' && changelogPanel.classList.contains('open')) {
+      changelogPanel.classList.remove('open');
+      changelogPanel.setAttribute('aria-hidden', 'true');
+      const tab = document.querySelector('.changelog-tab');
+      tab.setAttribute('aria-expanded', 'false');
+      tab.setAttribute('aria-label', 'Open changelog');
+      // Return focus to the changelog tab
+      tab.focus();
+    }
+  });
   });
 
   // Randomly shake the Buy Me a Coffee button to draw attention (non-intrusive)
@@ -1008,4 +1080,3 @@ $(document).ready(function() {
     // start after initial delay to avoid on-load distraction
     setTimeout(scheduleNext, CONFIG.BMC_NUDGE_INITIAL_DELAY_MS);
   })();
-});

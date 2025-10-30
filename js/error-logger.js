@@ -26,7 +26,7 @@
   // Configuration
   const CONFIG = {
     MAX_ENTRIES: 100,           // Maximum number of log entries per type
-    SHOW_CONSOLE: true,         // Also show in regular console
+    SHOW_CONSOLE: false,        // Suppress console noise in production
     AUTO_SAVE: true,            // Auto-save to localStorage
     STORAGE_KEY: 'chatlog_error_log'
   };
@@ -807,74 +807,50 @@
    * Shows report in a modal for manual copying
    */
   function showReportInModal(report) {
+    if (typeof HTMLDialogElement !== 'undefined') {
+      let dlg = document.getElementById('reportDialog');
+      if (!dlg) {
+        dlg = document.createElement('dialog');
+        dlg.id = 'reportDialog';
+        dlg.setAttribute('aria-label', 'Error Report');
+        dlg.innerHTML = `
+          <form method="dialog" style="margin:0;">
+            <h2 style="margin: 0 0 8px 0; font-size: 16px;">Error Report</h2>
+            <p style="margin:0 0 8px 0;">Copy this report and send it to the developer:</p>
+            <textarea readonly style="width: 80vw; max-width: 800px; height: 50vh; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">${report}</textarea>
+            <div style="margin-top: 10px; text-align: right;">
+              <button value="close" style="padding: 10px 16px;">Close</button>
+            </div>
+          </form>`;
+        document.body.appendChild(dlg);
+      } else {
+        const ta = dlg.querySelector('textarea');
+        if (ta) ta.value = report;
+      }
+      dlg.showModal();
+      const main = document.getElementById('main');
+      if (main) { main.setAttribute('inert', ''); main.setAttribute('aria-hidden', 'true'); }
+      dlg.addEventListener('close', () => {
+        if (main) { main.removeAttribute('inert'); main.removeAttribute('aria-hidden'); }
+      }, { once: true });
+      dlg.querySelector('textarea')?.select();
+      return;
+    }
+    // Fallback for browsers without <dialog>
     const modal = document.createElement('div');
-    modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    `;
-
+    modal.style.cssText = `position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 99999; display:flex; align-items:center; justify-content:center; padding:20px;`;
     const content = document.createElement('div');
-    content.style.cssText = `
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 800px;
-      max-height: 80vh;
-      overflow: auto;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    `;
-
+    content.style.cssText = `background: white; padding: 20px; border-radius: 8px; max-width: 800px; max-height: 80vh; overflow: auto; box-shadow: 0 4px 20px rgba(0,0,0,.3);`;
     content.innerHTML = `
-      <h2 style="margin-top: 0;">Error Report</h2>
+      <h2 style="margin-top:0;">Error Report</h2>
       <p>Copy this report and send it to the developer:</p>
-      <textarea readonly style="
-        width: 100%;
-        height: 400px;
-        font-family: monospace;
-        font-size: 12px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      ">${report}</textarea>
-      <div style="margin-top: 10px; text-align: right;">
-        <button id="closeReportModal" style="
-          padding: 10px 20px;
-          background: #3498db;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-        ">Close</button>
-      </div>
-    `;
-
+      <textarea readonly style="width:100%; height:400px; font-family: monospace; font-size:12px; padding:10px; border:1px solid #ccc; border-radius:4px;">${report}</textarea>
+      <div style="margin-top:10px; text-align:right;"><button id="closeReportModal" style="padding:10px 20px;">Close</button></div>`;
     modal.appendChild(content);
     document.body.appendChild(modal);
-
-    // Select text automatically
     content.querySelector('textarea').select();
-
-    // Close on button click
-    content.querySelector('#closeReportModal').onclick = () => {
-      document.body.removeChild(modal);
-    };
-
-    // Close on background click
-    modal.onclick = (e) => {
-      if (e.target === modal) {
-        document.body.removeChild(modal);
-      }
-    };
+    content.querySelector('#closeReportModal').onclick = () => document.body.removeChild(modal);
+    modal.onclick = (e) => { if (e.target === modal) document.body.removeChild(modal); };
   }
 
   /**
@@ -928,13 +904,15 @@
   };
 
   // Show status in console
-  console.info('✓ Error Logger initialized. Use ErrorLogger.sendReport() to auto-send bug reports.');
-  console.info('  Available commands:');
-  console.info('  - ErrorLogger.sendReport() - Auto-send report (Discord/Email)');
-  console.info('  - ErrorLogger.copyReport() - Copy report to clipboard');
-  console.info('  - ErrorLogger.downloadReport() - Download as .txt file');
-  console.info('  - ErrorLogger.getLog() - View full log');
-  console.info('  - ErrorLogger.clearLog() - Clear all logs');
+  if (CONFIG.SHOW_CONSOLE) {
+    console.info('✓ Error Logger initialized. Use ErrorLogger.sendReport() to auto-send bug reports.');
+    console.info('  Available commands:');
+    console.info('  - ErrorLogger.sendReport() - Auto-send report (Discord/Email)');
+    console.info('  - ErrorLogger.copyReport() - Copy report to clipboard');
+    console.info('  - ErrorLogger.downloadReport() - Download as .txt file');
+    console.info('  - ErrorLogger.getLog() - View full log');
+    console.info('  - ErrorLogger.clearLog() - Clear all logs');
+  }
 
 })();
 

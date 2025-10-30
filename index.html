@@ -13,20 +13,29 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <title>Chatlog Magician</title>
 
+  <!-- Google Fonts - Inter for better readability -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <!-- Preload critical assets -->
   <link rel="preload" href="css/foundation.fixed.css" as="style" />
   <link rel="preload" href="js/app.js" as="script" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/foundation.fixed.css" />
   <link rel="stylesheet" href="css/modern.css" />
   <link rel="stylesheet" href="css/app.css" />
   <link rel="stylesheet" href="css/fontawesome.min.css" />
-  <link rel="stylesheet" href="color-palette/color-palette.css" />
+  <link rel="stylesheet" href="color-palette/color-palette.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
         integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
         crossorigin="anonymous" />
   <link rel="icon" href="favicon.png" type="image/png" />
+
+  <!-- Vercel Web Analytics (CSP-safe; loaded conditionally in va-init.js) -->
+  <script src="js/va-init.js" defer></script>
 
   <!-- Error handling and cross-origin fixes -->
   <!-- Config is loaded via defaults in error-logger.js or Vercel environment variables -->
@@ -35,75 +44,54 @@
   <script src="js/cross-origin-fix.js" defer></script>
   <script src="js/cors-handler.js" defer></script>
 
-  <style>
-   label {
-    display: none;
-   }
-
-   ::-webkit-input-placeholder {
-    color: black;
-   }
-
-   :-ms-input-placeholder {
-    color: black;
-   }
-
-   ::placeholder {
-    color: black;
-   }
-
-   #chatlogInput::placeholder {
-    color: transparent;
-   }
-
-   .button .bmc-btn,
-   .bmc-btn {
-     background-color: transparent !important;
-     min-width: auto !important;
-     height: 38px !important;
-     padding: 0 12px !important;
-     line-height: 1 !important;
-   }
-  </style>
+  
  </head>
  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <header role="banner">
+      <h1 class="visually-hidden">Chatlog Magician</h1>
+      <nav aria-label="Primary" class="visually-hidden">
+        <a href="#output">Output</a>
+        <a href="#historyPanel">History</a>
+        <a href="#changelogPanel">Changelog</a>
+      </nav>
+    </header>
+    <main id="main" role="main">
     <div class="grid-container">
         <div class="grid-x grid-margin-x">
            <div class="cell small-12">
-              <div class="grid-x grid-margin-x align-middle">
+
+              <div class="grid-x grid-margin-x align-center">
                  <div class="cell small-4 medium-2">
-                    <label for="font-label">Font Size:</label>
                     <input name="font-label" id="font-label" type="number" min="8" max="24" step="1" value="12" aria-label="Font size" />
                     <div class="golden-sizes-hint">Golden: 8, 10, 12, 15, 19, 24px</div>
                  </div>
                  <div class="cell small-4 medium-2">
-                    <label for="lineLengthInput">Line Length:</label>
                     <input type="number" id="lineLengthInput" min="1" value="77" aria-label="Line length">
                  </div>
                  <div class="cell small-8 medium-8">
-                    <label for="characterNameInput">Character Name Filter:</label>
                     <div class="input-group" style="position: relative;">
                       <input type="text" id="characterNameInput" placeholder="Enter character name" autocomplete="off" aria-label="Character name filter" />
-                      <div class="input-group-button" style="display: flex; gap: 4px;">
+                      <div class="input-group-button" style="display: flex; gap: 8px;">
                         <button class="button small" id="addCharacterBtn" type="button" aria-label="Add character">Add</button>
                         <button class="button small" id="showCharacterListBtn" type="button" aria-label="Show character list">&#9660;</button>
                       </div>
-                      <div id="characterNameDropdown" class="character-dropdown" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: #222; color: #fff; border: 1px solid #444; z-index: 1000; max-height: 150px; overflow-y: auto;" role="listbox"></div>
+                      <div id="characterNameDropdown" class="character-dropdown" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: var(--surface); color: var(--text); border: 1px solid rgba(255, 255, 255, 0.12); z-index: 1000; max-height: 150px; overflow-y: auto; border-radius: 8px;" role="listbox"></div>
                     </div>
                  </div>
               </div>
               <label for="chatlogInput">Chat Log:</label>
-              <div class="textarea-container">
+             <div class="textarea-container">
                  <textarea id="chatlogInput" class="form-control textarea-input" rows="15" placeholder="Enter your chat log here..." aria-label="Chat log input"></textarea>
               </div>
               <div class="grid-x grid-margin-x align-middle">
                  <div class="cell auto">
                     <button id="downloadOutputTransparent" class="button success" aria-label="Download chat log">Download</button>
-                    <button id="toggleBackground" class="button">Toggle Background</button>
+                    <button id="toggleBackground" class="button" aria-label="Toggle background color" title="Switch between black and transparent background">Toggle Background</button>
                     <button id="toggleCharacterNameColoring" class="button" aria-label="Toggle character name coloring" title="Disable character name detection coloring">Name Colors</button>
                     <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character" title="Copy ÷ character">÷</button>
                     <button id="toggleColorPalette" class="button" aria-label="Toggle color palette" title="Click text to color">Color Text</button>
-                    <button id="copyErrorReport" class="button secondary" aria-label="Copy error report" title="Copy error report to send to developer" style="background-color: #e74c3c;">
+                    <button id="copyErrorReport" class="button danger" aria-label="Copy error report" title="Copy error report to send to developer">
                       <i class="fas fa-bug" aria-hidden="true"></i> Report Bug
                     </button>
                     <div class="button" style="display: inline-flex; align-items: center; padding: 0.5em 1em; height: 38px;">
@@ -115,6 +103,10 @@
            </div>
         </div>
      </div>
+     </main>
+     <footer role="contentinfo" class="visually-hidden">
+       <p>© Chatlog Magician</p>
+     </footer>
 
     <!-- Third-party scripts with fallback handling -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/4.0.0-beta.2/jquery.min.js" 
@@ -144,12 +136,12 @@
      <script src="js/app.js" defer></script>
 
      <!-- History panel -->
-     <div class="history-tab" 
-          onclick="toggleHistoryPanel()" 
-          role="button" 
+    <div class="history-tab" 
+         role="button" 
           tabindex="0" 
           aria-label="Open chat history" 
-          aria-expanded="false">
+          aria-expanded="false"
+          aria-controls="historyPanel">
        <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
      </div>
 
@@ -158,10 +150,19 @@
           role="dialog" 
           aria-label="Chat history" 
           aria-hidden="true">
-       <div class="history-header">
-         <h3>Chatlog History</h3>
-       </div>
+      <div class="history-header">
+        <h3>Chatlog History</h3>
+        <button id="clearHistoryBtn" class="clear-history-btn" aria-label="Clear all history">Clear All</button>
+      </div>
        <div class="history-items" role="list"></div>
+       <div class="history-loading">
+         <div class="spinner" aria-hidden="true"></div>
+         <p>Loading your chatlog history...</p>
+       </div>
+       <div class="history-empty">
+         <p>No chatlogs saved yet</p>
+         <p style="font-size: 14px; opacity: 0.8;">Your processed chatlogs will appear here for easy access</p>
+       </div>
      </div>
 
      <!-- Color Palette -->
@@ -191,11 +192,12 @@
      </div>
 
      <!-- Changelog tab -->
-     <div class="changelog-tab" 
+    <div class="changelog-tab" 
           role="button" 
           tabindex="0" 
           aria-label="Open changelog" 
-          aria-expanded="false">
+          aria-expanded="false"
+          aria-controls="changelogPanel">
        <i class="fas fa-list" aria-hidden="true"></i>
      </div>
 
@@ -208,25 +210,19 @@
          <h3>Latest Updates</h3>
        </div>
        <div class="changelog-items" role="list"></div>
+       <div class="changelog-loading">
+         <div class="spinner" aria-hidden="true"></div>
+         <p>Loading changelog...</p>
+       </div>
+       <div class="changelog-empty">
+         <p>Changelog not available</p>
+         <p style="font-size: 14px; opacity: 0.8;">Unable to load the latest updates at this time</p>
+       </div>
      </div>
 
      <script src="js/changelog-data.js" defer></script>
      <script src="js/changelog.js" defer></script>
 
-     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize ColorPalette after all scripts have loaded
-            if (typeof ColorPalette !== 'undefined') {
-                ColorPalette.init();
-            } else {
-                // If ColorPalette isn't ready yet, wait a bit
-                setTimeout(function() {
-                    if (typeof ColorPalette !== 'undefined') {
-                        ColorPalette.init();
-                    }
-                }, 100);
-            }
-        });
-     </script>
+    <script src="js/init.js" defer></script>
  </body>
 </html>
