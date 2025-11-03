@@ -101,6 +101,14 @@
           return true;
         },
 
+        // Skip font embedding to prevent 404 errors for external fonts
+        fontEmbedFn: function (url) {
+          // Return null to skip embedding this font
+          // This prevents dom-to-image from trying to fetch font files
+          console.log('Skipping font embedding for:', url);
+          return Promise.resolve(null);
+        },
+
         // Use fallback for images that can't be loaded
         imagePlaceholder:
           'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y0ZjRmNCIvPjwvc3ZnPg==',
