@@ -12,7 +12,8 @@
           "meta[name=theme-color]"
         ]
       }
-    ]
+    ],
+    "css-prefix-order": "off"
   },
   "browserslist": [
     "defaults",
@@ -22,6 +23,8 @@
     "not chrome <= 112",
     "not ios_saf <= 26",
     "not safari <= 26",
-    "not samsung <= 28"
+    "not samsung <= 28",
+    "not and_ff <= 143",
+    "not firefox <= 143"
   ]
 }

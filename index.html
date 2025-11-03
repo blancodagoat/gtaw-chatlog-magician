@@ -13,20 +13,30 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <title>Chatlog Magician</title>
 
+  <!-- Google Fonts - Inter for better readability -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <!-- Preload critical assets -->
   <link rel="preload" href="css/foundation.fixed.css" as="style" />
   <link rel="preload" href="js/app.js" as="script" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/foundation.fixed.css" />
   <link rel="stylesheet" href="css/modern.css" />
   <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/overlay.css" />
   <link rel="stylesheet" href="css/fontawesome.min.css" />
-  <link rel="stylesheet" href="color-palette/color-palette.css" />
+  <link rel="stylesheet" href="color-palette/color-palette.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
         integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
         crossorigin="anonymous" />
   <link rel="icon" href="favicon.png" type="image/png" />
+
+  <!-- Vercel Web Analytics (CSP-safe; loaded conditionally in va-init.js) -->
+  <script src="js/va-init.js" defer></script>
 
   <!-- Error handling and cross-origin fixes -->
   <!-- Config is loaded via defaults in error-logger.js or Vercel environment variables -->
@@ -35,75 +45,80 @@
   <script src="js/cross-origin-fix.js" defer></script>
   <script src="js/cors-handler.js" defer></script>
 
-  <style>
-   label {
-    display: none;
-   }
-
-   ::-webkit-input-placeholder {
-    color: black;
-   }
-
-   :-ms-input-placeholder {
-    color: black;
-   }
-
-   ::placeholder {
-    color: black;
-   }
-
-   #chatlogInput::placeholder {
-    color: transparent;
-   }
-
-   .button .bmc-btn,
-   .bmc-btn {
-     background-color: transparent !important;
-     min-width: auto !important;
-     height: 38px !important;
-     padding: 0 12px !important;
-     line-height: 1 !important;
-   }
-  </style>
+  
  </head>
  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <header role="banner">
+      <h1 class="visually-hidden">Chatlog Magician</h1>
+      <nav aria-label="Primary" class="visually-hidden">
+        <a href="#output">Output</a>
+        <a href="#historyPanel">History</a>
+        <a href="#changelogPanel">Changelog</a>
+      </nav>
+    </header>
+    <main id="main" role="main">
     <div class="grid-container">
         <div class="grid-x grid-margin-x">
            <div class="cell small-12">
-              <div class="grid-x grid-margin-x align-middle">
+
+              <div class="grid-x grid-margin-x align-center">
                  <div class="cell small-4 medium-2">
-                    <label for="font-label">Font Size:</label>
                     <input name="font-label" id="font-label" type="number" min="8" max="24" step="1" value="12" aria-label="Font size" />
                     <div class="golden-sizes-hint">Golden: 8, 10, 12, 15, 19, 24px</div>
                  </div>
                  <div class="cell small-4 medium-2">
-                    <label for="lineLengthInput">Line Length:</label>
                     <input type="number" id="lineLengthInput" min="1" value="77" aria-label="Line length">
                  </div>
                  <div class="cell small-8 medium-8">
-                    <label for="characterNameInput">Character Name Filter:</label>
                     <div class="input-group" style="position: relative;">
                       <input type="text" id="characterNameInput" placeholder="Enter character name" autocomplete="off" aria-label="Character name filter" />
-                      <div class="input-group-button" style="display: flex; gap: 4px;">
+                      <div class="input-group-button" style="display: flex; gap: 8px;">
                         <button class="button small" id="addCharacterBtn" type="button" aria-label="Add character">Add</button>
                         <button class="button small" id="showCharacterListBtn" type="button" aria-label="Show character list">&#9660;</button>
                       </div>
-                      <div id="characterNameDropdown" class="character-dropdown" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: #222; color: #fff; border: 1px solid #444; z-index: 1000; max-height: 150px; overflow-y: auto;" role="listbox"></div>
+                      <div id="characterNameDropdown" class="character-dropdown liquidGlass-wrapper" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: var(--surface); color: var(--text); border: 1px solid rgba(255, 255, 255, 0.12); z-index: 1000; max-height: 150px; overflow-y: auto; border-radius: 8px;" role="listbox">
+        <div class="liquidGlass-effect"></div>
+        <div class="liquidGlass-tint"></div>
+        <div class="liquidGlass-shine"></div>
+        <div class="liquidGlass-text"></div>
+      </div>
                     </div>
                  </div>
               </div>
               <label for="chatlogInput">Chat Log:</label>
-              <div class="textarea-container">
+             <div class="textarea-container">
                  <textarea id="chatlogInput" class="form-control textarea-input" rows="15" placeholder="Enter your chat log here..." aria-label="Chat log input"></textarea>
               </div>
               <div class="grid-x grid-margin-x align-middle">
                  <div class="cell auto">
-                    <button id="downloadOutputTransparent" class="button success" aria-label="Download chat log">Download</button>
-                    <button id="toggleBackground" class="button">Toggle Background</button>
+                    <button id="downloadOutputTransparent" class="button success" aria-label="Download chat log or overlay">Download</button>
+                    <button id="toggleMode" class="button active" data-mode="chat" aria-label="Toggle mode">
+                      <i class="fas fa-align-left" aria-hidden="true"></i> <span class="mode-text">Chat Only</span>
+                    </button>
+                    <button id="clearImageBtn" class="button secondary" type="button" title="Remove image" style="display: none;">
+                      <i class="fas fa-times" aria-hidden="true"></i> Clear Image
+                    </button>
+                    <div class="button" style="display: none; padding: 7.5px 20px; gap: 10px;" id="textPaddingControl">
+                      <input type="number" id="textPaddingHorizontal" min="0" max="200" value="0" step="5" style="width: 60px; height: auto; margin: 0; padding: 0; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center;" title="Horizontal padding (px)">
+                      <span style="color: rgba(255,255,255,0.5);">×</span>
+                      <input type="number" id="textPaddingVertical" min="0" max="200" value="0" step="5" style="width: 60px; height: auto; margin: 0; padding: 0; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center;" title="Vertical padding (px)">
+                      <span style="color: rgba(255,255,255,0.6); font-size: 12px;">px</span>
+                    </div>
+                    <div class="button" style="display: none; padding: 7.5px 20px; gap: 10px;" id="exportDimensionsControl">
+                      <input type="number" id="exportWidth" min="100" max="7680" value="1600" step="1" style="width: 70px; height: auto; margin: 0; padding: 2px 4px; border: none; background: rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-align: center; border-radius: 3px;" title="Export width (px)">
+                      <span style="color: rgba(255,255,255,0.5);">×</span>
+                      <input type="number" id="exportHeight" min="100" max="4320" value="1200" step="1" style="width: 70px; height: auto; margin: 0; padding: 2px 4px; border: none; background: rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-align: center; border-radius: 3px;" title="Export height (px)">
+                      <span style="color: rgba(255,255,255,0.6); font-size: 12px;">px</span>
+                      <span style="color: rgba(255,255,255,0.3); margin: 0 4px;">|</span>
+                      <input type="number" id="exportPPI" min="72" max="600" value="96" step="1" style="width: 60px; height: auto; margin: 0; padding: 2px 4px; border: none; background: rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-align: center; border-radius: 3px;" title="Export PPI">
+                      <span style="color: rgba(255,255,255,0.6); font-size: 12px;">PPI</span>
+                    </div>
+                    <button id="toggleBackground" class="button" aria-label="Toggle background color" title="Switch between black and transparent background">Toggle Background</button>
                     <button id="toggleCharacterNameColoring" class="button" aria-label="Toggle character name coloring" title="Disable character name detection coloring">Name Colors</button>
                     <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character" title="Copy ÷ character">÷</button>
                     <button id="toggleColorPalette" class="button" aria-label="Toggle color palette" title="Click text to color">Color Text</button>
-                    <button id="copyErrorReport" class="button secondary" aria-label="Copy error report" title="Copy error report to send to developer" style="background-color: #e74c3c;">
+                    <button id="copyErrorReport" class="button danger" aria-label="Copy error report" title="Copy error report to send to developer">
                       <i class="fas fa-bug" aria-hidden="true"></i> Report Bug
                     </button>
                     <div class="button" style="display: inline-flex; align-items: center; padding: 0.5em 1em; height: 38px;">
@@ -112,9 +127,41 @@
                  </div>
               </div>
               <div id="output" class="output" role="region" aria-label="Formatted chat log output"></div>
+
+              <!-- Image Overlay Drop Zone -->
+              <div id="imageOverlaySection" style="display: none;">
+                <input type="file" id="imageFileInput" accept="image/*" style="display: none;" aria-label="Upload screenshot">
+
+                <div id="imageDropzone" class="image-dropzone">
+                  <div class="dropzone-instructions">
+                    <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
+                    <p>Drop your screenshot here</p>
+                    <p style="font-size: 14px; opacity: 0.7;">or click to browse</p>
+                  </div>
+                  <div class="coordinate-display" style="display: none;">
+                    <span id="imageCoords">X: 0, Y: 0</span>
+                  </div>
+                  <div class="zoom-indicator" style="display: none;">
+                    <span id="imageZoom">100%</span>
+                  </div>
+                </div>
+
+                <!-- Overlay Info -->
+                <div class="overlay-info" style="max-width: 900px; margin: 10px auto; text-align: center; color: rgba(255,255,255,0.7); font-size: 13px; line-height: 1.6;">
+                  <p style="margin: 5px 0;"><i class="fas fa-mouse" aria-hidden="true"></i> <strong>Image:</strong> Double-click to upload | Click and drag to move | Scroll to zoom</p>
+                  <p style="margin: 5px 0; font-size: 12px; color: rgba(255,255,255,0.5);">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i> Downloaded image shows exactly what you see in preview |
+                    Settings auto-save | Canvas resizes to match your export dimensions
+                  </p>
+                </div>
+              </div>
            </div>
         </div>
      </div>
+     </main>
+     <footer role="contentinfo" class="visually-hidden">
+       <p>© Chatlog Magician</p>
+     </footer>
 
     <!-- Third-party scripts with fallback handling -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/4.0.0-beta.2/jquery.min.js" 
@@ -138,95 +185,179 @@
             onerror="console.warn('FileSaver.js failed to load from CDN')"></script>
 
     <!-- Application scripts -->
+    <script src="js/image-dropzone.js" defer></script>
+    <script src="js/image-overlay.js" defer></script>
+    <script src="js/image-renderer.js" defer></script>
     <script src="js/chat.js" defer></script>
      <script src="color-palette/color-palette.js" defer></script>
      <script src="js/chatlog-parser.js" defer></script>
      <script src="js/app.js" defer></script>
 
      <!-- History panel -->
-     <div class="history-tab" 
-          onclick="toggleHistoryPanel()" 
-          role="button" 
+    <div class="history-tab liquidGlass-wrapper" 
+         role="button" 
           tabindex="0" 
           aria-label="Open chat history" 
-          aria-expanded="false">
-       <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+          aria-expanded="false"
+          aria-controls="historyPanel">
+       <div class="liquidGlass-effect"></div>
+       <div class="liquidGlass-tint"></div>
+       <div class="liquidGlass-shine"></div>
+       <div class="liquidGlass-text">
+         <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+       </div>
      </div>
 
      <div id="historyPanel" 
-          class="history-panel" 
+          class="history-panel liquidGlass-wrapper" 
           role="dialog" 
           aria-label="Chat history" 
           aria-hidden="true">
-       <div class="history-header">
-         <h3>Chatlog History</h3>
+       <div class="liquidGlass-effect"></div>
+       <div class="liquidGlass-tint"></div>
+       <div class="liquidGlass-shine"></div>
+       <div class="liquidGlass-text">
+         <div class="history-header">
+           <h3>Chatlog History</h3>
+           <button id="clearHistoryBtn" class="clear-history-btn" aria-label="Clear all history">Clear All</button>
+         </div>
+         <div class="history-items" role="list"></div>
+         <div class="history-loading">
+           <div class="spinner" aria-hidden="true"></div>
+           <p>Loading your chatlog history...</p>
+         </div>
+         <div class="history-empty">
+           <p>No chatlogs saved yet</p>
+           <p style="font-size: 14px; opacity: 0.8;">Your processed chatlogs will appear here for easy access</p>
+         </div>
        </div>
-       <div class="history-items" role="list"></div>
      </div>
 
      <!-- Color Palette -->
-     <div id="colorPalette" class="color-palette" style="display: none;">
-         <div class="color-palette-header">
-             Select Color
-             <div class="selection-counter">0 selected</div>
-         </div>
-         <div class="color-palette-items">
-             <div class="color-item me" data-color="me" data-tooltip="Me/Ame Actions"></div>
-             <div class="color-item ame" data-color="ame" data-tooltip="Me/Ame Actions"></div>
-             <div class="color-item darkgrey" data-color="darkgrey" data-tooltip="Lower Voice"></div>
-             <div class="color-item grey" data-color="grey" data-tooltip="Low Voice"></div>
-             <div class="color-item lightgrey" data-color="lightgrey" data-tooltip="Normal Text"></div>
-             <div class="color-item death" data-color="death" data-tooltip="Death/Failures"></div>
-             <div class="color-item yellow" data-color="yellow" data-tooltip="Important Info"></div>
-             <div class="color-item green" data-color="green" data-tooltip="Success"></div>
-             <div class="color-item orange" data-color="orange" data-tooltip="Warnings"></div>
-             <div class="color-item blue" data-color="blue" data-tooltip="Info"></div>
-             <div class="color-item white" data-color="white" data-tooltip="Normal Text"></div>
-             <div class="color-item radioColor" data-color="radioColor" data-tooltip="Radio (Your Channel)"></div>
-             <div class="color-item radioColor2" data-color="radioColor2" data-tooltip="Radio (Other Channel)"></div>
-             <div class="color-item depColor" data-color="depColor" data-tooltip="Department"></div>
-             <div class="color-item vesseltraffic" data-color="vesseltraffic" data-tooltip="Vessel Traffic"></div>
-             <div class="color-item toyou" data-color="toyou" data-tooltip="Directed at You [!]"></div>
+     <div id="colorPalette" class="color-palette liquidGlass-wrapper" style="display: none;">
+         <div class="liquidGlass-effect"></div>
+         <div class="liquidGlass-tint"></div>
+         <div class="liquidGlass-shine"></div>
+         <div class="liquidGlass-text">
+             <div class="color-palette-header">
+                 Select Color
+                 <div class="selection-counter">0 selected</div>
+             </div>
+             <div class="color-palette-items">
+                 <div class="color-item me" data-color="me" data-tooltip="Me/Ame Actions"></div>
+                 <div class="color-item ame" data-color="ame" data-tooltip="Me/Ame Actions"></div>
+                 <div class="color-item darkgrey" data-color="darkgrey" data-tooltip="Lower Voice"></div>
+                 <div class="color-item grey" data-color="grey" data-tooltip="Low Voice"></div>
+                 <div class="color-item lightgrey" data-color="lightgrey" data-tooltip="Normal Text"></div>
+                 <div class="color-item death" data-color="death" data-tooltip="Death/Failures"></div>
+                 <div class="color-item yellow" data-color="yellow" data-tooltip="Important Info"></div>
+                 <div class="color-item green" data-color="green" data-tooltip="Success"></div>
+                 <div class="color-item orange" data-color="orange" data-tooltip="Warnings"></div>
+                 <div class="color-item blue" data-color="blue" data-tooltip="Info"></div>
+                 <div class="color-item white" data-color="white" data-tooltip="Normal Text"></div>
+                 <div class="color-item radioColor" data-color="radioColor" data-tooltip="Radio (Your Channel)"></div>
+                 <div class="color-item radioColor2" data-color="radioColor2" data-tooltip="Radio (Other Channel)"></div>
+                 <div class="color-item depColor" data-color="depColor" data-tooltip="Department"></div>
+                 <div class="color-item vesseltraffic" data-color="vesseltraffic" data-tooltip="Vessel Traffic"></div>
+                 <div class="color-item toyou" data-color="toyou" data-tooltip="Directed at You [!]"></div>
+             </div>
          </div>
      </div>
 
      <!-- Changelog tab -->
-     <div class="changelog-tab" 
+    <div class="changelog-tab liquidGlass-wrapper" 
           role="button" 
           tabindex="0" 
           aria-label="Open changelog" 
-          aria-expanded="false">
-       <i class="fas fa-list" aria-hidden="true"></i>
+          aria-expanded="false"
+          aria-controls="changelogPanel">
+       <div class="liquidGlass-effect"></div>
+       <div class="liquidGlass-tint"></div>
+       <div class="liquidGlass-shine"></div>
+       <div class="liquidGlass-text">
+         <i class="fas fa-list" aria-hidden="true"></i>
+       </div>
      </div>
 
      <div id="changelogPanel" 
-          class="changelog-panel" 
+          class="changelog-panel liquidGlass-wrapper" 
           role="dialog" 
           aria-label="Changelog" 
           aria-hidden="true">
-       <div class="changelog-header">
-         <h3>Latest Updates</h3>
+       <div class="liquidGlass-effect"></div>
+       <div class="liquidGlass-tint"></div>
+       <div class="liquidGlass-shine"></div>
+       <div class="liquidGlass-text">
+         <div class="changelog-header">
+           <h3>Latest Updates</h3>
+         </div>
+         <div class="changelog-items" role="list"></div>
+         <div class="changelog-loading">
+           <div class="spinner" aria-hidden="true"></div>
+           <p>Loading changelog...</p>
+         </div>
+         <div class="changelog-empty">
+           <p>Changelog not available</p>
+           <p style="font-size: 14px; opacity: 0.8;">Unable to load the latest updates at this time</p>
+         </div>
        </div>
-       <div class="changelog-items" role="list"></div>
      </div>
 
      <script src="js/changelog-data.js" defer></script>
      <script src="js/changelog.js" defer></script>
 
-     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize ColorPalette after all scripts have loaded
-            if (typeof ColorPalette !== 'undefined') {
-                ColorPalette.init();
-            } else {
-                // If ColorPalette isn't ready yet, wait a bit
-                setTimeout(function() {
-                    if (typeof ColorPalette !== 'undefined') {
-                        ColorPalette.init();
-                    }
-                }, 100);
-            }
-        });
-     </script>
+    <script src="js/init.js" defer></script>
+
+    <!-- Liquid Glass SVG Filter -->
+    <svg style="display: none" aria-hidden="true">
+      <filter
+        id="glass-distortion"
+        x="0%"
+        y="0%"
+        width="100%"
+        height="100%"
+        filterUnits="objectBoundingBox"
+      >
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.01 0.01"
+          numOctaves="1"
+          seed="5"
+          result="turbulence"
+        />
+        <feComponentTransfer in="turbulence" result="mapped">
+          <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5" />
+          <feFuncG type="gamma" amplitude="0" exponent="1" offset="0" />
+          <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5" />
+        </feComponentTransfer>
+        <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap" />
+        <feSpecularLighting
+          in="softMap"
+          surfaceScale="5"
+          specularConstant="1"
+          specularExponent="100"
+          lighting-color="white"
+          result="specLight"
+        >
+          <fePointLight x="-200" y="-200" z="300" />
+        </feSpecularLighting>
+        <feComposite
+          in="specLight"
+          operator="arithmetic"
+          k1="0"
+          k2="1"
+          k3="1"
+          k4="0"
+          result="litImage"
+        />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="softMap"
+          scale="150"
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+    </svg>
  </body>
 </html>

@@ -2,7 +2,7 @@
  * Comprehensive Error Logger for GTAW Chatlog Magician
  * Captures all errors, warnings, and important events for debugging
  */
-(function() {
+(function () {
   'use strict';
 
   // Error log storage
@@ -17,18 +17,18 @@
     errors: [],
     warnings: [],
     info: [],
-    networkIssues: [],      // Track failed requests
-    resourceIssues: [],     // Track failed resources
-    userActivity: [],       // Track user interactions (breadcrumbs)
-    performance: {}
+    networkIssues: [], // Track failed requests
+    resourceIssues: [], // Track failed resources
+    userActivity: [], // Track user interactions (breadcrumbs)
+    performance: {},
   };
 
   // Configuration
   const CONFIG = {
-    MAX_ENTRIES: 100,           // Maximum number of log entries per type
-    SHOW_CONSOLE: true,         // Also show in regular console
-    AUTO_SAVE: true,            // Auto-save to localStorage
-    STORAGE_KEY: 'chatlog_error_log'
+    MAX_ENTRIES: 100, // Maximum number of log entries per type
+    SHOW_CONSOLE: false, // Suppress console noise in production
+    AUTO_SAVE: true, // Auto-save to localStorage
+    STORAGE_KEY: 'chatlog_error_log',
   };
 
   /**
@@ -56,7 +56,7 @@
       message: String(message),
       details: details,
       url: window.location.href,
-      stack: details.stack || new Error().stack
+      stack: details.stack || new Error().stack,
     };
 
     // Add to appropriate array
@@ -85,7 +85,7 @@
     try {
       const logData = {
         ...errorLog,
-        lastUpdated: timestamp()
+        lastUpdated: timestamp(),
       };
       localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(logData));
     } catch (e) {
@@ -114,13 +114,13 @@
   /**
    * Captures uncaught errors
    */
-  window.addEventListener('error', function(event) {
+  window.addEventListener('error', function (event) {
     const entry = addLogEntry('errors', event.message, {
       filename: event.filename,
       lineno: event.lineno,
       colno: event.colno,
       stack: event.error?.stack,
-      errorType: event.error?.name
+      errorType: event.error?.name,
     });
 
     if (CONFIG.SHOW_CONSOLE) {
@@ -131,11 +131,11 @@
   /**
    * Captures unhandled promise rejections
    */
-  window.addEventListener('unhandledrejection', function(event) {
+  window.addEventListener('unhandledrejection', function (event) {
     const entry = addLogEntry('errors', 'Unhandled Promise Rejection: ' + event.reason, {
       reason: event.reason,
       stack: event.reason?.stack,
-      promise: String(event.promise)
+      promise: String(event.promise),
     });
 
     if (CONFIG.SHOW_CONSOLE) {
@@ -150,26 +150,26 @@
     error: console.error,
     warn: console.warn,
     info: console.info,
-    log: console.log
+    log: console.log,
   };
 
-  console.error = function(...args) {
+  console.error = function (...args) {
     addLogEntry('errors', args.join(' '), { args: args });
     return originalConsole.error.apply(console, args);
   };
 
-  console.warn = function(...args) {
+  console.warn = function (...args) {
     addLogEntry('warnings', args.join(' '), { args: args });
     return originalConsole.warn.apply(console, args);
   };
 
-  console.info = function(...args) {
+  console.info = function (...args) {
     addLogEntry('info', args.join(' '), { args: args });
     return originalConsole.info.apply(console, args);
   };
 
   // Keep console.log separate for cleaner output
-  console.log = function(...args) {
+  console.log = function (...args) {
     // Don't log everything, just important stuff
     const message = args.join(' ');
     if (message.includes('Error') || message.includes('Failed') || message.includes('Warning')) {
@@ -182,25 +182,26 @@
    * Captures network errors (failed fetch/XHR)
    */
   const originalFetch = window.fetch;
-  window.fetch = function(...args) {
+  window.fetch = function (...args) {
     const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
-    return originalFetch.apply(this, args)
-      .then(response => {
+    return originalFetch
+      .apply(this, args)
+      .then((response) => {
         if (!response.ok) {
           addLogEntry('networkIssues', `Failed fetch: ${url}`, {
             status: response.status,
             statusText: response.statusText,
             url: url,
-            method: args[1]?.method || 'GET'
+            method: args[1]?.method || 'GET',
           });
         }
         return response;
       })
-      .catch(error => {
+      .catch((error) => {
         addLogEntry('networkIssues', `Network error: ${url}`, {
           error: error.message,
           url: url,
-          stack: error.stack
+          stack: error.stack,
         });
         throw error;
       });
@@ -209,16 +210,20 @@
   /**
    * Captures resource loading errors (images, scripts, styles)
    */
-  window.addEventListener('error', function(event) {
-    if (event.target !== window && event.target.tagName) {
-      // Resource loading error
-      addLogEntry('resourceIssues', `Failed to load ${event.target.tagName}`, {
-        tagName: event.target.tagName,
-        src: event.target.src || event.target.href,
-        currentSrc: event.target.currentSrc
-      });
-    }
-  }, true); // Use capture phase
+  window.addEventListener(
+    'error',
+    function (event) {
+      if (event.target !== window && event.target.tagName) {
+        // Resource loading error
+        addLogEntry('resourceIssues', `Failed to load ${event.target.tagName}`, {
+          tagName: event.target.tagName,
+          src: event.target.src || event.target.href,
+          currentSrc: event.target.currentSrc,
+        });
+      }
+    },
+    true
+  ); // Use capture phase
 
   /**
    * Track user actions (breadcrumbs) for debugging context
@@ -226,34 +231,35 @@
   function trackUserAction(action, details = {}) {
     addLogEntry('userActivity', action, {
       ...details,
-      timestamp: timestamp()
+      timestamp: timestamp(),
     });
   }
 
   // Track button clicks
-  document.addEventListener('click', function(event) {
+  document.addEventListener('click', function (event) {
     const target = event.target.closest('button, a, [role="button"]');
     if (target) {
-      const label = target.textContent?.trim().substring(0, 50) || 
-                    target.getAttribute('aria-label') || 
-                    target.id || 
-                    'Unknown button';
+      const label =
+        target.textContent?.trim().substring(0, 50) ||
+        target.getAttribute('aria-label') ||
+        target.id ||
+        'Unknown button';
       trackUserAction(`Clicked: ${label}`, {
         element: target.tagName,
         id: target.id,
-        className: target.className
+        className: target.className,
       });
     }
   });
 
   // Track input changes (sanitized)
-  document.addEventListener('change', function(event) {
+  document.addEventListener('change', function (event) {
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT') {
       const label = event.target.id || event.target.name || 'Unknown input';
       trackUserAction(`Changed: ${label}`, {
         element: event.target.tagName,
         type: event.target.type,
-        id: event.target.id
+        id: event.target.id,
       });
     }
   });
@@ -262,7 +268,7 @@
    * Captures localStorage quota exceeded errors
    */
   const originalSetItem = Storage.prototype.setItem;
-  Storage.prototype.setItem = function(key, value) {
+  Storage.prototype.setItem = function (key, value) {
     try {
       originalSetItem.call(this, key, value);
     } catch (e) {
@@ -270,7 +276,7 @@
         addLogEntry('errors', 'LocalStorage quota exceeded', {
           key: key,
           valueSize: value.length,
-          error: e.message
+          error: e.message,
         });
       }
       throw e;
@@ -285,14 +291,17 @@
       errorLog.performance = {
         timing: {
           loadTime: performance.timing.loadEventEnd - performance.timing.navigationStart,
-          domReady: performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart,
-          firstPaint: performance.getEntriesByType('paint')[0]?.startTime || 'N/A'
+          domReady:
+            performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart,
+          firstPaint: performance.getEntriesByType('paint')[0]?.startTime || 'N/A',
         },
-        memory: performance.memory ? {
-          usedJSHeapSize: Math.round(performance.memory.usedJSHeapSize / 1048576) + ' MB',
-          totalJSHeapSize: Math.round(performance.memory.totalJSHeapSize / 1048576) + ' MB',
-          limit: Math.round(performance.memory.jsHeapSizeLimit / 1048576) + ' MB'
-        } : 'N/A'
+        memory: performance.memory
+          ? {
+              usedJSHeapSize: Math.round(performance.memory.usedJSHeapSize / 1048576) + ' MB',
+              totalJSHeapSize: Math.round(performance.memory.totalJSHeapSize / 1048576) + ' MB',
+              limit: Math.round(performance.memory.jsHeapSizeLimit / 1048576) + ' MB',
+            }
+          : 'N/A',
       };
     }
   }
@@ -337,7 +346,14 @@
       errorLog.errors.forEach((err, i) => {
         report.push('  ' + (i + 1) + '. [' + err.timestamp + '] ' + err.message);
         if (err.details.filename) {
-          report.push('     File: ' + err.details.filename + ':' + err.details.lineno + ':' + err.details.colno);
+          report.push(
+            '     File: ' +
+              err.details.filename +
+              ':' +
+              err.details.lineno +
+              ':' +
+              err.details.colno
+          );
         }
         if (err.stack) {
           report.push('     Stack: ' + err.stack.split('\n')[0]);
@@ -429,10 +445,10 @@
 
     const toast = document.createElement('div');
     toast.className = 'bug-report-toast';
-    
+
     const bgColor = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#f59e0b';
     const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : '⚠';
-    
+
     toast.style.cssText = `
       position: fixed;
       top: 20px;
@@ -451,10 +467,10 @@
       gap: 10px;
       max-width: 400px;
     `;
-    
+
     toast.innerHTML = `<span style="font-size: 20px;">${icon}</span><span>${message}</span>`;
     document.body.appendChild(toast);
-    
+
     // Add animation
     const style = document.createElement('style');
     style.textContent = `
@@ -471,7 +487,7 @@
       style.setAttribute('data-toast-animations', 'true');
       document.head.appendChild(style);
     }
-    
+
     // Auto-remove after duration
     setTimeout(() => {
       toast.style.animation = 'slideOutRight 0.3s ease-out';
@@ -485,7 +501,7 @@
   function getConfig() {
     // Use default config if window.BUG_REPORT_CONFIG is not loaded
     const defaults = {
-      USE_SERVERLESS_PROXY: true,  // Default to serverless proxy (Vercel)
+      USE_SERVERLESS_PROXY: true, // Default to serverless proxy (Vercel)
       DISCORD_WEBHOOK_URL: '',
       RATE_LIMIT: {
         ENABLED: true,
@@ -496,7 +512,7 @@
       SHOW_SUCCESS_MESSAGE: true,
       INCLUDE_CHATLOG_IN_REPORT: false,
     };
-    
+
     return window.BUG_REPORT_CONFIG || defaults;
   }
 
@@ -505,14 +521,15 @@
    */
   function autoSendReport() {
     const config = getConfig();
-    
+
     // Check rate limiting
     if (!checkRateLimit()) {
       showToast(
-        'Please wait before sending another report. Limit: ' + 
-        config.RATE_LIMIT.MAX_REPORTS_PER_SESSION + 
-        ' per session, ' + 
-        config.RATE_LIMIT.COOLDOWN_SECONDS + 's cooldown.',
+        'Please wait before sending another report. Limit: ' +
+          config.RATE_LIMIT.MAX_REPORTS_PER_SESSION +
+          ' per session, ' +
+          config.RATE_LIMIT.COOLDOWN_SECONDS +
+          's cooldown.',
         'warning',
         4000
       );
@@ -534,7 +551,7 @@
           }
           updateRateLimit();
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('Serverless function failed:', err);
           // Fallback to clipboard copy
           copyReportToClipboard(report);
@@ -550,7 +567,7 @@
           }
           updateRateLimit();
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('Discord webhook failed:', err);
           // Fallback to clipboard copy
           copyReportToClipboard(report);
@@ -579,7 +596,7 @@
       resourceIssues: errorLog.resourceIssues,
       userActivity: errorLog.userActivity,
       performance: errorLog.performance,
-      fullReport: report
+      fullReport: report,
     };
 
     return fetch('/api/report-bug', {
@@ -587,8 +604,8 @@
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload)
-    }).then(response => {
+      body: JSON.stringify(payload),
+    }).then((response) => {
       if (!response.ok) {
         throw new Error('Serverless function failed: ' + response.status);
       }
@@ -602,46 +619,48 @@
   function sendToDiscord(report, webhookUrl) {
     const errorCount = errorLog.errors.length;
     const warningCount = errorLog.warnings.length;
-    
+
     // Create Discord embed (rich formatting)
     const embed = {
       title: '🐛 Bug Report - Chatlog Magician',
-      description: errorCount > 0 ? `**${errorCount} error(s) detected**` : 'No errors (user feedback)',
+      description:
+        errorCount > 0 ? `**${errorCount} error(s) detected**` : 'No errors (user feedback)',
       color: errorCount > 0 ? 0xff0000 : 0xffa500, // Red if errors, orange otherwise
       fields: [
         {
           name: '📋 Session Info',
           value: `**ID:** ${errorLog.sessionId}\n**Browser:** ${errorLog.userAgent.split(' ').pop()}\n**Platform:** ${errorLog.platform}`,
-          inline: false
+          inline: false,
         },
         {
           name: '⚡ Performance',
-          value: errorLog.performance.timing ? 
-            `Load: ${errorLog.performance.timing.loadTime}ms\nMemory: ${errorLog.performance.memory?.usedJSHeapSize || 'N/A'}` :
-            'Not available',
-          inline: true
+          value: errorLog.performance.timing
+            ? `Load: ${errorLog.performance.timing.loadTime}ms\nMemory: ${errorLog.performance.memory?.usedJSHeapSize || 'N/A'}`
+            : 'Not available',
+          inline: true,
         },
         {
           name: '📊 Summary',
           value: `Errors: ${errorCount}\nWarnings: ${warningCount}`,
-          inline: true
-        }
+          inline: true,
+        },
       ],
       timestamp: new Date().toISOString(),
       footer: {
-        text: 'GTAW Chatlog Magician Error Reporter'
-      }
+        text: 'GTAW Chatlog Magician Error Reporter',
+      },
     };
 
     // Add errors if any
     if (errorCount > 0) {
-      const errorSummary = errorLog.errors.slice(0, 3).map((err, i) => 
-        `${i + 1}. ${err.message.substring(0, 100)}`
-      ).join('\n');
+      const errorSummary = errorLog.errors
+        .slice(0, 3)
+        .map((err, i) => `${i + 1}. ${err.message.substring(0, 100)}`)
+        .join('\n');
       embed.fields.push({
         name: '❌ Recent Errors',
         value: '```\n' + errorSummary + '\n```',
-        inline: false
+        inline: false,
       });
     }
 
@@ -650,7 +669,10 @@
       username: 'Bug Reporter',
       avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
       embeds: [embed],
-      content: '**GTAW Chatlog Magician - Error Report**\n\n```\n' + report.substring(0, 1800) + '\n...\n```'
+      content:
+        '**GTAW Chatlog Magician - Error Report**\n\n```\n' +
+        report.substring(0, 1800) +
+        '\n...\n```',
     };
 
     return fetch(webhookUrl, {
@@ -658,8 +680,8 @@
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload)
-    }).then(response => {
+      body: JSON.stringify(payload),
+    }).then((response) => {
       if (!response.ok) {
         throw new Error('Discord webhook failed: ' + response.status);
       }
@@ -667,12 +689,11 @@
     });
   }
 
-
   /**
    * Rate limiting to prevent spam
    */
   const rateLimitKey = 'bug_report_rate_limit';
-  
+
   function checkRateLimit() {
     const config = getConfig();
     if (!config.RATE_LIMIT || !config.RATE_LIMIT.ENABLED) return true;
@@ -680,23 +701,23 @@
     try {
       const data = JSON.parse(localStorage.getItem(rateLimitKey) || '{}');
       const now = Date.now();
-      
+
       // Check cooldown
-      if (data.lastReport && (now - data.lastReport) < config.RATE_LIMIT.COOLDOWN_SECONDS * 1000) {
+      if (data.lastReport && now - data.lastReport < config.RATE_LIMIT.COOLDOWN_SECONDS * 1000) {
         return false;
       }
-      
+
       // Check session limit
       const sessionStart = data.sessionStart || now;
       const reportCount = data.reportCount || 0;
-      
+
       // Reset if new session (more than 1 hour)
       if (now - sessionStart > 3600000) {
         return true;
       }
-      
+
       return reportCount < config.RATE_LIMIT.MAX_REPORTS_PER_SESSION;
-    } catch (e) {
+    } catch (_e) {
       return true; // Allow if localStorage fails
     }
   }
@@ -708,13 +729,13 @@
     try {
       const data = JSON.parse(localStorage.getItem(rateLimitKey) || '{}');
       const now = Date.now();
-      
+
       const newData = {
         sessionStart: data.sessionStart || now,
         reportCount: (data.reportCount || 0) + 1,
-        lastReport: now
+        lastReport: now,
       };
-      
+
       localStorage.setItem(rateLimitKey, JSON.stringify(newData));
     } catch (e) {
       console.warn('Could not update rate limit:', e);
@@ -786,15 +807,16 @@
    */
   function copyReportToClipboard() {
     const report = generateReport();
-    
+
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(report)
+      navigator.clipboard
+        .writeText(report)
         .then(() => {
           // Don't show another toast if already showing warning toast
           // Just log to console
           console.log('Error report copied to clipboard');
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('Failed to copy:', err);
           showReportInModal(report);
         });
@@ -807,73 +829,61 @@
    * Shows report in a modal for manual copying
    */
   function showReportInModal(report) {
+    if (typeof HTMLDialogElement !== 'undefined') {
+      let dlg = document.getElementById('reportDialog');
+      if (!dlg) {
+        dlg = document.createElement('dialog');
+        dlg.id = 'reportDialog';
+        dlg.setAttribute('aria-label', 'Error Report');
+        dlg.innerHTML = `
+          <form method="dialog" style="margin:0;">
+            <h2 style="margin: 0 0 8px 0; font-size: 16px;">Error Report</h2>
+            <p style="margin:0 0 8px 0;">Copy this report and send it to the developer:</p>
+            <textarea readonly style="width: 80vw; max-width: 800px; height: 50vh; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">${report}</textarea>
+            <div style="margin-top: 10px; text-align: right;">
+              <button value="close" style="padding: 10px 16px;">Close</button>
+            </div>
+          </form>`;
+        document.body.appendChild(dlg);
+      } else {
+        const ta = dlg.querySelector('textarea');
+        if (ta) ta.value = report;
+      }
+      dlg.showModal();
+      const main = document.getElementById('main');
+      if (main) {
+        main.setAttribute('inert', '');
+        main.setAttribute('aria-hidden', 'true');
+      }
+      dlg.addEventListener(
+        'close',
+        () => {
+          if (main) {
+            main.removeAttribute('inert');
+            main.removeAttribute('aria-hidden');
+          }
+        },
+        { once: true }
+      );
+      dlg.querySelector('textarea')?.select();
+      return;
+    }
+    // Fallback for browsers without <dialog>
     const modal = document.createElement('div');
-    modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    `;
-
+    modal.style.cssText = `position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 99999; display:flex; align-items:center; justify-content:center; padding:20px;`;
     const content = document.createElement('div');
-    content.style.cssText = `
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 800px;
-      max-height: 80vh;
-      overflow: auto;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    `;
-
+    content.style.cssText = `background: white; padding: 20px; border-radius: 8px; max-width: 800px; max-height: 80vh; overflow: auto; box-shadow: 0 4px 20px rgba(0,0,0,.3);`;
     content.innerHTML = `
-      <h2 style="margin-top: 0;">Error Report</h2>
+      <h2 style="margin-top:0;">Error Report</h2>
       <p>Copy this report and send it to the developer:</p>
-      <textarea readonly style="
-        width: 100%;
-        height: 400px;
-        font-family: monospace;
-        font-size: 12px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      ">${report}</textarea>
-      <div style="margin-top: 10px; text-align: right;">
-        <button id="closeReportModal" style="
-          padding: 10px 20px;
-          background: #3498db;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-        ">Close</button>
-      </div>
-    `;
-
+      <textarea readonly style="width:100%; height:400px; font-family: monospace; font-size:12px; padding:10px; border:1px solid #ccc; border-radius:4px;">${report}</textarea>
+      <div style="margin-top:10px; text-align:right;"><button id="closeReportModal" style="padding:10px 20px;">Close</button></div>`;
     modal.appendChild(content);
     document.body.appendChild(modal);
-
-    // Select text automatically
     content.querySelector('textarea').select();
-
-    // Close on button click
-    content.querySelector('#closeReportModal').onclick = () => {
-      document.body.removeChild(modal);
-    };
-
-    // Close on background click
+    content.querySelector('#closeReportModal').onclick = () => document.body.removeChild(modal);
     modal.onclick = (e) => {
-      if (e.target === modal) {
-        document.body.removeChild(modal);
-      }
+      if (e.target === modal) document.body.removeChild(modal);
     };
   }
 
@@ -918,23 +928,25 @@
   window.ErrorLogger = {
     getLog: () => errorLog,
     generateReport: generateReport,
-    sendReport: autoSendReport,           // Primary: Auto-send to Discord/Email
-    copyReport: copyReportToClipboard,    // Fallback: Manual copy
+    sendReport: autoSendReport, // Primary: Auto-send to Discord/Email
+    copyReport: copyReportToClipboard, // Fallback: Manual copy
     downloadReport: downloadReport,
     clearLog: clearLog,
     logError: (msg, details) => addLogEntry('errors', msg, details),
     logWarning: (msg, details) => addLogEntry('warnings', msg, details),
-    logInfo: (msg, details) => addLogEntry('info', msg, details)
+    logInfo: (msg, details) => addLogEntry('info', msg, details),
   };
 
   // Show status in console
-  console.info('✓ Error Logger initialized. Use ErrorLogger.sendReport() to auto-send bug reports.');
-  console.info('  Available commands:');
-  console.info('  - ErrorLogger.sendReport() - Auto-send report (Discord/Email)');
-  console.info('  - ErrorLogger.copyReport() - Copy report to clipboard');
-  console.info('  - ErrorLogger.downloadReport() - Download as .txt file');
-  console.info('  - ErrorLogger.getLog() - View full log');
-  console.info('  - ErrorLogger.clearLog() - Clear all logs');
-
+  if (CONFIG.SHOW_CONSOLE) {
+    console.info(
+      '✓ Error Logger initialized. Use ErrorLogger.sendReport() to auto-send bug reports.'
+    );
+    console.info('  Available commands:');
+    console.info('  - ErrorLogger.sendReport() - Auto-send report (Discord/Email)');
+    console.info('  - ErrorLogger.copyReport() - Copy report to clipboard');
+    console.info('  - ErrorLogger.downloadReport() - Download as .txt file');
+    console.info('  - ErrorLogger.getLog() - View full log');
+    console.info('  - ErrorLogger.clearLog() - Clear all logs');
+  }
 })();
-

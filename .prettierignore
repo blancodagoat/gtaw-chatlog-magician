@@ -1,0 +1,15 @@
+dist/
+build/
+.next/
+out/
+.vercel/
+.turbo/
+node_modules/
+coverage/
+.nyc_output/
+.vite/
+.parcel-cache/
+storybook-static/
+**/*.min.js
+webfonts/
+

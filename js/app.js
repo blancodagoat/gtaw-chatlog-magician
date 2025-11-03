@@ -6,35 +6,77 @@ if (typeof window.Foundation !== 'undefined') {
 }
 
 // Debug mode - set to false for production
-const DEBUG_MODE = false;
+const _DEBUG_MODE = false;
 
 // Configuration constants
 const CONFIG = {
-    FONT_SIZE_SMALL_THRESHOLD: 13,      // Font sizes <= this get smoothing
-    FONT_SIZE_MIN: 8,                   // Minimum allowed font size
-    FONT_SIZE_MAX: 24,                  // Maximum allowed font size
-    FONT_SIZE_DEFAULT: 12,              // Default font size
-    LINE_LENGTH_MIN: 1,                 // Minimum line length
-    LINE_LENGTH_DEFAULT: 77,            // Default line length
-    MAX_HISTORY_ITEMS: 20,              // Maximum history items to store
-    PROCESSING_DEBOUNCE_MS: 300,        // Debounce delay for text processing
-    COPY_FEEDBACK_DURATION_MS: 1500,    // How long to show copy feedback
-    AUTO_SAVE_INDICATOR_MS: 2000,       // How long to show auto-save indicator
-    DRAG_FLAG_RESET_MS: 150,            // Delay before resetting drag flag
-    LINE_HEIGHT_SMALL: 1.5,             // Line height for small fonts
-    LINE_HEIGHT_DEFAULT: 1.45,          // Default line height
-    LINE_HEIGHT_LARGE: 1.35,            // Line height for large fonts
-    FONT_SIZE_LARGE_THRESHOLD: 20,      // Font sizes >= this are considered large
-    BMC_NUDGE_INITIAL_DELAY_MS: 15000,  // Initial delay for BMC button nudge
-    BMC_NUDGE_MIN_INTERVAL_MS: 20000,   // Min time between BMC nudges
-    BMC_NUDGE_MAX_INTERVAL_MS: 60000,   // Max time between BMC nudges
-    BMC_NUDGE_ANIMATION_MS: 800         // Duration of BMC nudge animation
+  FONT_SIZE_SMALL_THRESHOLD: 13, // Font sizes <= this get smoothing
+  FONT_SIZE_MIN: 8, // Minimum allowed font size
+  FONT_SIZE_MAX: 24, // Maximum allowed font size
+  FONT_SIZE_DEFAULT: 12, // Default font size
+  LINE_LENGTH_MIN: 1, // Minimum line length
+  LINE_LENGTH_DEFAULT: 77, // Default line length
+  MAX_HISTORY_ITEMS: 20, // Maximum history items to store
+  PROCESSING_DEBOUNCE_MS: 300, // Debounce delay for text processing
+  COPY_FEEDBACK_DURATION_MS: 1500, // How long to show copy feedback
+  AUTO_SAVE_INDICATOR_MS: 2000, // How long to show auto-save indicator
+  DRAG_FLAG_RESET_MS: 150, // Delay before resetting drag flag
+  LINE_HEIGHT_SMALL: 1.5, // Line height for small fonts
+  LINE_HEIGHT_DEFAULT: 1.45, // Default line height
+  LINE_HEIGHT_LARGE: 1.35, // Line height for large fonts
+  FONT_SIZE_LARGE_THRESHOLD: 20, // Font sizes >= this are considered large
+  BMC_NUDGE_INITIAL_DELAY_MS: 15000, // Initial delay for BMC button nudge
+  BMC_NUDGE_MIN_INTERVAL_MS: 20000, // Min time between BMC nudges
+  BMC_NUDGE_MAX_INTERVAL_MS: 60000, // Max time between BMC nudges
+  BMC_NUDGE_ANIMATION_MS: 800, // Duration of BMC nudge animation
 };
+
+// Auto-save toast helper and localStorage instrumentation
+function showAutoSaveIndicator(message) {
+  try {
+    const existing = document.querySelector('.auto-save-indicator');
+    if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.className = 'auto-save-indicator';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    el.innerHTML =
+      '<div class="spinner" aria-hidden="true"></div><p class="loading-text">' +
+      (message || 'Saved') +
+      '</p>';
+    document.body.appendChild(el);
+    setTimeout(() => {
+      el.classList.add('fade-out');
+      setTimeout(() => el.remove(), 600);
+    }, CONFIG.AUTO_SAVE_INDICATOR_MS - 800);
+  } catch (_e) {
+    // noop
+  }
+}
+
+try {
+  const __origSet = localStorage.setItem.bind(localStorage);
+  const SAVE_KEYS = new Set([
+    'chatlogFontSize',
+    'chatlogLineLength',
+    'chatlogCharacterName',
+    'chatlogHistory',
+  ]);
+  localStorage.setItem = function (key, value) {
+    const res = __origSet(key, value);
+    if (SAVE_KEYS.has(String(key))) {
+      showAutoSaveIndicator('Saved');
+    }
+    return res;
+  };
+} catch (_e) {
+  // noop
+}
 
 // Typographic Golden Scale - Hand-picked sizes optimized for readability
 const TYPOGRAPHIC_SCALE = [8, 10, 12, 15, 19, 24];
 
-let scaleEnabled = false;
+let _scaleEnabled = false;
 let lastProcessedText = '';
 let processingTimeout = null;
 
@@ -46,17 +88,28 @@ let processingTimeout = null;
 function updateFontSize() {
   const fontSize = parseInt($('#font-label').val()) || CONFIG.FONT_SIZE_DEFAULT;
   $('#output').css('font-size', fontSize + 'px');
-  
+
   // Apply font smoothing for smaller sizes to make them more rounded
   if (fontSize <= CONFIG.FONT_SIZE_SMALL_THRESHOLD) {
     $('#output').addClass('font-smoothed');
   } else {
     $('#output').removeClass('font-smoothed');
   }
-  
+
+  // Update chat overlay font size if it exists
+  const chatOverlay = document.querySelector('.chat-overlay-container');
+  if (chatOverlay) {
+    chatOverlay.style.fontSize = fontSize + 'px';
+
+    // Re-render chat overlay to apply font size change
+    if (window.ImageOverlayState && window.ImageOverlayState.currentMode === 'overlay') {
+      window.ImageOverlayState.renderChatOverlay();
+    }
+  }
+
   // Apply size-aware line-height classes
   applySizeClasses(fontSize);
-  
+
   // Store the font size in localStorage
   try {
     localStorage.setItem('chatlogFontSize', fontSize.toString());
@@ -65,13 +118,12 @@ function updateFontSize() {
   }
 }
 
-
 /**
  * Checks if a font size is part of the typographic golden scale
  * @param {number} fontSize - The font size to check
  * @returns {boolean} True if the size is in the golden scale
  */
-function isTypographicGolden(fontSize) {
+function _isTypographicGolden(fontSize) {
   return TYPOGRAPHIC_SCALE.includes(fontSize);
 }
 
@@ -81,10 +133,10 @@ function isTypographicGolden(fontSize) {
  * @param {string} direction - Direction to move ('up' or 'down')
  * @returns {number} The next golden size, or current size if at boundary
  */
-function getNextGoldenSize(currentSize, direction = 'up') {
+function _getNextGoldenSize(currentSize, direction = 'up') {
   const index = TYPOGRAPHIC_SCALE.indexOf(currentSize);
   if (index === -1) return currentSize; // Not a golden size
-  
+
   if (direction === 'up' && index < TYPOGRAPHIC_SCALE.length - 1) {
     return TYPOGRAPHIC_SCALE[index + 1];
   } else if (direction === 'down' && index > 0) {
@@ -98,18 +150,19 @@ function getNextGoldenSize(currentSize, direction = 'up') {
  * @param {number} n - The number to find nearest golden size for
  * @returns {number} The closest golden scale size
  */
-function nearestGolden(n) {
-  return TYPOGRAPHIC_SCALE.reduce((best, v) =>
-    Math.abs(v - n) < Math.abs(best - n) ? v : best
-  , TYPOGRAPHIC_SCALE[0]);
+function _nearestGolden(n) {
+  return TYPOGRAPHIC_SCALE.reduce(
+    (best, v) => (Math.abs(v - n) < Math.abs(best - n) ? v : best),
+    TYPOGRAPHIC_SCALE[0]
+  );
 }
 
-function percentDelta(a, b) { 
-  return ((b - a) / a * 100).toFixed(1); 
+function _percentDelta(a, b) {
+  return (((b - a) / a) * 100).toFixed(1);
 }
 
 function goldenHintHTML(scale) {
-  return scale.map(s => `${s}px`).join(' → ');
+  return scale.map((s) => `${s}px`).join(' → ');
 }
 
 function applySizeClasses(px) {
@@ -118,11 +171,11 @@ function applySizeClasses(px) {
 }
 
 // Debug function to print scale's % deltas (handy for meta inspection)
-function printScaleDeltas() {
+function _printScaleDeltas() {
   console.table(
     TYPOGRAPHIC_SCALE.slice(0, -1).map((s, i) => {
-      const t = TYPOGRAPHIC_SCALE[i+1];
-      return { from: s, to: t, percent: +(((t-s)/s)*100).toFixed(1) };
+      const t = TYPOGRAPHIC_SCALE[i + 1];
+      return { from: s, to: t, percent: +(((t - s) / s) * 100).toFixed(1) };
     })
   );
 }
@@ -134,7 +187,7 @@ function printScaleDeltas() {
  * @returns {HTMLCanvasElement} A new canvas with trimmed content
  */
 function trimCanvas(canvas) {
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const pixels = imgData.data;
   let top = null,
@@ -187,13 +240,12 @@ function trimCanvas(canvas) {
   }
 
   if (top !== null && bottom !== null && left !== null && right !== null) {
-    let trimmedCanvas = document.createElement("canvas");
+    let trimmedCanvas = document.createElement('canvas');
     trimmedCanvas.width = right - left + 1;
     trimmedCanvas.height = bottom - top + 1;
-    trimmedCanvas.getContext("2d", { willReadFrequently: true }).putImageData(
-      ctx.getImageData(left, top, trimmedCanvas.width, trimmedCanvas.height),
-      0, 0
-    );
+    trimmedCanvas
+      .getContext('2d', { willReadFrequently: true })
+      .putImageData(ctx.getImageData(left, top, trimmedCanvas.width, trimmedCanvas.height), 0, 0);
     return trimmedCanvas;
   } else {
     return canvas;
@@ -206,13 +258,15 @@ function trimCanvas(canvas) {
  * @returns {string} The generated filename
  */
 function generateFilename() {
-  return new Date()
-    .toLocaleString()
-    .replaceAll(",", "_")
-    .replaceAll(" ", "_")
-    .replaceAll("/", "-")
-    .replace("__", "_")
-    .replaceAll(":", "-") + "_chatlog.png";
+  return (
+    new Date()
+      .toLocaleString()
+      .replaceAll(',', '_')
+      .replaceAll(' ', '_')
+      .replaceAll('/', '-')
+      .replace('__', '_')
+      .replaceAll(':', '-') + '_chatlog.png'
+  );
 }
 
 /**
@@ -229,14 +283,16 @@ function downloadOutputImage() {
       window.ColorPalette.clearSelections();
     } else {
       // Fallback: remove selection class directly
-      document.querySelectorAll('.selected-for-coloring').forEach(el => el.classList.remove('selected-for-coloring'));
+      document
+        .querySelectorAll('.selected-for-coloring')
+        .forEach((el) => el.classList.remove('selected-for-coloring'));
     }
-    const $out = $("#output");
+    const $out = $('#output');
     hadColoringMode = $out.hasClass('coloring-mode');
     if (hadColoringMode) {
       $out.removeClass('coloring-mode');
     }
-  } catch (e) {
+  } catch (_e) {
     // Non-fatal; continue with export
   }
 
@@ -248,151 +304,169 @@ function downloadOutputImage() {
       refreshHistoryPanel();
     }
 
-    const output = $("#output");
+    const output = $('#output');
 
     showLoadingIndicator();
 
-  const height = output.prop('scrollHeight') + 100;
-  const width = output.width();
-  const originalPadding = output.css('padding-bottom');
+    const height = output.prop('scrollHeight') + 100;
+    const width = output.width();
+    const originalPadding = output.css('padding-bottom');
 
-  output.css('padding-bottom', '100px');
+    output.css('padding-bottom', '100px');
 
-  // Configure dom-to-image with CORS handling
-  const domtoimageOptions = window.CORSHandler ? 
-    window.CORSHandler.getDomToImageOptions({
-      width: width,
-      height: height,
-      style: {
-        transform: 'scale(1)',
-        transformOrigin: "top left",
-      },
-      filter: function(node) {
-        if (node.classList && node.classList.contains('selected-for-coloring')) return false;
-        return true;
-      }
-    }) : {
-      width: width,
-      height: height,
-      style: {
-        transform: 'scale(1)',
-        transformOrigin: "top left",
-      },
-      filter: function(node) {
-        if (node.tagName === 'LINK' && node.href && 
-            (node.href.includes('cdnjs.cloudflare.com') || 
-             node.href.includes('fonts.googleapis.com'))) {
-          return false;
-        }
-        if (node.classList && node.classList.contains('selected-for-coloring')) return false;
-        return true;
-      },
-      imagePlaceholder: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y0ZjRmNCIvPjwvc3ZnPg=='
-    };
+    // Configure dom-to-image with CORS handling
+    const domtoimageOptions = window.CORSHandler
+      ? window.CORSHandler.getDomToImageOptions({
+          width: width,
+          height: height,
+          style: {
+            transform: 'scale(1)',
+            transformOrigin: 'top left',
+          },
+          filter: function (node) {
+            if (node.classList && node.classList.contains('selected-for-coloring')) return false;
+            return true;
+          },
+        })
+      : {
+          width: width,
+          height: height,
+          style: {
+            transform: 'scale(1)',
+            transformOrigin: 'top left',
+          },
+          filter: function (node) {
+            if (
+              node.tagName === 'LINK' &&
+              node.href &&
+              (node.href.includes('cdnjs.cloudflare.com') ||
+                node.href.includes('fonts.googleapis.com'))
+            ) {
+              return false;
+            }
+            if (node.classList && node.classList.contains('selected-for-coloring')) return false;
+            return true;
+          },
+          imagePlaceholder:
+            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y0ZjRmNCIvPjwvc3ZnPg==',
+        };
 
-  // Try with original output first
-  if (typeof domtoimage === 'undefined') {
-    console.error('domtoimage library not loaded');
-    alert('Image generation library not available. Please refresh the page and try again.');
-    hideLoadingIndicator();
-    if (hadColoringMode) output.addClass('coloring-mode');
-    return;
-  }
-  
-  domtoimage.toBlob(output[0], domtoimageOptions).then(function(blob) {
-    output.css('padding-bottom', originalPadding);
-    processGeneratedBlob(blob);
-  }).catch(function(error) {
-    console.error("Error generating image with original output:", error);
-    
-    // If CORS issues persist, try with a clean version
-    if (error.message && (error.message.includes('SecurityError') || 
-                          error.message.includes('cssRules') || 
-                          error.message.includes('Cannot access rules'))) {
-      
-      console.log("Attempting fallback with clean output...");
-      
-      // Create a clean version without external resources
-      const cleanOutput = window.CORSHandler ? 
-        window.CORSHandler.createCleanOutput(output[0]) : 
-        output[0].cloneNode(true);
-      
-      // Remove external stylesheets from the clone
-      const externalLinks = cleanOutput.querySelectorAll('link[rel="stylesheet"]');
-      externalLinks.forEach(link => {
-        if (link.href && (link.href.includes('cdnjs.cloudflare.com') || 
-                         link.href.includes('fonts.googleapis.com'))) {
-          link.remove();
-        }
-      });
-      
-      if (typeof domtoimage === 'undefined') {
-        console.error('domtoimage library not loaded');
-        alert('Image generation library not available. Please refresh the page and try again.');
-        hideLoadingIndicator();
-        if (hadColoringMode) output.addClass('coloring-mode');
-        return;
-      }
-      
-      domtoimage.toBlob(cleanOutput, domtoimageOptions).then(function(blob) {
-        output.css('padding-bottom', originalPadding);
-        processGeneratedBlob(blob);
-      }).catch(function(fallbackError) {
-        console.error("Fallback also failed:", fallbackError);
-        handleImageGenerationError(error);
-      });
-    } else {
-      handleImageGenerationError(error);
-    }
-  });
-
-  function processGeneratedBlob(blob) {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = URL.createObjectURL(blob);
-
-    img.onload = function() {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      // Set willReadFrequently to true for better performance with multiple readback operations
-      const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      ctx.drawImage(img, 0, 0);
-
-      const trimmedCanvas = trimCanvas(canvas);
-      trimmedCanvas.toBlob(function(trimmedBlob) {
-        window.saveAs(trimmedBlob, generateFilename());
-        hideLoadingIndicator();
-        if (hadColoringMode) output.addClass('coloring-mode');
-      });
-    };
-
-    img.onerror = function() {
-      console.error("Error loading generated image");
-      alert("There was an error processing the generated image. Please try again.");
+    // Try with original output first
+    if (typeof domtoimage === 'undefined') {
+      console.error('domtoimage library not loaded');
+      alert('Image generation library not available. Please refresh the page and try again.');
       hideLoadingIndicator();
       if (hadColoringMode) output.addClass('coloring-mode');
-    };
-  }
-
-  function handleImageGenerationError(error) {
-    console.error("Error generating image:", error);
-    
-    // Provide more specific error messages
-    let errorMessage = "There was an error generating the image. Please try again.";
-    
-    if (error.message && error.message.includes('SecurityError')) {
-      errorMessage = "Unable to access external resources. The image may be generated without some styling.";
-    } else if (error.message && error.message.includes('cssRules')) {
-      errorMessage = "Some external styles could not be loaded. The image will be generated with available styles.";
+      return;
     }
-    
-    alert(errorMessage);
-    hideLoadingIndicator();
-    const output = $("#output");
-    if (hadColoringMode) output.addClass('coloring-mode');
-  }
+
+    domtoimage
+      .toBlob(output[0], domtoimageOptions)
+      .then(function (blob) {
+        output.css('padding-bottom', originalPadding);
+        processGeneratedBlob(blob);
+      })
+      .catch(function (error) {
+        console.error('Error generating image with original output:', error);
+
+        // If CORS issues persist, try with a clean version
+        if (
+          error.message &&
+          (error.message.includes('SecurityError') ||
+            error.message.includes('cssRules') ||
+            error.message.includes('Cannot access rules'))
+        ) {
+          console.log('Attempting fallback with clean output...');
+
+          // Create a clean version without external resources
+          const cleanOutput = window.CORSHandler
+            ? window.CORSHandler.createCleanOutput(output[0])
+            : output[0].cloneNode(true);
+
+          // Remove external stylesheets from the clone
+          const externalLinks = cleanOutput.querySelectorAll('link[rel="stylesheet"]');
+          externalLinks.forEach((link) => {
+            if (
+              link.href &&
+              (link.href.includes('cdnjs.cloudflare.com') ||
+                link.href.includes('fonts.googleapis.com'))
+            ) {
+              link.remove();
+            }
+          });
+
+          if (typeof domtoimage === 'undefined') {
+            console.error('domtoimage library not loaded');
+            alert('Image generation library not available. Please refresh the page and try again.');
+            hideLoadingIndicator();
+            if (hadColoringMode) output.addClass('coloring-mode');
+            return;
+          }
+
+          domtoimage
+            .toBlob(cleanOutput, domtoimageOptions)
+            .then(function (blob) {
+              output.css('padding-bottom', originalPadding);
+              processGeneratedBlob(blob);
+            })
+            .catch(function (fallbackError) {
+              console.error('Fallback also failed:', fallbackError);
+              handleImageGenerationError(error);
+            });
+        } else {
+          handleImageGenerationError(error);
+        }
+      });
+
+    function processGeneratedBlob(blob) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = URL.createObjectURL(blob);
+
+      img.onload = function () {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // Set willReadFrequently to true for better performance with multiple readback operations
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0);
+
+        const trimmedCanvas = trimCanvas(canvas);
+        trimmedCanvas.toBlob(function (trimmedBlob) {
+          window.saveAs(trimmedBlob, generateFilename());
+          hideLoadingIndicator();
+          if (hadColoringMode) output.addClass('coloring-mode');
+        });
+      };
+
+      img.onerror = function () {
+        console.error('Error loading generated image');
+        alert('There was an error processing the generated image. Please try again.');
+        hideLoadingIndicator();
+        if (hadColoringMode) output.addClass('coloring-mode');
+      };
+    }
+
+    function handleImageGenerationError(error) {
+      console.error('Error generating image:', error);
+
+      // Provide more specific error messages
+      let errorMessage = 'There was an error generating the image. Please try again.';
+
+      if (error.message && error.message.includes('SecurityError')) {
+        errorMessage =
+          'Unable to access external resources. The image may be generated without some styling.';
+      } else if (error.message && error.message.includes('cssRules')) {
+        errorMessage =
+          'Some external styles could not be loaded. The image will be generated with available styles.';
+      }
+
+      alert(errorMessage);
+      hideLoadingIndicator();
+      const output = $('#output');
+      if (hadColoringMode) output.addClass('coloring-mode');
+    }
   }, 0);
 }
 
@@ -415,28 +489,14 @@ function hideLoadingIndicator() {
   $('#loadingIndicator').hide();
 }
 
-function showAutoSaveIndicator() {
-  // Remove existing indicator
-  $('.auto-save-indicator').remove();
-  
-  // Create and show new indicator
-  const indicator = $('<div class="auto-save-indicator">Settings saved</div>');
-  $('body').append(indicator);
-  
-  // Remove after 2 seconds
-  setTimeout(() => {
-    indicator.fadeOut(300, function() {
-      $(this).remove();
-    });
-  }, 2000);
-}
+// Deprecated duplicate kept earlier; this definition is superseded by the top-level implementation
 
 /**
  * Toggles the black background on the output display
  * @returns {void}
  */
 function toggleBackground() {
-  $("#output").toggleClass("background-active");
+  $('#output').toggleClass('background-active');
   if (typeof processOutput === 'function') {
     processOutput();
   }
@@ -444,7 +504,7 @@ function toggleBackground() {
 
 function autoResizeTextarea() {
   this.style.height = 'auto';
-  this.style.height = (this.scrollHeight) + 'px';
+  this.style.height = this.scrollHeight + 'px';
 
   const currentText = $(this).val();
   if (currentText === lastProcessedText) return;
@@ -466,25 +526,23 @@ function autoResizeTextarea() {
  * @returns {void}
  */
 function copyToClipboard(text, button) {
-
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text)
+    navigator.clipboard
+      .writeText(text)
       .then(() => {
         showCopySuccess(button);
       })
-      .catch(err => {
+      .catch((err) => {
         console.log('Clipboard API failed, trying fallback', err);
         copyUsingFallback(text, button);
       });
   } else {
-
     copyUsingFallback(text, button);
   }
 }
 
 function copyUsingFallback(text, button) {
   try {
-
     const textarea = document.createElement('textarea');
     textarea.value = text;
 
@@ -512,39 +570,38 @@ function copyUsingFallback(text, button) {
 
 function showCopySuccess(button) {
   const $btn = $(button);
-  const originalBg = $btn.css("background-color");
+  const originalBg = $btn.css('background-color');
   const originalText = $btn.text();
 
-  $btn.css("background-color", "#a8f0c6").text("Copied!");
+  $btn.css('background-color', '#a8f0c6').text('Copied!');
 
   setTimeout(() => {
-    $btn.css("background-color", originalBg).text(originalText);
+    $btn.css('background-color', originalBg).text(originalText);
   }, CONFIG.COPY_FEEDBACK_DURATION_MS);
 }
 
 function showCopyError(button) {
   const $btn = $(button);
-  const originalBg = $btn.css("background-color");
+  const originalBg = $btn.css('background-color');
   const originalText = $btn.text();
 
-  $btn.css("background-color", "#f0a8a8").text("Failed!");
+  $btn.css('background-color', '#f0a8a8').text('Failed!');
 
   setTimeout(() => {
-    $btn.css("background-color", originalBg).text(originalText);
+    $btn.css('background-color', originalBg).text(originalText);
   }, CONFIG.COPY_FEEDBACK_DURATION_MS);
 }
 
-function handleKeyboardShortcuts(e) {
+function handleKeyboardShortcuts(_e) {
   // Keyboard shortcuts removed as requested
 }
 
 function initTooltips() {
-
   $('.info-bracket').hover(
-    function() {
+    function () {
       $(this).find('.tooltip-text').fadeIn(200);
     },
-    function() {
+    function () {
       $(this).find('.tooltip-text').fadeOut(200);
     }
   );
@@ -576,7 +633,7 @@ function saveToHistory(text) {
       history = [];
     }
 
-    history = history.filter(item => item !== text);
+    history = history.filter((item) => item !== text);
     history.unshift(text);
 
     const MAX_HISTORY = CONFIG.MAX_HISTORY_ITEMS;
@@ -588,7 +645,6 @@ function saveToHistory(text) {
       localStorage.setItem('chatlogHistory', JSON.stringify(history));
     } catch (e) {
       if (e.name === 'QuotaExceededError') {
-
         history = history.slice(0, Math.floor(MAX_HISTORY / 2));
         try {
           localStorage.setItem('chatlogHistory', JSON.stringify(history));
@@ -626,6 +682,18 @@ function toggleHistoryPanel() {
   // After toggle, the state is opposite of isOpen, so aria-hidden should match the old state
   panel.setAttribute('aria-hidden', isOpen);
 
+  // Toggle inert on main content when panel is open for a11y
+  const main = document.getElementById('main');
+  if (main) {
+    if (!isOpen) {
+      main.setAttribute('inert', '');
+      main.setAttribute('aria-hidden', 'true');
+    } else {
+      main.removeAttribute('inert');
+      main.removeAttribute('aria-hidden');
+    }
+  }
+
   const tab = document.querySelector('.history-tab');
   tab.setAttribute('aria-expanded', !isOpen);
   tab.setAttribute('aria-label', isOpen ? 'Open chat history' : 'Close chat history');
@@ -654,8 +722,7 @@ function toggleHistoryPanel() {
 // Add click-outside-to-close functionality for history panel
 document.addEventListener('click', (e) => {
   const historyPanel = document.getElementById('historyPanel');
-  const historyTab = document.querySelector('.history-tab');
-  
+
   if (!e.target.closest('#historyPanel, .history-tab') && historyPanel.classList.contains('open')) {
     // Close the history panel by calling the toggle function
     toggleHistoryPanel();
@@ -666,12 +733,12 @@ document.addEventListener('click', (e) => {
  * Clears all chat log history after user confirmation
  * @returns {void}
  */
-function clearHistory() {
+window.clearHistory = function () {
   if (confirm('Are you sure you want to clear all chat history?')) {
     localStorage.removeItem('chatlogHistory');
     refreshHistoryPanel();
   }
-}
+};
 
 /**
  * Refreshes the history panel UI with current history items
@@ -695,21 +762,41 @@ function refreshHistoryPanel() {
     }
 
     const $items = history.map((text, index) => {
-      const $item = $('<div class="history-item" role="button" tabindex="0" aria-label="Load chatlog from history"></div>');
+      const $item = $(
+        '<div class="history-item liquidGlass-wrapper" role="button" tabindex="0" aria-label="Load chatlog from history"></div>'
+      );
       $item.data('index', index);
 
-      const $textContainer = $('<div class="history-item-text"></div>');
+      // Add liquid glass layers
+      $item.append('<div class="liquidGlass-effect"></div>');
+      $item.append('<div class="liquidGlass-tint"></div>');
+      $item.append('<div class="liquidGlass-shine"></div>');
+
+      const $textContainer = $(
+        '<div class="liquidGlass-text"><div class="history-item-text"></div></div>'
+      );
+      const $historyText = $textContainer.find('.history-item-text');
 
       const lines = text.split('\n');
-      const formattedLines = lines.map(line => {
-
-        if (typeof processLine === 'function') {
-          return processLine(line);
+      const formattedLines = lines.map((line) => {
+        // Use the same formatting function as the main output
+        if (typeof window.formatLineWithFilter === 'function') {
+          return window.formatLineWithFilter(line);
         }
-        return line;
+        // Fallback: escape HTML and wrap in white span to match output
+        const sanitized = line.replace(/[<>&"']/g, function (match) {
+          return {
+            '<': '&lt;',
+            '>': '&gt;',
+            '&': '&amp;',
+            '"': '&quot;',
+            "'": '&#x27;',
+          }[match];
+        });
+        return `<span class="white">${sanitized}</span>`;
       });
 
-      $textContainer.html(formattedLines.join('<br>'));
+      $historyText.html(formattedLines.join('<br>'));
       $item.append($textContainer);
 
       return $item;
@@ -717,7 +804,6 @@ function refreshHistoryPanel() {
 
     $loading.removeClass('active');
     $historyItems.append($items);
-
   } catch (e) {
     console.error('Error refreshing history panel:', e);
     $loading.removeClass('active');
@@ -730,34 +816,46 @@ function refreshHistoryPanel() {
  * @param {string} unsafe - The string containing potentially unsafe HTML
  * @returns {string} The escaped string safe for HTML insertion
  */
-function escapeHtml(unsafe) {
+function _escapeHtml(unsafe) {
   return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
-function toggleChangelogPanel() {
-    const panel = document.getElementById('changelogPanel');
-    const isOpen = panel.classList.contains('open');
+function _toggleChangelogPanel() {
+  const panel = document.getElementById('changelogPanel');
+  const isOpen = panel.classList.contains('open');
 
-    panel.classList.toggle('open');
-    // After toggle, the state is opposite of isOpen, so aria-hidden should match the old state
-    panel.setAttribute('aria-hidden', isOpen);
+  panel.classList.toggle('open');
+  // After toggle, the state is opposite of isOpen, so aria-hidden should match the old state
+  panel.setAttribute('aria-hidden', isOpen);
 
-    const tab = document.querySelector('.changelog-tab');
-    tab.setAttribute('aria-expanded', !isOpen);
-    tab.setAttribute('aria-label', isOpen ? 'Open changelog' : 'Close changelog');
-
+  // Toggle inert on main content when panel is open for a11y
+  const main = document.getElementById('main');
+  if (main) {
     if (!isOpen) {
-        const firstItem = panel.querySelector('.changelog-item');
-        if (firstItem) firstItem.focus();
+      main.setAttribute('inert', '');
+      main.setAttribute('aria-hidden', 'true');
+    } else {
+      main.removeAttribute('inert');
+      main.removeAttribute('aria-hidden');
     }
+  }
+
+  const tab = document.querySelector('.changelog-tab');
+  tab.setAttribute('aria-expanded', !isOpen);
+  tab.setAttribute('aria-label', isOpen ? 'Open changelog' : 'Close changelog');
+
+  if (!isOpen) {
+    const firstItem = panel.querySelector('.changelog-item');
+    if (firstItem) firstItem.focus();
+  }
 }
 
-$(document).ready(function() {
+$(document).ready(function () {
   // Initialize ColorPalette after all scripts are loaded
   if (typeof window.ColorPalette !== 'undefined') {
     window.ColorPalette.init();
@@ -786,20 +884,30 @@ $(document).ready(function() {
   }
   function renderCharacterDropdown() {
     const dropdown = $('#characterNameDropdown');
+    const $liquidGlassText = dropdown.find('.liquidGlass-text');
     const list = getCharacterList();
-    if (list.length === 0) {
-      dropdown.html('<div style="padding: 8px; color: #888;">No characters saved</div>');
-      return;
+    const content =
+      list.length === 0
+        ? '<div style="padding: 8px; color: #888;">No characters saved</div>'
+        : list
+            .map(
+              (name) =>
+                `<div class="character-dropdown-item" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; cursor: pointer;">
+          <span class="character-name-select">${$('<div>').text(name).html()}</span>
+          <button class="remove-character-btn" data-name="${$('<div>').text(name).html()}" style="background: none; border: none; color: #c00; font-size: 16px; cursor: pointer;">&times;</button>
+        </div>`
+            )
+            .join('');
+
+    // If liquid glass wrapper exists, append to liquidGlass-text, otherwise append to dropdown
+    if ($liquidGlassText.length > 0) {
+      $liquidGlassText.html(content);
+    } else {
+      dropdown.html(content);
     }
-    dropdown.html(list.map(name =>
-      `<div class="character-dropdown-item" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; cursor: pointer;">
-        <span class="character-name-select">${$('<div>').text(name).html()}</span>
-        <button class="remove-character-btn" data-name="${$('<div>').text(name).html()}" style="background: none; border: none; color: #c00; font-size: 16px; cursor: pointer;">&times;</button>
-      </div>`
-    ).join(''));
   }
 
-  $('#addCharacterBtn').on('click', function() {
+  $('#addCharacterBtn').on('click', function () {
     const val = $('#characterNameInput').val().trim();
     if (!val) return;
     let list = getCharacterList();
@@ -811,7 +919,7 @@ $(document).ready(function() {
     $('#characterNameInput').val('');
   });
 
-  $('#showCharacterListBtn').on('click', function(e) {
+  $('#showCharacterListBtn').on('click', function (e) {
     e.stopPropagation();
     const dropdown = $('#characterNameDropdown');
     if (dropdown.is(':visible')) {
@@ -822,7 +930,7 @@ $(document).ready(function() {
     }
   });
 
-  $(document).on('click', '.character-name-select', function() {
+  $(document).on('click', '.character-name-select', function () {
     const name = $(this).text();
     $('#characterNameInput').val(name);
     $('#characterNameDropdown').hide();
@@ -830,21 +938,21 @@ $(document).ready(function() {
     if (typeof applyFilter === 'function') applyFilter();
   });
 
-  $(document).on('click', '.remove-character-btn', function(e) {
+  $(document).on('click', '.remove-character-btn', function (e) {
     e.stopPropagation();
     const name = $(this).data('name');
-    let list = getCharacterList().filter(n => n !== name);
+    let list = getCharacterList().filter((n) => n !== name);
     saveCharacterList(list);
     renderCharacterDropdown();
   });
 
-  $(document).on('click', function(e) {
+  $(document).on('click', function (e) {
     if (!$(e.target).closest('.input-group').length) {
       $('#characterNameDropdown').hide();
     }
   });
 
-  $('#characterNameInput').on('keydown', function(e) {
+  $('#characterNameInput').on('keydown', function (e) {
     if (e.key === 'Escape') {
       $('#characterNameDropdown').hide();
     }
@@ -852,7 +960,9 @@ $(document).ready(function() {
 
   // Initialize font size from localStorage or default
   $('#font-label').val(localStorage.getItem('chatlogFontSize') || CONFIG.FONT_SIZE_DEFAULT);
-  $('#lineLengthInput').val(localStorage.getItem('chatlogLineLength') || CONFIG.LINE_LENGTH_DEFAULT);
+  $('#lineLengthInput').val(
+    localStorage.getItem('chatlogLineLength') || CONFIG.LINE_LENGTH_DEFAULT
+  );
   $('#characterNameInput').val(localStorage.getItem('chatlogCharacterName') || '');
 
   // Update golden hint
@@ -866,30 +976,28 @@ $(document).ready(function() {
 
   // toggleHistoryPanel() is already defined globally above
 
-  $('#font-label').on('input', function() {
+  $('#font-label').on('input', function () {
     const value = parseInt($(this).val()) || CONFIG.FONT_SIZE_DEFAULT;
     // Ensure value is within valid range
     if (value < CONFIG.FONT_SIZE_MIN) $(this).val(CONFIG.FONT_SIZE_MIN);
     if (value > CONFIG.FONT_SIZE_MAX) $(this).val(CONFIG.FONT_SIZE_MAX);
-    
+
     // Font size is now stored automatically in updateFontSize()
     updateFontSize();
-    
+
     // Reprocess output to recalculate line breaks with new font size
     if (typeof processOutput === 'function') {
       processOutput();
     }
-    
+
     showAutoSaveIndicator();
   });
 
-
-
-  $('#lineLengthInput').on('input', function() {
+  $('#lineLengthInput').on('input', function () {
     const value = parseInt($(this).val()) || CONFIG.LINE_LENGTH_DEFAULT;
     // Remove line length limitations - allow any positive value
     if (value < CONFIG.LINE_LENGTH_MIN) $(this).val(CONFIG.LINE_LENGTH_MIN);
-    
+
     try {
       localStorage.setItem('chatlogLineLength', $(this).val());
     } catch (e) {
@@ -901,7 +1009,7 @@ $(document).ready(function() {
     showAutoSaveIndicator();
   });
 
-  $('#characterNameInput').on('input', function() {
+  $('#characterNameInput').on('input', function () {
     try {
       localStorage.setItem('chatlogCharacterName', $(this).val());
     } catch (e) {
@@ -913,9 +1021,9 @@ $(document).ready(function() {
     showAutoSaveIndicator();
   });
 
-  $('#chatlogInput').on('input', function() {
+  $('#chatlogInput').on('input', function () {
     const text = $(this).val().trim();
-    
+
     // Show subtle processing indicator for large inputs
     if (text.length > 1000) {
       $('#output').addClass('processing');
@@ -925,15 +1033,34 @@ $(document).ready(function() {
     }
   });
 
-  $(document).on('chatlogProcessed', function(event, text) {
+  $(document).on('chatlogProcessed', function (_event, _text) {});
 
+  $('#downloadOutputTransparent').click(async function () {
+    // Check if we're in overlay mode and have an image
+    if (
+      window.ImageOverlayState &&
+      window.ImageOverlayState.currentMode === 'overlay' &&
+      window.ImageOverlayState.imageElement &&
+      window.OverlayRenderer
+    ) {
+      // Save to history before downloading
+      const text = $('#chatlogInput').val().trim();
+      if (text) {
+        saveToHistory(text);
+        refreshHistoryPanel();
+      }
+
+      // Use overlay renderer
+      await window.OverlayRenderer.renderAndDownload();
+    } else {
+      // Use regular download
+      downloadOutputImage();
+    }
   });
+  $('#toggleBackground').click(toggleBackground);
 
-  $("#downloadOutputTransparent").click(downloadOutputImage);
-  $("#toggleBackground").click(toggleBackground);
-  
   // Error report button - Auto-sends to Discord/Email
-  $("#copyErrorReport").click(function() {
+  $('#copyErrorReport').click(function () {
     if (window.ErrorLogger) {
       window.ErrorLogger.sendReport();
     } else {
@@ -944,28 +1071,30 @@ $(document).ready(function() {
   const textarea = document.querySelector('.textarea-input');
   textarea.addEventListener('input', autoResizeTextarea);
 
-  document.addEventListener('keydown', handleKeyboardShortcuts);
-
   if (textarea.value) {
     autoResizeTextarea.call(textarea);
   }
 
-  $('#censorCharButton').click(function() {
+  $('#censorCharButton').click(function () {
     copyToClipboard('÷', this);
   });
 
   $('.button').hover(
-    function() { $(this).css('transform', 'translateY(-2px)'); },
-    function() { $(this).css('transform', 'translateY(0)'); }
+    function () {
+      $(this).css('transform', 'translateY(-2px)');
+    },
+    function () {
+      $(this).css('transform', 'translateY(0)');
+    }
   );
 
-  $(document).on('click', function(e) {
+  $(document).on('click', function (e) {
     if (!$(e.target).closest('#historyPanel, #chatlogInput').length) {
       $('#historyPanel').hide();
     }
   });
 
-  $(document).on('click', '.history-item', function() {
+  $(document).on('click', '.history-item', function () {
     const index = $(this).data('index');
     const history = loadHistory();
     if (history[index]) {
@@ -974,38 +1103,60 @@ $(document).ready(function() {
     }
   });
 
-  $('.history-header').append(
-    $('<button class="clear-history-btn" onclick="clearHistory()" aria-label="Clear all history">Clear All</button>')
-  );
+  // Ensure a single Clear All button exists and is wired (no inline handlers)
+  (function ensureClearHistoryButton() {
+    const $header = $('.history-header');
+    if (!$header.length) return;
+    let $btn = $header.find('.clear-history-btn');
+    if (!$btn.length) {
+      $btn = $(
+        '<button class="clear-history-btn" aria-label="Clear all history">Clear All</button>'
+      );
+      $header.append($btn);
+    }
+    $btn.off('click.clear').on('click.clear', function (e) {
+      e.preventDefault();
+      if (typeof window.clearHistory === 'function') {
+        window.clearHistory();
+      }
+    });
+  })();
 
   // Add click-away functionality for changelog panel
-  $(document).on('click', function(e) {
+  $(document).on('click', function (e) {
     const panel = document.getElementById('changelogPanel');
     const tab = document.querySelector('.changelog-tab');
-    
-    if (!$(e.target).closest('#changelogPanel, .changelog-tab').length && panel.classList.contains('open')) {
+
+    if (
+      !$(e.target).closest('#changelogPanel, .changelog-tab').length &&
+      panel.classList.contains('open')
+    ) {
       panel.classList.remove('open');
       panel.setAttribute('aria-hidden', 'true');
       tab.setAttribute('aria-expanded', 'false');
       tab.setAttribute('aria-label', 'Open changelog');
     }
   });
-
-  // Randomly shake the Buy Me a Coffee button to draw attention (non-intrusive)
-  (function initBmcNudge(){
-    function nudgeOnce(){
-      const btn = document.querySelector('.bmc-btn');
-      if (!btn) return;
-      btn.classList.add('bmc-attn');
-      setTimeout(()=>btn.classList.remove('bmc-attn'), CONFIG.BMC_NUDGE_ANIMATION_MS);
-    }
-    function scheduleNext(){
-      // random between min and max interval
-      const ms = CONFIG.BMC_NUDGE_MIN_INTERVAL_MS + 
-                 Math.random() * (CONFIG.BMC_NUDGE_MAX_INTERVAL_MS - CONFIG.BMC_NUDGE_MIN_INTERVAL_MS);
-      setTimeout(()=>{ nudgeOnce(); scheduleNext(); }, ms);
-    }
-    // start after initial delay to avoid on-load distraction
-    setTimeout(scheduleNext, CONFIG.BMC_NUDGE_INITIAL_DELAY_MS);
-  })();
 });
+
+// Randomly shake the Buy Me a Coffee button to draw attention (non-intrusive)
+(function initBmcNudge() {
+  function nudgeOnce() {
+    const btn = document.querySelector('.bmc-btn');
+    if (!btn) return;
+    btn.classList.add('bmc-attn');
+    setTimeout(() => btn.classList.remove('bmc-attn'), CONFIG.BMC_NUDGE_ANIMATION_MS);
+  }
+  function scheduleNext() {
+    // random between min and max interval
+    const ms =
+      CONFIG.BMC_NUDGE_MIN_INTERVAL_MS +
+      Math.random() * (CONFIG.BMC_NUDGE_MAX_INTERVAL_MS - CONFIG.BMC_NUDGE_MIN_INTERVAL_MS);
+    setTimeout(() => {
+      nudgeOnce();
+      scheduleNext();
+    }, ms);
+  }
+  // start after initial delay to avoid on-load distraction
+  setTimeout(scheduleNext, CONFIG.BMC_NUDGE_INITIAL_DELAY_MS);
+})();

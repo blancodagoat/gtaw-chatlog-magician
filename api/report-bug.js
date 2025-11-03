@@ -11,6 +11,21 @@
  * 4. Add: DEVELOPER_EMAIL = your_email (optional)
  */
 
+// naive in-memory rate limiter (best-effort within a single function instance)
+const RATE_WINDOW_MS = 60_000; // 1 minute
+const RATE_MAX = 5;
+const requestLog = new Map(); // key -> [timestamps]
+
+function allowRequest(key) {
+  const now = Date.now();
+  const windowStart = now - RATE_WINDOW_MS;
+  const arr = (requestLog.get(key) || []).filter((t) => t > windowStart);
+  if (arr.length >= RATE_MAX) return false;
+  arr.push(now);
+  requestLog.set(key, arr);
+  return true;
+}
+
 module.exports = async (req, res) => {
   // Only allow POST requests
   if (req.method !== 'POST') {
@@ -18,7 +33,7 @@ module.exports = async (req, res) => {
   }
 
   // CORS headers for your domain
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Change to your domain in production
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Consider restricting to your domain in production
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -28,6 +43,12 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // basic rate limit by session or IP
+    const key = (req.body && req.body.sessionId) || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    if (!allowRequest(String(key))) {
+      return res.status(429).json({ error: 'Too many reports. Please wait and try again.' });
+    }
+
     const {
       sessionId,
       userAgent,
@@ -40,9 +61,21 @@ module.exports = async (req, res) => {
     } = req.body;
 
     // Basic validation
-    if (!sessionId || !fullReport) {
+    if (typeof sessionId !== 'string' || typeof fullReport !== 'string') {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+
+    // Sanitize/limit payload sizes
+    const safeErrorCount = Number.isFinite(errorCount) ? Math.min(errorCount, 1000) : 0;
+    const safeWarningCount = Number.isFinite(warningCount) ? Math.min(warningCount, 1000) : 0;
+    const safeUA = (typeof userAgent === 'string' ? userAgent : '').slice(0, 256);
+    const safePlatform = (typeof platform === 'string' ? platform : '').slice(0, 64);
+    const safeErrors = Array.isArray(errors) ? errors.slice(0, 10).map(e => ({
+      message: (e && typeof e.message === 'string' ? e.message.slice(0, 300) : ''),
+      stack: (e && typeof e.stack === 'string' ? e.stack.slice(0, 500) : undefined)
+    })) : [];
+    const safePerf = performance && typeof performance === 'object' ? performance : undefined;
+    const truncatedReport = fullReport.slice(0, 4000);
 
     // Get webhook URL from environment variable (kept private!)
     const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
@@ -52,24 +85,24 @@ module.exports = async (req, res) => {
     if (webhookUrl) {
       const embed = {
         title: '🐛 Bug Report - Chatlog Magician',
-        description: errorCount > 0 ? `**${errorCount} error(s) detected**` : 'No errors (user feedback)',
-        color: errorCount > 0 ? 0xff0000 : 0xffa500,
+        description: safeErrorCount > 0 ? `**${safeErrorCount} error(s) detected**` : 'No errors (user feedback)',
+        color: safeErrorCount > 0 ? 0xff0000 : 0xffa500,
         fields: [
           {
             name: '📋 Session Info',
-            value: `**ID:** ${sessionId}\n**Browser:** ${(userAgent || '').split(' ').pop()}\n**Platform:** ${platform || 'Unknown'}`,
+            value: `**ID:** ${sessionId}\n**Browser:** ${(safeUA || '').split(' ').pop()}\n**Platform:** ${safePlatform || 'Unknown'}`,
             inline: false
           },
           {
             name: '⚡ Performance',
-            value: performance?.timing ? 
-              `Load: ${performance.timing.loadTime}ms\nMemory: ${performance.memory?.usedJSHeapSize || 'N/A'}` :
+            value: safePerf?.timing ? 
+              `Load: ${safePerf.timing.loadTime}ms\nMemory: ${safePerf.memory?.usedJSHeapSize || 'N/A'}` :
               'Not available',
             inline: true
           },
           {
             name: '📊 Summary',
-            value: `Errors: ${errorCount || 0}\nWarnings: ${warningCount || 0}`,
+            value: `Errors: ${safeErrorCount || 0}\nWarnings: ${safeWarningCount || 0}`,
             inline: true
           }
         ],
@@ -80,9 +113,9 @@ module.exports = async (req, res) => {
       };
 
       // Add errors if any
-      if (errors && errors.length > 0) {
-        const errorSummary = errors.slice(0, 3).map((err, i) => 
-          `${i + 1}. ${err.message.substr(0, 100)}`
+      if (safeErrors && safeErrors.length > 0) {
+        const errorSummary = safeErrors.slice(0, 3).map((err, i) => 
+          `${i + 1}. ${err.message}`
         ).join('\n');
         embed.fields.push({
           name: '❌ Recent Errors',
@@ -95,7 +128,7 @@ module.exports = async (req, res) => {
         username: 'Bug Reporter',
         avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
         embeds: [embed],
-        content: '**New bug report received!**\n\n```\n' + (fullReport || '').substr(0, 1800) + '\n...\n```'
+        content: '**New bug report received!**\n\n```\n' + (truncatedReport || '') + '\n...\n```'
       };
 
       // Send to Discord

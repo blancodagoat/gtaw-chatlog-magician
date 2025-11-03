@@ -24,6 +24,72 @@ dist/
 build/
 *.log
 
+# Next.js / Turbo / Vercel
+.next/
+out/
+.vercel/
+.turbo/
+.eslintcache
+
+# TypeScript
+*.tsbuildinfo
+
+# Package managers
+pnpm-lock.yaml
+.pnpm-store/
+
+# Storybook
+storybook-static/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+
+# Rust
+target/
+
+# Prisma / DB (keep migrations tracked)
+prisma/*.db
+prisma/*.sqlite
+prisma/*.db-journal
+
+# Supabase (local/dev artifacts)
+supabase/.branches/
+supabase/.temp/
+supabase/functions/.env
+
+# NativeScript
+platforms/
+hooks/
+
+# Tailwind
+.tailwindcache/
+
+# Linters/formatters
+.prettiercache
+
+# Story caches and bundlers
+.parcel-cache/
+.vite/
+
+# Editor/workspace
+*.code-workspace
+.history/
+.cursor/
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
 # Environment files
 .env
 .env.local
