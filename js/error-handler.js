@@ -7,7 +7,12 @@
     WXT_STORAGE: ['@wxt-dev/storage', 'Storage migration'],
     CROSS_ORIGIN: ['cross-origin', 'XrayWrapper', 'Cannot access rules', 'SecurityError'],
     DOMTOIMAGE: ['domtoimage', 'dom-to-image', 'cssRules', 'SecurityError: Failed to read'],
-    IGNORED: ['ResizeObserver loop', 'ResizeObserver loop limit exceeded']
+    IGNORED: ['ResizeObserver loop', 'ResizeObserver loop limit exceeded'],
+    // Image mode specific error categories - DO NOT IGNORE, LOG FOR DEBUGGING
+    IMAGE_LOAD: ['Failed to load image', 'Image load timeout', 'image may be too large', 'image may be corrupted'],
+    CANVAS_MEMORY: ['Canvas memory', 'out of memory', 'Canvas too large', 'Canvas dimensions exceed'],
+    FILE_UPLOAD: ['File too large', 'Invalid file type', 'Failed to read file', 'FileReader'],
+    IMAGE_RENDER: ['Failed to render', 'Could not get canvas context', 'blob creation failed', 'PNG metadata']
   };
 
   const matchesErrorCategory = (errorText, categories) => {
@@ -27,6 +32,39 @@
     return result;
   };
 
+  /**
+   * Enhanced logging for image mode errors with additional context
+   */
+  const logImageError = (errorInfo) => {
+    if (!window.ErrorLogger) return;
+
+    // Determine error category
+    let category = 'UNKNOWN';
+    const errorText = errorInfo.message || '';
+
+    if (matchesErrorCategory(errorText, ['IMAGE_LOAD'])) {
+      category = 'IMAGE_LOAD';
+    } else if (matchesErrorCategory(errorText, ['CANVAS_MEMORY'])) {
+      category = 'CANVAS_MEMORY';
+    } else if (matchesErrorCategory(errorText, ['FILE_UPLOAD'])) {
+      category = 'FILE_UPLOAD';
+    } else if (matchesErrorCategory(errorText, ['IMAGE_RENDER'])) {
+      category = 'IMAGE_RENDER';
+    }
+
+    // Enhance error info with category and context
+    const enhancedInfo = {
+      ...errorInfo,
+      category,
+      context: 'Image Mode',
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      viewport: `${window.innerWidth}x${window.innerHeight}`
+    };
+
+    window.ErrorLogger.logError(`[${category}] ${errorInfo.message}`, enhancedInfo);
+  };
+
   window.addEventListener('error', function(event) {
     const errorInfo = {
       message: event.error?.message || event.message,
@@ -36,8 +74,14 @@
       stack: event.error?.stack
     };
 
-    // Log to ErrorLogger even if we suppress it from console
-    if (window.ErrorLogger) {
+    // Check if this is an image-related error and log with enhanced context
+    const errorText = errorInfo.message || '';
+    const isImageError = matchesErrorCategory(errorText, ['IMAGE_LOAD', 'CANVAS_MEMORY', 'FILE_UPLOAD', 'IMAGE_RENDER']);
+
+    if (isImageError) {
+      logImageError(errorInfo);
+    } else if (window.ErrorLogger) {
+      // Log to ErrorLogger even if we suppress it from console
       window.ErrorLogger.logInfo('Error captured: ' + errorInfo.message, errorInfo);
     }
 
@@ -57,8 +101,13 @@
       stack: event.reason?.stack
     };
 
-    // Log to ErrorLogger even if we suppress it from console
-    if (window.ErrorLogger) {
+    // Check if this is an image-related error and log with enhanced context
+    const isImageError = matchesErrorCategory(errorMessage, ['IMAGE_LOAD', 'CANVAS_MEMORY', 'FILE_UPLOAD', 'IMAGE_RENDER']);
+
+    if (isImageError) {
+      logImageError(errorInfo);
+    } else if (window.ErrorLogger) {
+      // Log to ErrorLogger even if we suppress it from console
       window.ErrorLogger.logInfo('Promise rejection: ' + errorMessage, errorInfo);
     }
 
@@ -111,4 +160,10 @@
       performance.measure('error-handler-setup', 'error-handler-initialized');
     });
   }
+
+  // Expose enhanced image error logging globally
+  window.ImageErrorHandler = {
+    logImageError,
+    ERROR_CATEGORIES
+  };
 })();

@@ -79,17 +79,103 @@
   }
 
   /**
-   * Saves log to localStorage
+   * Check localStorage available space
+   * @returns {Object} - {available: number, total: number, used: number, percentage: number}
+   */
+  function checkLocalStorageQuota() {
+    try {
+      let total = 0;
+      let used = 0;
+
+      // Calculate current usage
+      for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+          used += localStorage[key].length + key.length;
+        }
+      }
+
+      // Try to estimate total (typical limit is 5-10MB, we'll use 5MB as conservative estimate)
+      const ESTIMATED_LIMIT = 5 * 1024 * 1024; // 5MB in bytes
+      total = ESTIMATED_LIMIT;
+
+      const percentage = (used / total) * 100;
+
+      return {
+        available: total - used,
+        total: total,
+        used: used,
+        percentage: percentage.toFixed(2),
+        usedMB: (used / (1024 * 1024)).toFixed(2),
+        totalMB: (total / (1024 * 1024)).toFixed(2)
+      };
+    } catch (e) {
+      console.warn('Could not check localStorage quota:', e);
+      return null;
+    }
+  }
+
+  /**
+   * Saves log to localStorage with quota checking
    */
   function saveToStorage() {
     try {
+      // Check quota before attempting to save
+      const quota = checkLocalStorageQuota();
+      if (quota && quota.percentage > 90) {
+        console.warn(`[ErrorLogger] localStorage usage high (${quota.percentage}%). Some logs may be lost.`);
+        addLogEntry('warnings', `localStorage quota critical: ${quota.percentage}% used (${quota.usedMB}MB / ${quota.totalMB}MB)`, {
+          quota: quota,
+          context: 'localStorage quota check'
+        });
+
+        // Try to clear old data if we're over 95%
+        if (quota.percentage > 95) {
+          console.warn('[ErrorLogger] localStorage nearly full, attempting to trim old data');
+          // Keep only recent entries
+          errorLog.errors = errorLog.errors.slice(-20);
+          errorLog.warnings = errorLog.warnings.slice(-20);
+          errorLog.info = errorLog.info.slice(-20);
+          errorLog.userActivity = errorLog.userActivity.slice(-20);
+        }
+      }
+
       const logData = {
         ...errorLog,
         lastUpdated: timestamp(),
       };
-      localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(logData));
+
+      const serialized = JSON.stringify(logData);
+      const sizeKB = (serialized.length / 1024).toFixed(2);
+
+      // Check if this specific save will exceed quota
+      if (quota && serialized.length > quota.available) {
+        console.error(`[ErrorLogger] Cannot save to localStorage - data size (${sizeKB}KB) exceeds available space (${(quota.available / 1024).toFixed(2)}KB)`);
+        addLogEntry('errors', `localStorage save failed: data too large (${sizeKB}KB > ${(quota.available / 1024).toFixed(2)}KB available)`, {
+          dataSize: serialized.length,
+          available: quota.available,
+          context: 'localStorage save'
+        });
+        return;
+      }
+
+      localStorage.setItem(CONFIG.STORAGE_KEY, serialized);
     } catch (e) {
-      console.warn('Could not save error log to localStorage:', e);
+      if (e.name === 'QuotaExceededError') {
+        console.error('[ErrorLogger] localStorage quota exceeded:', e);
+        addLogEntry('errors', 'localStorage quota exceeded during save', {
+          error: e.message,
+          errorName: e.name,
+          context: 'localStorage save',
+          quota: checkLocalStorageQuota()
+        });
+      } else {
+        console.warn('[ErrorLogger] Could not save error log to localStorage:', e);
+        addLogEntry('warnings', 'Failed to save error log to localStorage', {
+          error: e.message,
+          errorName: e.name,
+          context: 'localStorage save'
+        });
+      }
     }
   }
 
@@ -179,29 +265,53 @@
   };
 
   /**
-   * Captures network errors (failed fetch/XHR)
+   * Captures network errors (failed fetch/XHR) with timeout support
    */
+  const FETCH_TIMEOUT_MS = 30000; // 30 seconds default timeout
+
   const originalFetch = window.fetch;
   window.fetch = function (...args) {
     const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
+    const options = args[1] || {};
+
+    // Add timeout support using AbortController
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    // Merge abort signal with existing options
+    const fetchOptions = {
+      ...options,
+      signal: controller.signal
+    };
+
     return originalFetch
-      .apply(this, args)
+      .apply(this, [args[0], fetchOptions])
       .then((response) => {
+        clearTimeout(timeoutId);
         if (!response.ok) {
           addLogEntry('networkIssues', `Failed fetch: ${url}`, {
             status: response.status,
             statusText: response.statusText,
             url: url,
-            method: args[1]?.method || 'GET',
+            method: options.method || 'GET',
           });
         }
         return response;
       })
       .catch((error) => {
-        addLogEntry('networkIssues', `Network error: ${url}`, {
+        clearTimeout(timeoutId);
+
+        // Determine if this is a timeout error
+        const isTimeout = error.name === 'AbortError';
+        const errorMessage = isTimeout ? `Network timeout: ${url}` : `Network error: ${url}`;
+
+        addLogEntry('networkIssues', errorMessage, {
           error: error.message,
+          errorType: error.name,
           url: url,
           stack: error.stack,
+          timeout: isTimeout,
+          timeoutMs: FETCH_TIMEOUT_MS
         });
         throw error;
       });
@@ -265,7 +375,7 @@
   });
 
   /**
-   * Captures localStorage quota exceeded errors
+   * Captures localStorage quota exceeded errors with enhanced context
    */
   const originalSetItem = Storage.prototype.setItem;
   Storage.prototype.setItem = function (key, value) {
@@ -273,10 +383,26 @@
       originalSetItem.call(this, key, value);
     } catch (e) {
       if (e.name === 'QuotaExceededError') {
-        addLogEntry('errors', 'LocalStorage quota exceeded', {
+        const quota = checkLocalStorageQuota();
+        const valueSizeKB = (value.length / 1024).toFixed(2);
+
+        addLogEntry('errors', `LocalStorage quota exceeded for key "${key}"`, {
+          key: key,
+          valueSize: value.length,
+          valueSizeKB: valueSizeKB,
+          error: e.message,
+          quota: quota,
+          suggestion: 'Clear old data or reduce storage usage'
+        });
+
+        console.error(`[ErrorLogger] localStorage quota exceeded when setting key "${key}" (${valueSizeKB}KB). Current usage: ${quota?.percentage}%`);
+      } else {
+        console.error('[ErrorLogger] localStorage setItem failed:', e);
+        addLogEntry('errors', `LocalStorage setItem failed for key "${key}"`, {
           key: key,
           valueSize: value.length,
           error: e.message,
+          errorName: e.name
         });
       }
       throw e;
@@ -935,6 +1061,7 @@
     logError: (msg, details) => addLogEntry('errors', msg, details),
     logWarning: (msg, details) => addLogEntry('warnings', msg, details),
     logInfo: (msg, details) => addLogEntry('info', msg, details),
+    checkQuota: checkLocalStorageQuota, // Check localStorage quota
   };
 
   // Show status in console

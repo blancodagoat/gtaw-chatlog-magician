@@ -22,6 +22,59 @@
   const SHADOW_COLOR = '#000000';
   const BACKGROUND_COLOR = '#000000';
 
+  // Canvas safety limits
+  const MAX_CANVAS_PIXELS = 268435456; // 16384 x 16384 (common browser limit)
+  const MAX_CANVAS_DIMENSION = 32767; // Maximum dimension per side
+  const MAX_CANVAS_MEMORY_MB = 512; // Warn if estimated memory > 512MB
+  const BYTES_PER_PIXEL = 4; // RGBA
+
+  /**
+   * Validate canvas dimensions and estimate memory usage
+   * @param {number} width - Canvas width in pixels
+   * @param {number} height - Canvas height in pixels
+   * @returns {Object} - Validation result {valid: boolean, error: string, warning: string}
+   */
+  function validateCanvasDimensions(width, height) {
+    const result = {
+      valid: true,
+      error: null,
+      warning: null
+    };
+
+    // Check for invalid dimensions
+    if (!width || !height || width <= 0 || height <= 0) {
+      result.valid = false;
+      result.error = `Invalid canvas dimensions: ${width}x${height}. Dimensions must be positive numbers.`;
+      return result;
+    }
+
+    // Check if dimensions exceed maximum per side
+    if (width > MAX_CANVAS_DIMENSION || height > MAX_CANVAS_DIMENSION) {
+      result.valid = false;
+      result.error = `Canvas dimensions exceed maximum allowed size. Maximum dimension per side is ${MAX_CANVAS_DIMENSION}px. You specified ${width}x${height}.`;
+      return result;
+    }
+
+    // Check total pixel count
+    const totalPixels = width * height;
+    if (totalPixels > MAX_CANVAS_PIXELS) {
+      result.valid = false;
+      result.error = `Canvas dimensions too large. Total pixels (${totalPixels.toLocaleString()}) exceeds maximum (${MAX_CANVAS_PIXELS.toLocaleString()}). Try reducing the export dimensions.`;
+      return result;
+    }
+
+    // Estimate memory usage (RGBA = 4 bytes per pixel)
+    const estimatedMemoryBytes = totalPixels * BYTES_PER_PIXEL;
+    const estimatedMemoryMB = Math.round(estimatedMemoryBytes / (1024 * 1024));
+
+    // Warn if memory usage is high
+    if (estimatedMemoryMB > MAX_CANVAS_MEMORY_MB) {
+      result.warning = `Large canvas detected (${width}x${height}). Estimated memory usage: ${estimatedMemoryMB}MB. This may cause performance issues or fail on some devices.`;
+    }
+
+    return result;
+  }
+
   // Expose to global scope
   window.OverlayRenderer = {
     /**
@@ -76,6 +129,36 @@
       const exportHeight = exportHeightInput ? parseInt(exportHeightInput.value) || 1200 : 1200;
       const exportPPI = exportPPIInput ? parseInt(exportPPIInput.value) || 96 : 96;
 
+      // Validate canvas dimensions before creating
+      const validation = validateCanvasDimensions(exportWidth, exportHeight);
+      if (!validation.valid) {
+        const errorInfo = {
+          message: validation.error,
+          dimensions: { width: exportWidth, height: exportHeight },
+          context: 'Canvas dimension validation',
+          maxDimension: MAX_CANVAS_DIMENSION,
+          maxPixels: MAX_CANVAS_PIXELS
+        };
+
+        // Log to enhanced image error handler
+        if (window.ImageErrorHandler) {
+          window.ImageErrorHandler.logImageError(errorInfo);
+        }
+
+        throw new Error(validation.error);
+      }
+
+      // Show warning if memory usage is high
+      if (validation.warning) {
+        console.warn('[Renderer]', validation.warning);
+        if (window.ErrorLogger) {
+          window.ErrorLogger.logWarning(validation.warning, {
+            dimensions: { width: exportWidth, height: exportHeight },
+            context: 'Canvas memory warning'
+          });
+        }
+      }
+
       // The dropzone might be scaled down for display, but export uses full dimensions
       // Calculate the scale ratio between export and display
       const dropZoneWidth = window.ImageOverlayState.dropZoneWidth;
@@ -96,12 +179,39 @@
 
       // Create canvas with export dimensions
       const canvas = document.createElement('canvas');
-      canvas.width = exportWidth;
-      canvas.height = exportHeight;
+
+      try {
+        canvas.width = exportWidth;
+        canvas.height = exportHeight;
+      } catch (error) {
+        const errorInfo = {
+          message: `Failed to set canvas dimensions: ${error.message}`,
+          dimensions: { width: exportWidth, height: exportHeight },
+          context: 'Canvas creation',
+          originalError: error.message
+        };
+
+        if (window.ImageErrorHandler) {
+          window.ImageErrorHandler.logImageError(errorInfo);
+        }
+
+        throw new Error(`Canvas dimensions too large for this device. Try using smaller export dimensions. (${exportWidth}x${exportHeight})`);
+      }
+
       const ctx = canvas.getContext('2d');
 
       if (!ctx) {
-        throw new Error('Could not get canvas context');
+        const errorInfo = {
+          message: 'Could not get canvas 2d context',
+          dimensions: { width: exportWidth, height: exportHeight },
+          context: 'Canvas context creation'
+        };
+
+        if (window.ImageErrorHandler) {
+          window.ImageErrorHandler.logImageError(errorInfo);
+        }
+
+        throw new Error('Could not get canvas context. Your browser may not support the required canvas size.');
       }
 
       // Pass scale ratios to drawing functions so they can scale transforms manually
@@ -157,7 +267,19 @@
         });
       } catch (error) {
         console.error('[Renderer] Image load failed:', error);
-        throw new Error('Failed to load image. The image may be too large or corrupted.');
+
+        const errorInfo = {
+          message: error.message,
+          context: 'Image loading for canvas rendering',
+          timeout: IMAGE_LOAD_TIMEOUT_MS,
+          imageSource: imgSrc?.substring(0, 100) + '...' // Log first 100 chars
+        };
+
+        if (window.ImageErrorHandler) {
+          window.ImageErrorHandler.logImageError(errorInfo);
+        }
+
+        throw new Error('Failed to load image. The image may be too large or corrupted. Please try uploading a smaller image or refresh the page.');
       }
 
       // Calculate object-fit: contain dimensions
@@ -408,18 +530,46 @@
         canvas.toBlob(
           async (blob) => {
             if (!blob) {
-              reject(new Error('Failed to create blob from canvas'));
+              const errorInfo = {
+                message: 'Failed to create blob from canvas',
+                context: 'Canvas blob creation',
+                canvasSize: `${canvas.width}x${canvas.height}`
+              };
+
+              if (window.ImageErrorHandler) {
+                window.ImageErrorHandler.logImageError(errorInfo);
+              }
+
+              reject(new Error('Failed to create blob from canvas. The canvas may be too large or the browser ran out of memory.'));
               return;
             }
 
             try {
               // Read the blob as ArrayBuffer to inject PPI metadata
-              const arrayBuffer = await blob.arrayBuffer();
+              const arrayBuffer = await blob.arrayBuffer().catch(error => {
+                console.warn('[Renderer] Failed to read blob as ArrayBuffer:', error);
+                if (window.ErrorLogger) {
+                  window.ErrorLogger.logWarning('Failed to read blob as ArrayBuffer', {
+                    error: error.message,
+                    blobSize: blob.size,
+                    context: 'ArrayBuffer conversion'
+                  });
+                }
+                throw error;
+              });
+
               const pngWithPPI = this.injectPNGPPI(arrayBuffer, ppi);
               const finalBlob = new Blob([pngWithPPI], { type: CANVAS_IMAGE_FORMAT });
               resolve(finalBlob);
             } catch (error) {
               console.warn('[Renderer] Failed to inject PPI metadata, returning blob without it:', error);
+              if (window.ErrorLogger) {
+                window.ErrorLogger.logWarning('PPI metadata injection failed, using original blob', {
+                  error: error.message,
+                  blobSize: blob.size,
+                  context: 'PPI injection'
+                });
+              }
               // Fall back to original blob without PPI if injection fails
               resolve(blob);
             }
