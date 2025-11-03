@@ -327,7 +327,6 @@ function downloadOutputImage() {
             if (node.classList && node.classList.contains('selected-for-coloring')) return false;
             return true;
           },
-          skipFonts: true,
         })
       : {
           width: width,
@@ -349,8 +348,12 @@ function downloadOutputImage() {
             if (node.classList && node.classList.contains('selected-for-coloring')) return false;
             return true;
           },
-          // Skip font embedding to avoid 404 errors for external fonts
-          skipFonts: true,
+          // Skip font embedding to prevent 404 errors for external fonts
+          fontEmbedFn: function (url) {
+            // Return null to skip embedding fonts - prevents 404 errors
+            console.log('Skipping font embedding for:', url);
+            return Promise.resolve(null);
+          },
           imagePlaceholder:
             'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y0ZjRmNCIvPjwvc3ZnPg==',
         };
