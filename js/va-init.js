@@ -1,7 +1,9 @@
 // Initialize Vercel Web Analytics queue without inline scripts (CSP-friendly)
-window.va = window.va || function () {
-  (window.vaq = window.vaq || []).push(arguments);
-};
+window.va =
+  window.va ||
+  function () {
+    (window.vaq = window.vaq || []).push(arguments);
+  };
 
 // Conditionally load Vercel Web Analytics only in prod (avoid 404 on localhost)
 (function loadVercelAnalytics() {
@@ -13,11 +15,11 @@ window.va = window.va || function () {
     const s = document.createElement('script');
     s.defer = true;
     s.src = '/_vercel/insights/script.js';
-    s.onerror = function() {
+    s.onerror = function () {
       // Silently ignore if not available (non-Vercel environments)
     };
     document.head.appendChild(s);
-  } catch (e) {
+  } catch (_e) {
     // no-op
   }
 })();

@@ -118,8 +118,6 @@ html::-webkit-scrollbar {
 	padding: 16px; /* 8px grid */
     margin-bottom: 16px; /* 8px grid */
 	transition: all 0.3s ease;
-	-webkit-backdrop-filter: blur(10px);
-	backdrop-filter: blur(10px);
 	font-size: 14px;
 	line-height: 1.6;
 }

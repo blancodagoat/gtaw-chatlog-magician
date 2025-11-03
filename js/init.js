@@ -33,12 +33,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     };
     historyTab.addEventListener('click', handler);
-    historyTab.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handler();
-      }
-    });
   }
 });
 

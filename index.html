@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="css/foundation.fixed.css" />
   <link rel="stylesheet" href="css/modern.css" />
   <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/overlay.css" />
   <link rel="stylesheet" href="css/fontawesome.min.css" />
   <link rel="stylesheet" href="color-palette/color-palette.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
@@ -86,7 +87,28 @@
               </div>
               <div class="grid-x grid-margin-x align-middle">
                  <div class="cell auto">
-                    <button id="downloadOutputTransparent" class="button success" aria-label="Download chat log">Download</button>
+                    <button id="downloadOutputTransparent" class="button success" aria-label="Download chat log or overlay">Download</button>
+                    <button id="toggleMode" class="button active" data-mode="chat" aria-label="Toggle mode">
+                      <i class="fas fa-align-left" aria-hidden="true"></i> <span class="mode-text">Chat Only</span>
+                    </button>
+                    <button id="clearImageBtn" class="button secondary" type="button" title="Remove image" style="display: none;">
+                      <i class="fas fa-times" aria-hidden="true"></i> Clear Image
+                    </button>
+                    <div class="button" style="display: none; padding: 7.5px 20px; gap: 10px;" id="textPaddingControl">
+                      <input type="number" id="textPaddingHorizontal" min="0" max="200" value="0" step="5" style="width: 60px; height: auto; margin: 0; padding: 0; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center;" title="Horizontal padding (px)">
+                      <span style="color: rgba(255,255,255,0.5);">×</span>
+                      <input type="number" id="textPaddingVertical" min="0" max="200" value="0" step="5" style="width: 60px; height: auto; margin: 0; padding: 0; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center;" title="Vertical padding (px)">
+                      <span style="color: rgba(255,255,255,0.6); font-size: 12px;">px</span>
+                    </div>
+                    <div class="button" style="display: none; padding: 7.5px 20px; gap: 10px;" id="exportDimensionsControl">
+                      <input type="number" id="exportWidth" min="100" max="7680" value="1600" step="1" style="width: 70px; height: auto; margin: 0; padding: 2px 4px; border: none; background: rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-align: center; border-radius: 3px;" title="Export width (px)">
+                      <span style="color: rgba(255,255,255,0.5);">×</span>
+                      <input type="number" id="exportHeight" min="100" max="4320" value="1200" step="1" style="width: 70px; height: auto; margin: 0; padding: 2px 4px; border: none; background: rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-align: center; border-radius: 3px;" title="Export height (px)">
+                      <span style="color: rgba(255,255,255,0.6); font-size: 12px;">px</span>
+                      <span style="color: rgba(255,255,255,0.3); margin: 0 4px;">|</span>
+                      <input type="number" id="exportPPI" min="72" max="600" value="96" step="1" style="width: 60px; height: auto; margin: 0; padding: 2px 4px; border: none; background: rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-align: center; border-radius: 3px;" title="Export PPI">
+                      <span style="color: rgba(255,255,255,0.6); font-size: 12px;">PPI</span>
+                    </div>
                     <button id="toggleBackground" class="button" aria-label="Toggle background color" title="Switch between black and transparent background">Toggle Background</button>
                     <button id="toggleCharacterNameColoring" class="button" aria-label="Toggle character name coloring" title="Disable character name detection coloring">Name Colors</button>
                     <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character" title="Copy ÷ character">÷</button>
@@ -100,6 +122,34 @@
                  </div>
               </div>
               <div id="output" class="output" role="region" aria-label="Formatted chat log output"></div>
+
+              <!-- Image Overlay Drop Zone -->
+              <div id="imageOverlaySection" style="display: none;">
+                <input type="file" id="imageFileInput" accept="image/*" style="display: none;" aria-label="Upload screenshot">
+
+                <div id="imageDropzone" class="image-dropzone">
+                  <div class="dropzone-instructions">
+                    <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
+                    <p>Drop your screenshot here</p>
+                    <p style="font-size: 14px; opacity: 0.7;">or click to browse</p>
+                  </div>
+                  <div class="coordinate-display" style="display: none;">
+                    <span id="imageCoords">X: 0, Y: 0</span>
+                  </div>
+                  <div class="zoom-indicator" style="display: none;">
+                    <span id="imageZoom">100%</span>
+                  </div>
+                </div>
+
+                <!-- Overlay Info -->
+                <div class="overlay-info" style="max-width: 900px; margin: 10px auto; text-align: center; color: rgba(255,255,255,0.7); font-size: 13px; line-height: 1.6;">
+                  <p style="margin: 5px 0;"><i class="fas fa-mouse" aria-hidden="true"></i> <strong>Image:</strong> Double-click to upload | Click and drag to move | Scroll to zoom</p>
+                  <p style="margin: 5px 0; font-size: 12px; color: rgba(255,255,255,0.5);">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i> Downloaded image shows exactly what you see in preview |
+                    Settings auto-save | Canvas resizes to match your export dimensions
+                  </p>
+                </div>
+              </div>
            </div>
         </div>
      </div>
@@ -130,6 +180,9 @@
             onerror="console.warn('FileSaver.js failed to load from CDN')"></script>
 
     <!-- Application scripts -->
+    <script src="js/image-dropzone.js" defer></script>
+    <script src="js/image-overlay.js" defer></script>
+    <script src="js/image-renderer.js" defer></script>
     <script src="js/chat.js" defer></script>
      <script src="color-palette/color-palette.js" defer></script>
      <script src="js/chatlog-parser.js" defer></script>
