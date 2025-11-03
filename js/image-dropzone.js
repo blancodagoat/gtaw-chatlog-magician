@@ -166,29 +166,70 @@
       reader.onload = (e) => {
         if (!e.target?.result) {
           console.error('[ImageDropZone] FileReader returned empty result');
+
+          const errorInfo = {
+            message: 'FileReader returned empty result',
+            context: 'Image file reading',
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type
+          };
+
+          if (window.ImageErrorHandler) {
+            window.ImageErrorHandler.logImageError(errorInfo);
+          }
+
           this.state.isProcessing = false;
           this.hideLoading();
-          this.showError('Failed to read file. The file may be empty or corrupted.');
+          this.showError(`Failed to read file "${file.name}". The file may be empty or corrupted.`);
           return;
         }
         this.state.droppedImageSrc = e.target.result;
-        this.loadImage(e.target.result);
+        this.loadImage(e.target.result, file);
       };
 
       reader.onerror = (err) => {
         console.error('[ImageDropZone] FileReader error:', err);
+
+        const errorInfo = {
+          message: `FileReader error: ${err.target?.error?.message || 'Unknown error'}`,
+          context: 'Image file reading',
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          error: err.target?.error
+        };
+
+        if (window.ImageErrorHandler) {
+          window.ImageErrorHandler.logImageError(errorInfo);
+        }
+
         this.state.isProcessing = false;
         this.hideLoading();
-        this.showError('Failed to read file. Please try again.');
+        this.showError(`Failed to read file "${file.name}". Error: ${err.target?.error?.message || 'Please try again.'}`);
       };
 
       try {
         reader.readAsDataURL(file);
       } catch (error) {
         console.error('[ImageDropZone] Failed to start file read:', error);
+
+        const errorInfo = {
+          message: `Failed to start file read: ${error.message}`,
+          context: 'Image file reading initialization',
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          error: error.message
+        };
+
+        if (window.ImageErrorHandler) {
+          window.ImageErrorHandler.logImageError(errorInfo);
+        }
+
         this.state.isProcessing = false;
         this.hideLoading();
-        this.showError('Failed to process file. Please try again.');
+        this.showError(`Failed to process file "${file.name}". ${error.message}`);
       }
     },
 
@@ -201,15 +242,66 @@
       }
 
       if (!this.state.allowedTypes.includes(file.type)) {
+        const errorInfo = {
+          message: 'Invalid file type uploaded',
+          context: 'File type validation',
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          allowedTypes: this.state.allowedTypes.join(', ')
+        };
+
+        if (window.ImageErrorHandler) {
+          window.ImageErrorHandler.logImageError(errorInfo);
+        }
+
         return {
           valid: false,
-          message: 'Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.',
+          message: `Invalid file type "${file.type}". Please upload a JPEG, PNG, GIF, or WebP image. File: "${file.name}"`,
         };
       }
 
       if (file.size > this.state.maxFileSize) {
         const sizeMB = (this.state.maxFileSize / (1024 * 1024)).toFixed(0);
-        return { valid: false, message: `File too large. Maximum size is ${sizeMB}MB.` };
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+
+        const errorInfo = {
+          message: 'File size exceeds maximum',
+          context: 'File size validation',
+          fileName: file.name,
+          fileSize: file.size,
+          fileSizeMB: fileSizeMB,
+          maxSizeMB: sizeMB,
+          fileType: file.type
+        };
+
+        if (window.ImageErrorHandler) {
+          window.ImageErrorHandler.logImageError(errorInfo);
+        }
+
+        return {
+          valid: false,
+          message: `File "${file.name}" is too large (${fileSizeMB}MB). Maximum size is ${sizeMB}MB. Please compress or resize the image.`
+        };
+      }
+
+      if (file.size === 0) {
+        const errorInfo = {
+          message: 'Empty file uploaded',
+          context: 'File size validation',
+          fileName: file.name,
+          fileSize: 0,
+          fileType: file.type
+        };
+
+        if (window.ImageErrorHandler) {
+          window.ImageErrorHandler.logImageError(errorInfo);
+        }
+
+        return {
+          valid: false,
+          message: `File "${file.name}" is empty (0 bytes). Please select a valid image file.`
+        };
       }
 
       return { valid: true };
@@ -217,8 +309,10 @@
 
     /**
      * Load image from data URL
+     * @param {string} src - Image data URL
+     * @param {File} file - Original file object (optional, for error context)
      */
-    loadImage: function (src) {
+    loadImage: function (src, file = null) {
       const img = new Image();
       img.onload = () => {
         this.state.droppedImageElement = img;
@@ -229,21 +323,42 @@
 
         // Trigger custom event
         const event = new CustomEvent('imageLoaded', {
-          detail: { src, image: img },
+          detail: { src, image: img, file },
         });
         document.dispatchEvent(event);
 
-        console.log('Image loaded:', { width: img.width, height: img.height });
+        console.log('[ImageDropZone] Image loaded successfully:', {
+          width: img.width,
+          height: img.height,
+          fileName: file?.name,
+          fileSize: file?.size
+        });
       };
 
       img.onerror = () => {
+        const errorInfo = {
+          message: 'Failed to load image element',
+          context: 'Image element loading',
+          fileName: file?.name || 'Unknown',
+          fileSize: file?.size || 0,
+          fileType: file?.type || 'Unknown',
+          imageDimensions: `${img.naturalWidth || 0}x${img.naturalHeight || 0}`
+        };
+
+        if (window.ImageErrorHandler) {
+          window.ImageErrorHandler.logImageError(errorInfo);
+        }
+
         this.state.isProcessing = false;
         this.hideLoading();
-        this.showError('Failed to load image. The file may be corrupted.');
+
+        const fileName = file?.name || 'the file';
+        const additionalInfo = file ? ` (${(file.size / 1024).toFixed(1)} KB, ${file.type})` : '';
+        this.showError(`Failed to load image "${fileName}". The file may be corrupted or in an unsupported format.${additionalInfo}`);
 
         // Trigger error event
         const errorEvent = new CustomEvent('imageLoadError', {
-          detail: { src, error: 'Failed to load image' },
+          detail: { src, error: 'Failed to load image', file },
         });
         document.dispatchEvent(errorEvent);
       };
