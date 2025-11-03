@@ -77,7 +77,12 @@
                         <button class="button small" id="addCharacterBtn" type="button" aria-label="Add character">Add</button>
                         <button class="button small" id="showCharacterListBtn" type="button" aria-label="Show character list">&#9660;</button>
                       </div>
-                      <div id="characterNameDropdown" class="character-dropdown" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: var(--surface); color: var(--text); border: 1px solid rgba(255, 255, 255, 0.12); z-index: 1000; max-height: 150px; overflow-y: auto; border-radius: 8px;" role="listbox"></div>
+                      <div id="characterNameDropdown" class="character-dropdown liquidGlass-wrapper" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: var(--surface); color: var(--text); border: 1px solid rgba(255, 255, 255, 0.12); z-index: 1000; max-height: 150px; overflow-y: auto; border-radius: 8px;" role="listbox">
+        <div class="liquidGlass-effect"></div>
+        <div class="liquidGlass-tint"></div>
+        <div class="liquidGlass-shine"></div>
+        <div class="liquidGlass-text"></div>
+      </div>
                     </div>
                  </div>
               </div>
@@ -189,87 +194,112 @@
      <script src="js/app.js" defer></script>
 
      <!-- History panel -->
-    <div class="history-tab" 
+    <div class="history-tab liquidGlass-wrapper" 
          role="button" 
           tabindex="0" 
           aria-label="Open chat history" 
           aria-expanded="false"
           aria-controls="historyPanel">
-       <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+       <div class="liquidGlass-effect"></div>
+       <div class="liquidGlass-tint"></div>
+       <div class="liquidGlass-shine"></div>
+       <div class="liquidGlass-text">
+         <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+       </div>
      </div>
 
      <div id="historyPanel" 
-          class="history-panel" 
+          class="history-panel liquidGlass-wrapper" 
           role="dialog" 
           aria-label="Chat history" 
           aria-hidden="true">
-      <div class="history-header">
-        <h3>Chatlog History</h3>
-        <button id="clearHistoryBtn" class="clear-history-btn" aria-label="Clear all history">Clear All</button>
-      </div>
-       <div class="history-items" role="list"></div>
-       <div class="history-loading">
-         <div class="spinner" aria-hidden="true"></div>
-         <p>Loading your chatlog history...</p>
-       </div>
-       <div class="history-empty">
-         <p>No chatlogs saved yet</p>
-         <p style="font-size: 14px; opacity: 0.8;">Your processed chatlogs will appear here for easy access</p>
+       <div class="liquidGlass-effect"></div>
+       <div class="liquidGlass-tint"></div>
+       <div class="liquidGlass-shine"></div>
+       <div class="liquidGlass-text">
+         <div class="history-header">
+           <h3>Chatlog History</h3>
+           <button id="clearHistoryBtn" class="clear-history-btn" aria-label="Clear all history">Clear All</button>
+         </div>
+         <div class="history-items" role="list"></div>
+         <div class="history-loading">
+           <div class="spinner" aria-hidden="true"></div>
+           <p>Loading your chatlog history...</p>
+         </div>
+         <div class="history-empty">
+           <p>No chatlogs saved yet</p>
+           <p style="font-size: 14px; opacity: 0.8;">Your processed chatlogs will appear here for easy access</p>
+         </div>
        </div>
      </div>
 
      <!-- Color Palette -->
-     <div id="colorPalette" class="color-palette" style="display: none;">
-         <div class="color-palette-header">
-             Select Color
-             <div class="selection-counter">0 selected</div>
-         </div>
-         <div class="color-palette-items">
-             <div class="color-item me" data-color="me" data-tooltip="Me/Ame Actions"></div>
-             <div class="color-item ame" data-color="ame" data-tooltip="Me/Ame Actions"></div>
-             <div class="color-item darkgrey" data-color="darkgrey" data-tooltip="Lower Voice"></div>
-             <div class="color-item grey" data-color="grey" data-tooltip="Low Voice"></div>
-             <div class="color-item lightgrey" data-color="lightgrey" data-tooltip="Normal Text"></div>
-             <div class="color-item death" data-color="death" data-tooltip="Death/Failures"></div>
-             <div class="color-item yellow" data-color="yellow" data-tooltip="Important Info"></div>
-             <div class="color-item green" data-color="green" data-tooltip="Success"></div>
-             <div class="color-item orange" data-color="orange" data-tooltip="Warnings"></div>
-             <div class="color-item blue" data-color="blue" data-tooltip="Info"></div>
-             <div class="color-item white" data-color="white" data-tooltip="Normal Text"></div>
-             <div class="color-item radioColor" data-color="radioColor" data-tooltip="Radio (Your Channel)"></div>
-             <div class="color-item radioColor2" data-color="radioColor2" data-tooltip="Radio (Other Channel)"></div>
-             <div class="color-item depColor" data-color="depColor" data-tooltip="Department"></div>
-             <div class="color-item vesseltraffic" data-color="vesseltraffic" data-tooltip="Vessel Traffic"></div>
-             <div class="color-item toyou" data-color="toyou" data-tooltip="Directed at You [!]"></div>
+     <div id="colorPalette" class="color-palette liquidGlass-wrapper" style="display: none;">
+         <div class="liquidGlass-effect"></div>
+         <div class="liquidGlass-tint"></div>
+         <div class="liquidGlass-shine"></div>
+         <div class="liquidGlass-text">
+             <div class="color-palette-header">
+                 Select Color
+                 <div class="selection-counter">0 selected</div>
+             </div>
+             <div class="color-palette-items">
+                 <div class="color-item me" data-color="me" data-tooltip="Me/Ame Actions"></div>
+                 <div class="color-item ame" data-color="ame" data-tooltip="Me/Ame Actions"></div>
+                 <div class="color-item darkgrey" data-color="darkgrey" data-tooltip="Lower Voice"></div>
+                 <div class="color-item grey" data-color="grey" data-tooltip="Low Voice"></div>
+                 <div class="color-item lightgrey" data-color="lightgrey" data-tooltip="Normal Text"></div>
+                 <div class="color-item death" data-color="death" data-tooltip="Death/Failures"></div>
+                 <div class="color-item yellow" data-color="yellow" data-tooltip="Important Info"></div>
+                 <div class="color-item green" data-color="green" data-tooltip="Success"></div>
+                 <div class="color-item orange" data-color="orange" data-tooltip="Warnings"></div>
+                 <div class="color-item blue" data-color="blue" data-tooltip="Info"></div>
+                 <div class="color-item white" data-color="white" data-tooltip="Normal Text"></div>
+                 <div class="color-item radioColor" data-color="radioColor" data-tooltip="Radio (Your Channel)"></div>
+                 <div class="color-item radioColor2" data-color="radioColor2" data-tooltip="Radio (Other Channel)"></div>
+                 <div class="color-item depColor" data-color="depColor" data-tooltip="Department"></div>
+                 <div class="color-item vesseltraffic" data-color="vesseltraffic" data-tooltip="Vessel Traffic"></div>
+                 <div class="color-item toyou" data-color="toyou" data-tooltip="Directed at You [!]"></div>
+             </div>
          </div>
      </div>
 
      <!-- Changelog tab -->
-    <div class="changelog-tab" 
+    <div class="changelog-tab liquidGlass-wrapper" 
           role="button" 
           tabindex="0" 
           aria-label="Open changelog" 
           aria-expanded="false"
           aria-controls="changelogPanel">
-       <i class="fas fa-list" aria-hidden="true"></i>
+       <div class="liquidGlass-effect"></div>
+       <div class="liquidGlass-tint"></div>
+       <div class="liquidGlass-shine"></div>
+       <div class="liquidGlass-text">
+         <i class="fas fa-list" aria-hidden="true"></i>
+       </div>
      </div>
 
      <div id="changelogPanel" 
-          class="changelog-panel" 
+          class="changelog-panel liquidGlass-wrapper" 
           role="dialog" 
           aria-label="Changelog" 
           aria-hidden="true">
-       <div class="changelog-header">
-         <h3>Latest Updates</h3>
-       </div>
-       <div class="changelog-items" role="list"></div>
-       <div class="changelog-loading">
-         <div class="spinner" aria-hidden="true"></div>
-         <p>Loading changelog...</p>
-       </div>
-       <div class="changelog-empty">
-         <p>Changelog not available</p>
-         <p style="font-size: 14px; opacity: 0.8;">Unable to load the latest updates at this time</p>
+       <div class="liquidGlass-effect"></div>
+       <div class="liquidGlass-tint"></div>
+       <div class="liquidGlass-shine"></div>
+       <div class="liquidGlass-text">
+         <div class="changelog-header">
+           <h3>Latest Updates</h3>
+         </div>
+         <div class="changelog-items" role="list"></div>
+         <div class="changelog-loading">
+           <div class="spinner" aria-hidden="true"></div>
+           <p>Loading changelog...</p>
+         </div>
+         <div class="changelog-empty">
+           <p>Changelog not available</p>
+           <p style="font-size: 14px; opacity: 0.8;">Unable to load the latest updates at this time</p>
+         </div>
        </div>
      </div>
 
@@ -277,5 +307,57 @@
      <script src="js/changelog.js" defer></script>
 
     <script src="js/init.js" defer></script>
+
+    <!-- Liquid Glass SVG Filter -->
+    <svg style="display: none" aria-hidden="true">
+      <filter
+        id="glass-distortion"
+        x="0%"
+        y="0%"
+        width="100%"
+        height="100%"
+        filterUnits="objectBoundingBox"
+      >
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.01 0.01"
+          numOctaves="1"
+          seed="5"
+          result="turbulence"
+        />
+        <feComponentTransfer in="turbulence" result="mapped">
+          <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5" />
+          <feFuncG type="gamma" amplitude="0" exponent="1" offset="0" />
+          <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5" />
+        </feComponentTransfer>
+        <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap" />
+        <feSpecularLighting
+          in="softMap"
+          surfaceScale="5"
+          specularConstant="1"
+          specularExponent="100"
+          lighting-color="white"
+          result="specLight"
+        >
+          <fePointLight x="-200" y="-200" z="300" />
+        </feSpecularLighting>
+        <feComposite
+          in="specLight"
+          operator="arithmetic"
+          k1="0"
+          k2="1"
+          k3="1"
+          k4="0"
+          result="litImage"
+        />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="softMap"
+          scale="150"
+          xChannelSelector="R"
+          yChannelSelector="G"
+        />
+      </filter>
+    </svg>
  </body>
 </html>

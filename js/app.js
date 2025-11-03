@@ -729,7 +729,6 @@ document.addEventListener('click', (e) => {
   }
 });
 
-
 /**
  * Clears all chat log history after user confirmation
  * @returns {void}
@@ -764,21 +763,40 @@ function refreshHistoryPanel() {
 
     const $items = history.map((text, index) => {
       const $item = $(
-        '<div class="history-item" role="button" tabindex="0" aria-label="Load chatlog from history"></div>'
+        '<div class="history-item liquidGlass-wrapper" role="button" tabindex="0" aria-label="Load chatlog from history"></div>'
       );
       $item.data('index', index);
 
-      const $textContainer = $('<div class="history-item-text"></div>');
+      // Add liquid glass layers
+      $item.append('<div class="liquidGlass-effect"></div>');
+      $item.append('<div class="liquidGlass-tint"></div>');
+      $item.append('<div class="liquidGlass-shine"></div>');
+
+      const $textContainer = $(
+        '<div class="liquidGlass-text"><div class="history-item-text"></div></div>'
+      );
+      const $historyText = $textContainer.find('.history-item-text');
 
       const lines = text.split('\n');
       const formattedLines = lines.map((line) => {
-        if (typeof processLine === 'function') {
-          return processLine(line);
+        // Use the same formatting function as the main output
+        if (typeof window.formatLineWithFilter === 'function') {
+          return window.formatLineWithFilter(line);
         }
-        return line;
+        // Fallback: escape HTML and wrap in white span to match output
+        const sanitized = line.replace(/[<>&"']/g, function (match) {
+          return {
+            '<': '&lt;',
+            '>': '&gt;',
+            '&': '&amp;',
+            '"': '&quot;',
+            "'": '&#x27;',
+          }[match];
+        });
+        return `<span class="white">${sanitized}</span>`;
       });
 
-      $textContainer.html(formattedLines.join('<br>'));
+      $historyText.html(formattedLines.join('<br>'));
       $item.append($textContainer);
 
       return $item;
@@ -866,22 +884,27 @@ $(document).ready(function () {
   }
   function renderCharacterDropdown() {
     const dropdown = $('#characterNameDropdown');
+    const $liquidGlassText = dropdown.find('.liquidGlass-text');
     const list = getCharacterList();
-    if (list.length === 0) {
-      dropdown.html('<div style="padding: 8px; color: #888;">No characters saved</div>');
-      return;
+    const content =
+      list.length === 0
+        ? '<div style="padding: 8px; color: #888;">No characters saved</div>'
+        : list
+            .map(
+              (name) =>
+                `<div class="character-dropdown-item" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; cursor: pointer;">
+          <span class="character-name-select">${$('<div>').text(name).html()}</span>
+          <button class="remove-character-btn" data-name="${$('<div>').text(name).html()}" style="background: none; border: none; color: #c00; font-size: 16px; cursor: pointer;">&times;</button>
+        </div>`
+            )
+            .join('');
+
+    // If liquid glass wrapper exists, append to liquidGlass-text, otherwise append to dropdown
+    if ($liquidGlassText.length > 0) {
+      $liquidGlassText.html(content);
+    } else {
+      dropdown.html(content);
     }
-    dropdown.html(
-      list
-        .map(
-          (name) =>
-            `<div class="character-dropdown-item" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; cursor: pointer;">
-        <span class="character-name-select">${$('<div>').text(name).html()}</span>
-        <button class="remove-character-btn" data-name="${$('<div>').text(name).html()}" style="background: none; border: none; color: #c00; font-size: 16px; cursor: pointer;">&times;</button>
-      </div>`
-        )
-        .join('')
-    );
   }
 
   $('#addCharacterBtn').on('click', function () {
@@ -1114,7 +1137,6 @@ $(document).ready(function () {
       tab.setAttribute('aria-label', 'Open changelog');
     }
   });
-
 });
 
 // Randomly shake the Buy Me a Coffee button to draw attention (non-intrusive)

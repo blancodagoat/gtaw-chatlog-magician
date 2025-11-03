@@ -299,6 +299,7 @@ html::-webkit-scrollbar {
 	transition: all var(--dur-panel) var(--ease-spring);
 }
 
+
 /* Size-aware line-height adjustments for optical comfort */
 .output.is-small {
 	line-height: 1.5; /* More breathing room for small text */
@@ -715,7 +716,7 @@ label { display: none; }
 /* Textarea glass frame (does not affect content) */
 /* .glass-frame removed per design feedback */
 
-/* Glassy tabs */
+/* Glassy tabs - with liquid glass support */
 .history-tab, .changelog-tab {
     background:
         linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
@@ -724,9 +725,33 @@ label { display: none; }
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255,255,255,.14);
 }
+
+/* When liquid glass is applied, override background to let layers show through */
+.history-tab.liquidGlass-wrapper,
+.changelog-tab.liquidGlass-wrapper {
+    background: transparent;
+    background-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border: none;
+}
+
 .history-tab:hover, .changelog-tab:hover {
     background-color: rgba(24,32,44,.8);
     box-shadow: 0 10px 24px rgba(0,0,0,.25);
+}
+
+.history-tab.liquidGlass-wrapper:hover,
+.changelog-tab.liquidGlass-wrapper:hover {
+    background-color: transparent;
+}
+
+/* Ensure liquid glass layers match border radius of parent */
+.history-tab.liquidGlass-wrapper > div,
+.changelog-tab.liquidGlass-wrapper > div,
+.history-tab.liquidGlass-wrapper,
+.changelog-tab.liquidGlass-wrapper {
+    border-radius: inherit;
 }
 
 /* Color palette panel glass override */
@@ -739,6 +764,136 @@ label { display: none; }
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255,255,255,.14);
     box-shadow: 0 12px 28px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,255,255,.06);
+}
+
+/* When liquid glass is applied, override background to let layers show through */
+#colorPalette.liquidGlass-wrapper {
+    background: transparent;
+    background-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border: none;
+    box-shadow: none;
+}
+
+/* Ensure liquid glass layers match border radius of color palette */
+#colorPalette.liquidGlass-wrapper > div {
+    border-radius: inherit;
+}
+
+/* Liquid Glass Effect Styles */
+.liquidGlass-wrapper {
+    position: relative;
+    display: flex;
+    font-weight: 600;
+    overflow: hidden;
+    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+}
+
+.liquidGlass-effect {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    backdrop-filter: blur(3px);
+    filter: url(#glass-distortion);
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.liquidGlass-tint {
+    z-index: 1;
+    position: absolute;
+    inset: 0;
+    /* Adjusted for dark theme - lighter tint for better visibility */
+    background: rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+}
+
+.liquidGlass-shine {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    box-shadow: inset 2px 2px 1px 0 rgba(255, 255, 255, 0.5),
+        inset -1px -1px 1px 1px rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+}
+
+.liquidGlass-text {
+    position: relative;
+    z-index: 3;
+    /* Ensure text content is fully visible and interactive */
+    pointer-events: auto;
+}
+
+/* Ensure icons and text in liquid glass elements are visible */
+.liquidGlass-text i,
+.liquidGlass-text * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Apply liquid glass to existing glassmorphic elements */
+.history-tab.liquidGlass-wrapper,
+.changelog-tab.liquidGlass-wrapper,
+#colorPalette.liquidGlass-wrapper {
+    /* Base styles maintained, liquid glass layers added via HTML structure */
+}
+
+/* Ensure child divs get same border radius on hover */
+.liquidGlass-wrapper:hover,
+.liquidGlass-wrapper:hover > div {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+}
+
+/* Ensure liquid glass layers inherit border radius from parent elements */
+.liquidGlass-effect,
+.liquidGlass-tint,
+.liquidGlass-shine {
+    border-radius: inherit;
+}
+
+/* Hover states for liquid glass items */
+.history-item.liquidGlass-wrapper:hover {
+    background-color: transparent;
+}
+
+.changelog-item.liquidGlass-wrapper:hover {
+    background-color: transparent;
+}
+
+/* Specific adjustments for history and changelog tabs with liquid glass */
+.history-tab.liquidGlass-wrapper {
+    /* Preserve existing positioning and sizing */
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 80px;
+    border-radius: 8px 0 0 8px;
+    /* Preserve flex display for icon centering */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Let liquid glass layers handle visual effects */
+}
+
+.changelog-tab.liquidGlass-wrapper {
+    /* Preserve existing positioning and sizing - changelog is on the left */
+    position: fixed;
+    left: 0;
+    top: calc(50% + 90px);
+    transform: translateY(-50%);
+    width: 40px;
+    height: 80px;
+    border-radius: 0 8px 8px 0;
+    /* Preserve flex display for icon centering */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Let liquid glass layers handle visual effects */
 }
 
 @media (max-width: 640px) {
@@ -994,13 +1149,34 @@ label { display: none; }
 	cursor: pointer;
 	border: 1px solid rgba(255, 255, 255, 0.08);
 	border-radius: 12px;
-	background: var(--surface);
+	/* Match output background - transparent with slight backdrop */
+	background: rgba(24, 32, 44, 0.6);
+	-webkit-backdrop-filter: blur(5px);
+	backdrop-filter: blur(5px);
 	color: var(--text);
 	transition: all var(--dur-hover) var(--ease-hover);
 	box-shadow: var(--elev-1);
 	max-height: 200px;
 	overflow-y: auto;
 	position: relative;
+}
+
+/* When liquid glass is applied to history items */
+.history-item.liquidGlass-wrapper {
+	background: transparent;
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+	border: none;
+	box-shadow: none;
+	overflow: visible;
+}
+
+.history-item.liquidGlass-wrapper .liquidGlass-text {
+	position: relative;
+	z-index: 3;
+	padding: 0;
+	max-height: 200px;
+	overflow-y: auto;
 }
 
 .history-item:hover {
@@ -1010,6 +1186,11 @@ label { display: none; }
 	transform: translateY(-1px);
 }
 
+.history-item.liquidGlass-wrapper:hover {
+    background: transparent;
+    transform: translateY(-1px);
+}
+
 .history-item:focus-visible {
 	outline: 2px solid var(--primary);
 	outline-offset: 2px;
@@ -1017,10 +1198,39 @@ label { display: none; }
 }
 
 .history-item-text {
+	/* Match output styling exactly */
+	font-family: Arial, sans-serif !important;
+	font-weight: 700;
 	font-size: 12px;
-	line-height: 1.4;
-	white-space: pre-wrap;
+	line-height: 1.45;
+	color: #fff;
+	/* 8-direction text-shadow to match output black outline */
+	text-shadow:
+		0 1px 0 #000,
+		0 -1px 0 #000,
+		1px 0 0 #000,
+		-1px 0 0 #000,
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;
+	letter-spacing: 0.2px;
+	/* Font rendering to match output */
+	-webkit-font-smoothing: none !important;
+	-moz-osx-font-smoothing: none !important;
+	text-rendering: optimizeSpeed;
+	/* Word wrapping */
 	word-wrap: break-word;
+	overflow-wrap: break-word;
+	white-space: pre-line;
+	margin: 0;
+	padding: 0;
+}
+
+/* Style line breaks - they should preserve spacing */
+.history-item-text br {
+	display: block;
+	line-height: 1.45;
 }
 
 .history-item-text .me { color: #c2a3da; }
@@ -1217,6 +1427,24 @@ label { display: none; }
     -webkit-backdrop-filter: blur(var(--glass-blur));
     backdrop-filter: blur(var(--glass-blur));
 }
+
+/* When liquid glass is applied */
+.history-panel.liquidGlass-wrapper {
+	background: transparent;
+	background-color: transparent;
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+	border: none;
+	box-shadow: none;
+}
+
+.history-panel.liquidGlass-wrapper .liquidGlass-text {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	height: 100%;
+	overflow: hidden;
+}
 @media (prefers-reduced-motion: reduce) {
   .history-panel { transition: none; }
 }
@@ -1241,6 +1469,29 @@ label { display: none; }
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28), inset 0 0 0 1px rgba(255,255,255,.06);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
+}
+
+/* When liquid glass is applied */
+.character-dropdown.liquidGlass-wrapper {
+	background: transparent !important;
+	background-color: transparent !important;
+	-webkit-backdrop-filter: none !important;
+	backdrop-filter: none !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
+.character-dropdown.liquidGlass-wrapper .liquidGlass-text {
+	position: relative;
+	z-index: 3;
+	overflow-y: auto;
+	max-height: 150px;
+}
+
+/* Ensure dropdown items are visible */
+.character-dropdown.liquidGlass-wrapper .liquidGlass-text > div {
+	position: relative;
+	z-index: 1;
 }
 
 .character-dropdown div {
@@ -1336,7 +1587,25 @@ label { display: none; }
     -webkit-backdrop-filter: blur(var(--glass-blur));
     backdrop-filter: blur(var(--glass-blur));
 }
+
+/* When liquid glass is applied */
+.changelog-panel.liquidGlass-wrapper {
+	background: transparent;
+	background-color: transparent;
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+	border: none;
+	box-shadow: none;
 }
+
+.changelog-panel.liquidGlass-wrapper .liquidGlass-text {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	height: 100%;
+	overflow: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .changelog-panel { transition: none; }
 }
@@ -1412,11 +1681,32 @@ label { display: none; }
 	position: relative;
 }
 
+/* When liquid glass is applied to changelog items */
+.changelog-item.liquidGlass-wrapper {
+	background: transparent;
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+	border: none;
+	box-shadow: none;
+	overflow: visible;
+}
+
+.changelog-item.liquidGlass-wrapper .liquidGlass-text {
+	position: relative;
+	z-index: 3;
+	padding: 0;
+}
+
 .changelog-item:hover {
     background: rgba(255,255,255,0.06);
     border-color: rgba(255,255,255,0.18);
     box-shadow: 0 12px 24px rgba(0,0,0,.28);
 	transform: translateY(-1px);
+}
+
+.changelog-item.liquidGlass-wrapper:hover {
+    background: transparent;
+    transform: translateY(-1px);
 }
 
 .changelog-date {

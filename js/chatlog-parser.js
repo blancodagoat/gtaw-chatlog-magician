@@ -1108,6 +1108,9 @@ $(document).ready(function () {
     return line;
   }
 
+  // Make formatLineWithFilter globally accessible for history panel
+  window.formatLineWithFilter = formatLineWithFilter;
+
   function escapeHTML(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
     return text.replace(/[&<>"']/g, (m) => map[m]);
