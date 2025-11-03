@@ -419,33 +419,149 @@ function downloadOutputImage() {
       });
 
     function processGeneratedBlob(blob) {
+      // Validate blob before processing
+      if (!blob) {
+        console.error('Error: Blob is null or undefined');
+        if (window.ErrorLogger) {
+          window.ErrorLogger.logError(new Error('Failed to generate image: blob is null'));
+        }
+        alert('Failed to generate image blob. Please try again.');
+        hideLoadingIndicator();
+        if (hadColoringMode) output.addClass('coloring-mode');
+        return;
+      }
+
+      if (blob.size === 0) {
+        console.error('Error: Blob is empty (size: 0)');
+        if (window.ErrorLogger) {
+          window.ErrorLogger.logError(new Error('Failed to generate image: blob is empty'));
+        }
+        alert('Generated image is empty. Please try again.');
+        hideLoadingIndicator();
+        if (hadColoringMode) output.addClass('coloring-mode');
+        return;
+      }
+
+      // Log blob details for debugging
+      console.log('Processing blob:', {
+        size: blob.size,
+        type: blob.type,
+      });
+
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.src = URL.createObjectURL(blob);
 
-      img.onload = function () {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
+      let objectURL = null;
+      let loadTimeout = null;
+      let hasCompleted = false;
 
-        // Set willReadFrequently to true for better performance with multiple readback operations
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(img, 0, 0);
-
-        const trimmedCanvas = trimCanvas(canvas);
-        trimmedCanvas.toBlob(function (trimmedBlob) {
-          window.saveAs(trimmedBlob, generateFilename());
-          hideLoadingIndicator();
-          if (hadColoringMode) output.addClass('coloring-mode');
-        });
+      const cleanup = () => {
+        if (objectURL) {
+          URL.revokeObjectURL(objectURL);
+          objectURL = null;
+        }
+        if (loadTimeout) {
+          clearTimeout(loadTimeout);
+          loadTimeout = null;
+        }
       };
 
-      img.onerror = function () {
-        console.error('Error loading generated image');
+      img.onload = function () {
+        if (hasCompleted) return;
+        hasCompleted = true;
+
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          // Set willReadFrequently to true for better performance with multiple readback operations
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          ctx.drawImage(img, 0, 0);
+
+          const trimmedCanvas = trimCanvas(canvas);
+          trimmedCanvas.toBlob(function (trimmedBlob) {
+            if (!trimmedBlob) {
+              console.error('Error: Failed to create trimmed blob');
+              if (window.ErrorLogger) {
+                window.ErrorLogger.logError(new Error('Failed to create trimmed blob'));
+              }
+              alert('Failed to process the image. Please try again.');
+            } else {
+              window.saveAs(trimmedBlob, generateFilename());
+            }
+            cleanup();
+            hideLoadingIndicator();
+            if (hadColoringMode) output.addClass('coloring-mode');
+          });
+        } catch (error) {
+          console.error('Error processing image:', error);
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logError(error);
+          }
+          alert('Error processing the image. Please try again.');
+          cleanup();
+          hideLoadingIndicator();
+          if (hadColoringMode) output.addClass('coloring-mode');
+        }
+      };
+
+      img.onerror = function (event) {
+        if (hasCompleted) return;
+        hasCompleted = true;
+
+        const errorDetails = {
+          blobSize: blob.size,
+          blobType: blob.type,
+          imageWidth: img.width,
+          imageHeight: img.height,
+          src: img.src ? 'blob URL' : 'no src',
+        };
+
+        console.error('Error loading generated image', errorDetails);
+
+        if (window.ErrorLogger) {
+          const error = new Error('Error loading generated image');
+          error.details = errorDetails;
+          window.ErrorLogger.logError(error);
+        }
+
         alert('There was an error processing the generated image. Please try again.');
+        cleanup();
         hideLoadingIndicator();
         if (hadColoringMode) output.addClass('coloring-mode');
       };
+
+      // Set timeout for image loading (30 seconds)
+      loadTimeout = setTimeout(() => {
+        if (hasCompleted) return;
+        hasCompleted = true;
+
+        console.error('Error: Image load timeout after 30 seconds');
+        if (window.ErrorLogger) {
+          window.ErrorLogger.logError(new Error('Image load timeout after 30 seconds'));
+        }
+
+        alert('Image processing timed out. Please try again with a smaller chatlog.');
+        cleanup();
+        hideLoadingIndicator();
+        if (hadColoringMode) output.addClass('coloring-mode');
+      }, 30000);
+
+      // Create object URL and set as image source
+      try {
+        objectURL = URL.createObjectURL(blob);
+        img.src = objectURL;
+      } catch (error) {
+        console.error('Error creating object URL:', error);
+        if (window.ErrorLogger) {
+          window.ErrorLogger.logError(error);
+        }
+        alert('Failed to create image URL. Please try again.');
+        cleanup();
+        hideLoadingIndicator();
+        if (hadColoringMode) output.addClass('coloring-mode');
+      }
     }
 
     function handleImageGenerationError(error) {
