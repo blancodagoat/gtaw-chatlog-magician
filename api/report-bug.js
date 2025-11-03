@@ -75,7 +75,8 @@ export default async (req, res) => {
       stack: (e && typeof e.stack === 'string' ? e.stack.slice(0, 500) : undefined)
     })) : [];
     const safePerf = performance && typeof performance === 'object' ? performance : undefined;
-    const truncatedReport = fullReport.slice(0, 4000);
+    // Discord content field has 2000 char limit, leave room for markdown formatting
+    const truncatedReport = fullReport.slice(0, 1800);
 
     // Get webhook URL from environment variable (kept private!)
     const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
@@ -114,22 +115,42 @@ export default async (req, res) => {
 
       // Add errors if any
       if (safeErrors && safeErrors.length > 0) {
-        const errorSummary = safeErrors.slice(0, 3).map((err, i) => 
+        const errorSummary = safeErrors.slice(0, 3).map((err, i) =>
           `${i + 1}. ${err.message}`
         ).join('\n');
+        // Discord field value limit is 1024 chars
+        const truncatedErrorSummary = errorSummary.slice(0, 1000);
         embed.fields.push({
           name: '❌ Recent Errors',
-          value: '```\n' + errorSummary + '\n```',
+          value: '```\n' + truncatedErrorSummary + '\n```',
           inline: false
         });
+      }
+
+      // Build content field respecting Discord's 2000 char limit
+      let content = '**New bug report received!**\n\n';
+      if (truncatedReport) {
+        // Calculate remaining space for report
+        const headerLength = content.length;
+        const codeBlockFormatting = '```\n...\n```'.length;
+        const maxReportLength = 2000 - headerLength - codeBlockFormatting;
+        const finalReport = truncatedReport.slice(0, maxReportLength);
+        content += '```\n' + finalReport + '\n```';
       }
 
       const payload = {
         username: 'Bug Reporter',
         avatar_url: 'https://cdn.discordapp.com/embed/avatars/0.png',
         embeds: [embed],
-        content: '**New bug report received!**\n\n```\n' + (truncatedReport || '') + '\n...\n```'
+        content: content
       };
+
+      // Validate Discord limits before sending
+      if (content.length > 2000) {
+        console.error('Content exceeds Discord limit:', content.length);
+        // Truncate further if needed
+        payload.content = content.slice(0, 1990) + '...```';
+      }
 
       // Send to Discord
       const discordResponse = await fetch(webhookUrl, {
@@ -141,13 +162,20 @@ export default async (req, res) => {
       });
 
       if (discordResponse.ok) {
-        return res.status(200).json({ 
-          success: true, 
+        return res.status(200).json({
+          success: true,
           message: 'Report sent to Discord',
           method: 'discord'
         });
       } else {
-        console.error('Discord webhook failed:', discordResponse.status);
+        const errorText = await discordResponse.text().catch(() => 'Unable to read error');
+        console.error('Discord webhook failed:', {
+          status: discordResponse.status,
+          statusText: discordResponse.statusText,
+          error: errorText,
+          contentLength: content.length,
+          embedFieldsCount: embed.fields.length
+        });
         // Continue to email fallback
       }
     }
