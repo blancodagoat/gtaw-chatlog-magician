@@ -620,6 +620,7 @@ function hideLoadingIndicator() {
  */
 function toggleBackground() {
   $('#output').toggleClass('background-active');
+
   if (typeof processOutput === 'function') {
     processOutput();
   }
@@ -948,35 +949,6 @@ function _escapeHtml(unsafe) {
     .replace(/'/g, '&#039;');
 }
 
-function _toggleChangelogPanel() {
-  const panel = document.getElementById('changelogPanel');
-  const isOpen = panel.classList.contains('open');
-
-  panel.classList.toggle('open');
-  // After toggle, the state is opposite of isOpen, so aria-hidden should match the old state
-  panel.setAttribute('aria-hidden', isOpen);
-
-  // Toggle inert on main content when panel is open for a11y
-  const main = document.getElementById('main');
-  if (main) {
-    if (!isOpen) {
-      main.setAttribute('inert', '');
-      main.setAttribute('aria-hidden', 'true');
-    } else {
-      main.removeAttribute('inert');
-      main.removeAttribute('aria-hidden');
-    }
-  }
-
-  const tab = document.querySelector('.changelog-tab');
-  tab.setAttribute('aria-expanded', !isOpen);
-  tab.setAttribute('aria-label', isOpen ? 'Open changelog' : 'Close changelog');
-
-  if (!isOpen) {
-    const firstItem = panel.querySelector('.changelog-item');
-    if (firstItem) firstItem.focus();
-  }
-}
 
 $(document).ready(function () {
   // Initialize ColorPalette after all scripts are loaded
@@ -1245,21 +1217,6 @@ $(document).ready(function () {
     });
   })();
 
-  // Add click-away functionality for changelog panel
-  $(document).on('click', function (e) {
-    const panel = document.getElementById('changelogPanel');
-    const tab = document.querySelector('.changelog-tab');
-
-    if (
-      !$(e.target).closest('#changelogPanel, .changelog-tab').length &&
-      panel.classList.contains('open')
-    ) {
-      panel.classList.remove('open');
-      panel.setAttribute('aria-hidden', 'true');
-      tab.setAttribute('aria-expanded', 'false');
-      tab.setAttribute('aria-label', 'Open changelog');
-    }
-  });
 });
 
 // Randomly shake the Buy Me a Coffee button to draw attention (non-intrusive)

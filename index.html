@@ -54,7 +54,6 @@
       <nav aria-label="Primary" class="visually-hidden">
         <a href="#output">Output</a>
         <a href="#historyPanel">History</a>
-        <a href="#changelogPanel">Changelog</a>
       </nav>
     </header>
     <main id="main" role="main">
@@ -73,15 +72,11 @@
                  <div class="cell small-8 medium-8">
                     <div class="input-group" style="position: relative;">
                       <input type="text" id="characterNameInput" placeholder="Enter character name" autocomplete="off" aria-label="Character name filter" />
-                      <div class="input-group-button" style="display: flex; gap: 8px;">
-                        <button class="button small" id="addCharacterBtn" type="button" aria-label="Add character">Add</button>
-                        <button class="button small" id="showCharacterListBtn" type="button" aria-label="Show character list">&#9660;</button>
+                      <div class="input-group-button">
+                        <button class="button small success" id="addCharacterBtn" type="button" aria-label="Add character">Add</button>
+                        <button class="button small secondary" id="showCharacterListBtn" type="button" aria-label="Show character list">&#9660;</button>
                       </div>
-                      <div id="characterNameDropdown" class="character-dropdown liquidGlass-wrapper" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: var(--surface); color: var(--text); border: 1px solid rgba(255, 255, 255, 0.12); z-index: 1000; max-height: 150px; overflow-y: auto; border-radius: 8px;" role="listbox">
-        <div class="liquidGlass-effect"></div>
-        <div class="liquidGlass-tint"></div>
-        <div class="liquidGlass-shine"></div>
-        <div class="liquidGlass-text"></div>
+                      <div id="characterNameDropdown" class="character-dropdown" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: var(--surface); color: var(--text); border: 1px solid rgba(255, 255, 255, 0.12); z-index: 1000; max-height: 150px; overflow-y: auto; border-radius: 0;" role="listbox">
       </div>
                     </div>
                  </div>
@@ -92,38 +87,69 @@
               </div>
               <div class="grid-x grid-margin-x align-middle">
                  <div class="cell auto">
-                    <button id="downloadOutputTransparent" class="button success" aria-label="Download chat log or overlay">Download</button>
-                    <button id="toggleMode" class="button active" data-mode="chat" aria-label="Toggle mode">
-                      <i class="fas fa-align-left" aria-hidden="true"></i> <span class="mode-text">Chat Only</span>
-                    </button>
-                    <button id="clearImageBtn" class="button secondary" type="button" title="Remove image" style="display: none;">
-                      <i class="fas fa-times" aria-hidden="true"></i> Clear Image
-                    </button>
-                    <div class="button" style="display: none; padding: 7.5px 20px; gap: 10px;" id="textPaddingControl">
-                      <input type="number" id="textPaddingHorizontal" min="0" max="200" value="0" step="5" style="width: 60px; height: auto; margin: 0; padding: 0; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center;" title="Horizontal padding (px)">
-                      <span style="color: rgba(255,255,255,0.5);">×</span>
-                      <input type="number" id="textPaddingVertical" min="0" max="200" value="0" step="5" style="width: 60px; height: auto; margin: 0; padding: 0; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center;" title="Vertical padding (px)">
-                      <span style="color: rgba(255,255,255,0.6); font-size: 12px;">px</span>
+                    <div class="button-group">
+                      <!-- Primary action - Download (Green = Success/Go) -->
+                      <button id="downloadOutputTransparent" class="button success" aria-label="Download chat log or overlay">
+                        <i class="fas fa-download" aria-hidden="true"></i> Download
+                      </button>
+
+                      <!-- Mode toggle (Blue = Information/Primary) -->
+                      <button id="toggleMode" class="button primary active" data-mode="chat" aria-label="Toggle mode">
+                        <i class="fas fa-align-left" aria-hidden="true"></i> <span class="mode-text">Chat Only</span>
+                      </button>
+
+                      <!-- Clear image (Red = Alert/Remove) -->
+                      <button id="clearImageBtn" class="button alert" type="button" title="Remove image" style="display: none;">
+                        <i class="fas fa-times" aria-hidden="true"></i> Clear Image
+                      </button>
+
+                      <!-- Toggle background (Yellow = Warning/Toggle) -->
+                      <button id="toggleBackground" class="button warning" aria-label="Toggle background color" title="Switch between black and transparent background">
+                        <i class="fas fa-adjust" aria-hidden="true"></i> Background
+                      </button>
+
+                      <!-- Name colors toggle (Yellow = Warning/Toggle) -->
+                      <button id="toggleCharacterNameColoring" class="button warning" aria-label="Toggle character name coloring" title="Disable character name detection coloring">
+                        <i class="fas fa-palette" aria-hidden="true"></i> Name Colors
+                      </button>
+
+                      <!-- Color text (Blue = Info/Tool) -->
+                      <button id="toggleColorPalette" class="button info" aria-label="Toggle color palette" title="Click text to color">
+                        <i class="fas fa-fill-drip" aria-hidden="true"></i> Color Text
+                      </button>
+
+                      <!-- Censor character (Secondary = Utility) -->
+                      <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character" title="Copy ÷ character">÷</button>
+
+                      <!-- Report bug (Red = Danger/Alert) -->
+                      <button id="copyErrorReport" class="button danger" aria-label="Copy error report" title="Copy error report to send to developer">
+                        <i class="fas fa-bug" aria-hidden="true"></i> Report Bug
+                      </button>
+
+                      <!-- Donate (Gray = Neutral/External) -->
+                      <a href="https://buymeacoffee.com/blancodagoat" target="_blank" rel="noopener noreferrer" class="button" aria-label="Donate">
+                        <i class="fas fa-dollar-sign" aria-hidden="true"></i> Donate
+                      </a>
                     </div>
-                    <div class="button" style="display: none; padding: 7.5px 20px; gap: 10px;" id="exportDimensionsControl">
-                      <input type="number" id="exportWidth" min="100" max="7680" value="1600" step="1" style="width: 70px; height: auto; margin: 0; padding: 2px 4px; border: none; background: rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-align: center; border-radius: 3px;" title="Export width (px)">
-                      <span style="color: rgba(255,255,255,0.5);">×</span>
-                      <input type="number" id="exportHeight" min="100" max="4320" value="1200" step="1" style="width: 70px; height: auto; margin: 0; padding: 2px 4px; border: none; background: rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-align: center; border-radius: 3px;" title="Export height (px)">
-                      <span style="color: rgba(255,255,255,0.6); font-size: 12px;">px</span>
-                      <span style="color: rgba(255,255,255,0.3); margin: 0 4px;">|</span>
-                      <input type="number" id="exportPPI" min="72" max="600" value="96" step="1" style="width: 60px; height: auto; margin: 0; padding: 2px 4px; border: none; background: rgba(255,255,255,0.1); color: inherit; font-size: inherit; text-align: center; border-radius: 3px;" title="Export PPI">
-                      <span style="color: rgba(255,255,255,0.6); font-size: 12px;">PPI</span>
+
+                    <!-- Hidden controls (displayed when overlay mode is active) -->
+                    <div class="overlay-controls-group" style="display: none;">
+                      <div class="button info" id="textPaddingControl">
+                        <input type="number" id="textPaddingHorizontal" min="0" max="200" value="0" step="5" style="width: 60px; height: auto; margin: 0; padding: 0; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center;" title="Horizontal padding (px)">
+                        <span style="opacity: 0.7;">×</span>
+                        <input type="number" id="textPaddingVertical" min="0" max="200" value="0" step="5" style="width: 60px; height: auto; margin: 0; padding: 0; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center;" title="Vertical padding (px)">
+                        <span style="opacity: 0.7; font-size: 12px;">px</span>
+                      </div>
+                      <div class="button warning" id="exportDimensionsControl">
+                        <input type="number" id="exportWidth" min="100" max="7680" value="1600" step="1" style="width: 70px; height: auto; margin: 0; padding: 2px 4px; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center; border-radius: 0;" title="Export width (px)">
+                        <span style="opacity: 0.7;">×</span>
+                        <input type="number" id="exportHeight" min="100" max="4320" value="1200" step="1" style="width: 70px; height: auto; margin: 0; padding: 2px 4px; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center; border-radius: 0;" title="Export height (px)">
+                        <span style="opacity: 0.7; font-size: 12px;">px</span>
+                        <span style="opacity: 0.5; margin: 0 4px;">|</span>
+                        <input type="number" id="exportPPI" min="72" max="600" value="96" step="1" style="width: 60px; height: auto; margin: 0; padding: 2px 4px; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center; border-radius: 0;" title="Export PPI">
+                        <span style="opacity: 0.7; font-size: 12px;">PPI</span>
+                      </div>
                     </div>
-                    <button id="toggleBackground" class="button" aria-label="Toggle background color" title="Switch between black and transparent background">Toggle Background</button>
-                    <button id="toggleCharacterNameColoring" class="button" aria-label="Toggle character name coloring" title="Disable character name detection coloring">Name Colors</button>
-                    <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character" title="Copy ÷ character">÷</button>
-                    <button id="toggleColorPalette" class="button" aria-label="Toggle color palette" title="Click text to color">Color Text</button>
-                    <button id="copyErrorReport" class="button danger" aria-label="Copy error report" title="Copy error report to send to developer">
-                      <i class="fas fa-bug" aria-hidden="true"></i> Report Bug
-                    </button>
-                    <div class="button" style="display: inline-flex; align-items: center; padding: 0.5em 1em; height: 38px;">
-                     <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="blancodagoat" data-color="#000000" data-emoji="" data-font="Cookie" data-text="Buy me a pizza" data-outline-color="#ffffff" data-font-color="#ffffff" data-coffee-color="#FFDD00" data-size="small"></script>
-                   </div>
                  </div>
               </div>
               <div id="output" class="output" role="region" aria-label="Formatted chat log output"></div>
@@ -137,12 +163,6 @@
                     <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
                     <p>Drop your screenshot here</p>
                     <p style="font-size: 14px; opacity: 0.7;">or click to browse</p>
-                  </div>
-                  <div class="coordinate-display" style="display: none;">
-                    <span id="imageCoords">X: 0, Y: 0</span>
-                  </div>
-                  <div class="zoom-indicator" style="display: none;">
-                    <span id="imageZoom">100%</span>
                   </div>
                 </div>
 
@@ -194,29 +214,20 @@
      <script src="js/app.js?v=20251103-004" defer></script>
 
      <!-- History panel -->
-    <div class="history-tab liquidGlass-wrapper" 
-         role="button" 
-          tabindex="0" 
-          aria-label="Open chat history" 
-          aria-expanded="false"
-          aria-controls="historyPanel">
-       <div class="liquidGlass-effect"></div>
-       <div class="liquidGlass-tint"></div>
-       <div class="liquidGlass-shine"></div>
-       <div class="liquidGlass-text">
+    <div class="history-tab"
+         role="button"
+         tabindex="0"
+         aria-label="Open chat history"
+         aria-expanded="false"
+         aria-controls="historyPanel">
          <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
-       </div>
      </div>
 
-     <div id="historyPanel" 
-          class="history-panel liquidGlass-wrapper" 
-          role="dialog" 
-          aria-label="Chat history" 
+     <div id="historyPanel"
+          class="history-panel"
+          role="dialog"
+          aria-label="Chat history"
           aria-hidden="true">
-       <div class="liquidGlass-effect"></div>
-       <div class="liquidGlass-tint"></div>
-       <div class="liquidGlass-shine"></div>
-       <div class="liquidGlass-text">
          <div class="history-header">
            <h3>Chatlog History</h3>
            <button id="clearHistoryBtn" class="clear-history-btn" aria-label="Clear all history">Clear All</button>
@@ -230,15 +241,10 @@
            <p>No chatlogs saved yet</p>
            <p style="font-size: 14px; opacity: 0.8;">Your processed chatlogs will appear here for easy access</p>
          </div>
-       </div>
      </div>
 
      <!-- Color Palette -->
-     <div id="colorPalette" class="color-palette liquidGlass-wrapper" style="display: none;">
-         <div class="liquidGlass-effect"></div>
-         <div class="liquidGlass-tint"></div>
-         <div class="liquidGlass-shine"></div>
-         <div class="liquidGlass-text">
+     <div id="colorPalette" class="color-palette" style="display: none;">
              <div class="color-palette-header">
                  Select Color
                  <div class="selection-counter">0 selected</div>
@@ -261,103 +267,9 @@
                  <div class="color-item vesseltraffic" data-color="vesseltraffic" data-tooltip="Vessel Traffic"></div>
                  <div class="color-item toyou" data-color="toyou" data-tooltip="Directed at You [!]"></div>
              </div>
-         </div>
      </div>
 
-     <!-- Changelog tab -->
-    <div class="changelog-tab liquidGlass-wrapper" 
-          role="button" 
-          tabindex="0" 
-          aria-label="Open changelog" 
-          aria-expanded="false"
-          aria-controls="changelogPanel">
-       <div class="liquidGlass-effect"></div>
-       <div class="liquidGlass-tint"></div>
-       <div class="liquidGlass-shine"></div>
-       <div class="liquidGlass-text">
-         <i class="fas fa-list" aria-hidden="true"></i>
-       </div>
-     </div>
-
-     <div id="changelogPanel" 
-          class="changelog-panel liquidGlass-wrapper" 
-          role="dialog" 
-          aria-label="Changelog" 
-          aria-hidden="true">
-       <div class="liquidGlass-effect"></div>
-       <div class="liquidGlass-tint"></div>
-       <div class="liquidGlass-shine"></div>
-       <div class="liquidGlass-text">
-         <div class="changelog-header">
-           <h3>Latest Updates</h3>
-         </div>
-         <div class="changelog-items" role="list"></div>
-         <div class="changelog-loading">
-           <div class="spinner" aria-hidden="true"></div>
-           <p>Loading changelog...</p>
-         </div>
-         <div class="changelog-empty">
-           <p>Changelog not available</p>
-           <p style="font-size: 14px; opacity: 0.8;">Unable to load the latest updates at this time</p>
-         </div>
-       </div>
-     </div>
-
-     <script src="js/changelog-data.js" defer></script>
-     <script src="js/changelog.js" defer></script>
 
     <script src="js/init.js" defer></script>
-
-    <!-- Liquid Glass SVG Filter -->
-    <svg style="display: none" aria-hidden="true">
-      <filter
-        id="glass-distortion"
-        x="0%"
-        y="0%"
-        width="100%"
-        height="100%"
-        filterUnits="objectBoundingBox"
-      >
-        <feTurbulence
-          type="fractalNoise"
-          baseFrequency="0.01 0.01"
-          numOctaves="1"
-          seed="5"
-          result="turbulence"
-        />
-        <feComponentTransfer in="turbulence" result="mapped">
-          <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5" />
-          <feFuncG type="gamma" amplitude="0" exponent="1" offset="0" />
-          <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5" />
-        </feComponentTransfer>
-        <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap" />
-        <feSpecularLighting
-          in="softMap"
-          surfaceScale="5"
-          specularConstant="1"
-          specularExponent="100"
-          lighting-color="white"
-          result="specLight"
-        >
-          <fePointLight x="-200" y="-200" z="300" />
-        </feSpecularLighting>
-        <feComposite
-          in="specLight"
-          operator="arithmetic"
-          k1="0"
-          k2="1"
-          k3="1"
-          k4="0"
-          result="litImage"
-        />
-        <feDisplacementMap
-          in="SourceGraphic"
-          in2="softMap"
-          scale="150"
-          xChannelSelector="R"
-          yChannelSelector="G"
-        />
-      </filter>
-    </svg>
  </body>
 </html>

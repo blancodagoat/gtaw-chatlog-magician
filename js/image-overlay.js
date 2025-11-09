@@ -137,6 +137,14 @@
           }
         });
         observer.observe(output, { childList: true, subtree: true });
+
+        // Also observe class changes on output element (for background-active toggle)
+        const classObserver = new MutationObserver(() => {
+          if (this.currentMode === 'overlay' && this.imageElement) {
+            requestAnimationFrame(() => this.renderChatOverlay());
+          }
+        });
+        classObserver.observe(output, { attributes: true, attributeFilter: ['class'] });
       }
     },
 
@@ -175,6 +183,12 @@
       // Create chat overlay container
       const chatOverlay = document.createElement('div');
       chatOverlay.className = 'chat-overlay-container';
+
+      // Add data attribute if background is active (use global state from chatlog-parser)
+      if (window.chatlogBackgroundActive) {
+        chatOverlay.setAttribute('data-background', 'active');
+      }
+
       chatOverlay.style.width = '100%';
       chatOverlay.style.maxWidth = outputWidth + 'px';
 
@@ -245,8 +259,7 @@
         const newMode = this.currentMode === 'chat' ? 'overlay' : 'chat';
         this.currentMode = newMode;
 
-        const textPaddingControl = document.getElementById('textPaddingControl');
-        const exportDimensionsControl = document.getElementById('exportDimensionsControl');
+        const overlayControlsGroup = document.querySelector('.overlay-controls-group');
         if (newMode === 'overlay') {
           toggleButton.classList.remove('active');
           toggleButton.querySelector('.fas').className = 'fas fa-layer-group';
@@ -254,8 +267,7 @@
           if (overlaySection) overlaySection.style.display = 'block';
           if (outputDiv) outputDiv.style.display = 'none';
           if (clearImageBtn) clearImageBtn.style.display = 'inline-block';
-          if (textPaddingControl) textPaddingControl.style.display = 'inline-flex';
-          if (exportDimensionsControl) exportDimensionsControl.style.display = 'inline-flex';
+          if (overlayControlsGroup) overlayControlsGroup.style.display = 'flex';
         } else {
           toggleButton.classList.add('active');
           toggleButton.querySelector('.fas').className = 'fas fa-align-left';
@@ -263,8 +275,7 @@
           if (overlaySection) overlaySection.style.display = 'none';
           if (outputDiv) outputDiv.style.display = 'block';
           if (clearImageBtn) clearImageBtn.style.display = 'none';
-          if (textPaddingControl) textPaddingControl.style.display = 'none';
-          if (exportDimensionsControl) exportDimensionsControl.style.display = 'none';
+          if (overlayControlsGroup) overlayControlsGroup.style.display = 'none';
         }
       });
     },

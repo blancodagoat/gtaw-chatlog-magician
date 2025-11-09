@@ -29,6 +29,9 @@ $(document).ready(function () {
     applyBackground = !applyBackground;
     $output.toggleClass('background-active', applyBackground);
 
+    // Store background state globally so canvas renderer can access it
+    window.chatlogBackgroundActive = applyBackground;
+
     $toggleBackgroundBtn
       .toggleClass('btn-dark', applyBackground)
       .toggleClass('btn-outline-dark', !applyBackground);

@@ -84,27 +84,77 @@
       try {
         // Validate prerequisites
         if (!window.ImageOverlayState) {
-          throw new Error('Image overlay system not initialized');
+          const error = new Error('Image overlay system not initialized');
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logError('Overlay renderer prerequisite check failed', {
+              error: error.message,
+              imageOverlayState: !!window.ImageOverlayState,
+              context: 'renderAndDownload validation'
+            });
+          }
+          throw error;
         }
+
         if (!window.ImageDropZone?.state?.droppedImageSrc) {
-          throw new Error('No image loaded. Please upload an image first.');
+          const error = new Error('No image loaded. Please upload an image first.');
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logError('No image loaded for overlay rendering', {
+              error: error.message,
+              imageDropZone: !!window.ImageDropZone,
+              droppedImageSrc: !!window.ImageDropZone?.state?.droppedImageSrc,
+              context: 'renderAndDownload validation'
+            });
+          }
+          throw error;
         }
+
         if (!document.getElementById('output')?.querySelector('.generated')) {
-          throw new Error('No chat messages to render. Please generate some chat first.');
+          const error = new Error('No chat messages to render. Please generate some chat first.');
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logError('No chat messages for overlay rendering', {
+              error: error.message,
+              outputElement: !!document.getElementById('output'),
+              generatedCount: document.getElementById('output')?.querySelectorAll('.generated').length || 0,
+              context: 'renderAndDownload validation'
+            });
+          }
+          throw error;
         }
 
         showLoadingIndicator();
 
         const blob = await this.renderOverlayImage();
 
-        if (blob) {
-          const filename = this.generateFilename();
-          window.saveAs(blob, filename);
-        } else {
-          throw new Error('Failed to generate image blob');
+        if (!blob) {
+          const error = new Error('Failed to generate image blob');
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logError('Blob generation failed', {
+              error: error.message,
+              blobType: typeof blob,
+              context: 'renderAndDownload blob check'
+            });
+          }
+          throw error;
+        }
+
+        const filename = this.generateFilename();
+        window.saveAs(blob, filename);
+
+        if (window.ErrorLogger) {
+          window.ErrorLogger.logInfo('Overlay image rendered successfully', {
+            filename,
+            blobSize: blob.size,
+            blobType: blob.type
+          });
         }
       } catch (error) {
-        console.error('Error rendering overlay:', error);
+        if (window.ErrorLogger) {
+          window.ErrorLogger.logError('Overlay render and download failed', {
+            error: error.message,
+            stack: error.stack,
+            context: 'renderAndDownload main'
+          });
+        }
         const userMessage = error.message || 'There was an error generating the overlay image. Please try again.';
         alert(userMessage);
       } finally {
@@ -114,122 +164,215 @@
 
     /**
      * Render overlay image to canvas and return blob
+     * Uses dom-to-image to capture the dropzone with all CSS styling intact
      */
     renderOverlayImage: async function () {
-      if (!window.ImageOverlayState || !window.ImageDropZone) {
-        throw new Error('Image overlay system not initialized');
-      }
-
-      // Get custom dimensions from inputs
-      const exportWidthInput = document.getElementById('exportWidth');
-      const exportHeightInput = document.getElementById('exportHeight');
-      const exportPPIInput = document.getElementById('exportPPI');
-
-      const exportWidth = exportWidthInput ? parseInt(exportWidthInput.value) || 1600 : 1600;
-      const exportHeight = exportHeightInput ? parseInt(exportHeightInput.value) || 1200 : 1200;
-      const exportPPI = exportPPIInput ? parseInt(exportPPIInput.value) || 96 : 96;
-
-      // Validate canvas dimensions before creating
-      const validation = validateCanvasDimensions(exportWidth, exportHeight);
-      if (!validation.valid) {
-        const errorInfo = {
-          message: validation.error,
-          dimensions: { width: exportWidth, height: exportHeight },
-          context: 'Canvas dimension validation',
-          maxDimension: MAX_CANVAS_DIMENSION,
-          maxPixels: MAX_CANVAS_PIXELS
-        };
-
-        // Log to enhanced image error handler
-        if (window.ImageErrorHandler) {
-          window.ImageErrorHandler.logImageError(errorInfo);
+      try {
+        if (!window.ImageOverlayState || !window.ImageDropZone) {
+          const error = new Error('Image overlay system not initialized');
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logError('Overlay system check failed', {
+              error: error.message,
+              imageOverlayState: !!window.ImageOverlayState,
+              imageDropZone: !!window.ImageDropZone,
+              context: 'renderOverlayImage initialization'
+            });
+          }
+          throw error;
         }
 
-        throw new Error(validation.error);
-      }
+        // Get the dropzone element that contains both image and overlay
+        const dropzone = document.getElementById('imageDropzone');
+        if (!dropzone) {
+          const error = new Error('Image dropzone not found');
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logError('Dropzone element not found', {
+              error: error.message,
+              context: 'renderOverlayImage dropzone lookup'
+            });
+          }
+          throw error;
+        }
 
-      // Show warning if memory usage is high
-      if (validation.warning) {
-        console.warn('[Renderer]', validation.warning);
+        // Get custom dimensions from inputs
+        const exportWidthInput = document.getElementById('exportWidth');
+        const exportHeightInput = document.getElementById('exportHeight');
+        const exportPPIInput = document.getElementById('exportPPI');
+
+        const exportWidth = exportWidthInput ? parseInt(exportWidthInput.value) || 1600 : 1600;
+        const exportHeight = exportHeightInput ? parseInt(exportHeightInput.value) || 1200 : 1200;
+        const exportPPI = exportPPIInput ? parseInt(exportPPIInput.value) || 96 : 96;
+
         if (window.ErrorLogger) {
-          window.ErrorLogger.logWarning(validation.warning, {
-            dimensions: { width: exportWidth, height: exportHeight },
-            context: 'Canvas memory warning'
+          window.ErrorLogger.logInfo('Starting overlay image render', {
+            exportWidth,
+            exportHeight,
+            exportPPI,
+            context: 'renderOverlayImage dimensions'
           });
         }
-      }
 
-      // The dropzone might be scaled down for display, but export uses full dimensions
-      // Calculate the scale ratio between export and display
-      const dropZoneWidth = window.ImageOverlayState.dropZoneWidth;
-      const dropZoneHeight = window.ImageOverlayState.dropZoneHeight;
+        // Validate canvas dimensions
+        const validation = validateCanvasDimensions(exportWidth, exportHeight);
+        if (!validation.valid) {
+          const error = new Error(validation.error);
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logError('Canvas dimension validation failed', {
+              error: error.message,
+              exportWidth,
+              exportHeight,
+              context: 'renderOverlayImage validation'
+            });
+          }
+          throw error;
+        }
 
-      const scaleRatioX = exportWidth / dropZoneWidth;
-      const scaleRatioY = exportHeight / dropZoneHeight;
+        if (validation.warning && window.ErrorLogger) {
+          window.ErrorLogger.logWarning('Canvas dimension warning', {
+            warning: validation.warning,
+            exportWidth,
+            exportHeight,
+            context: 'renderOverlayImage validation'
+          });
+        }
 
-      console.log('[Renderer] Export settings:', {
-        exportWidth,
-        exportHeight,
-        exportPPI,
-        dropZoneWidth,
-        dropZoneHeight,
-        scaleRatioX,
-        scaleRatioY
-      });
-
-      // Create canvas with export dimensions
-      const canvas = document.createElement('canvas');
-
-      try {
+        // Use manual canvas rendering to capture exactly what's on screen
+        // This respects all CSS transforms applied to the overlay
+        const canvas = document.createElement('canvas');
         canvas.width = exportWidth;
         canvas.height = exportHeight;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          throw new Error('Could not get canvas context');
+        }
+
+        // Calculate scale ratios
+        const dropzoneRect = dropzone.getBoundingClientRect();
+        const scaleRatioX = exportWidth / dropzoneRect.width;
+        const scaleRatioY = exportHeight / dropzoneRect.height;
+
+        // 1. Draw black background
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, exportWidth, exportHeight);
+
+        // 2. Draw the background image with its transforms
+        await this.drawImageWithTransforms(ctx, exportWidth, exportHeight, scaleRatioX, scaleRatioY);
+
+        // 3. Draw the chat overlay - use dom-to-image to capture CSS-styled overlay
+        const overlayContainer = document.querySelector('.chat-overlay-container');
+        if (overlayContainer) {
+          try {
+            // Capture the overlay container as an image (preserves all CSS styling)
+            const overlayBlob = await domtoimage.toBlob(overlayContainer, {
+              fontEmbedFn: () => Promise.resolve(null)
+            });
+
+            // Convert blob to image
+            const overlayImg = await new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => resolve(img);
+              img.onerror = reject;
+              img.src = URL.createObjectURL(overlayBlob);
+            });
+
+            // Get overlay transform from state
+            const state = window.ImageOverlayState;
+            const scaledChatX = state.chatTransform.x * scaleRatioX;
+            const scaledChatY = state.chatTransform.y * scaleRatioY;
+
+            // Draw the overlay image with transforms
+            ctx.save();
+            ctx.translate(scaledChatX, scaledChatY);
+            ctx.scale(state.chatTransform.scale, state.chatTransform.scale);
+            ctx.drawImage(overlayImg, 0, 0);
+            ctx.restore();
+
+            // Clean up
+            URL.revokeObjectURL(overlayImg.src);
+          } catch (error) {
+            // Fallback to manual drawing if dom-to-image fails
+            if (window.ErrorLogger) {
+              window.ErrorLogger.logWarning('Overlay capture failed, using fallback', {
+                error: error.message,
+                context: 'renderOverlayImage overlay capture'
+              });
+            }
+            await this.drawChatOverlay(ctx, exportWidth, exportHeight, scaleRatioX, scaleRatioY);
+          }
+        } else {
+          // No overlay container, use manual drawing
+          await this.drawChatOverlay(ctx, exportWidth, exportHeight, scaleRatioX, scaleRatioY);
+        }
+
+        // Convert canvas to blob
+        let blob;
+        try {
+          blob = await new Promise((resolve, reject) => {
+            canvas.toBlob((b) => {
+              if (!b) reject(new Error('Failed to create blob from canvas'));
+              else resolve(b);
+            }, 'image/png');
+          });
+
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logInfo('Canvas blob created', {
+              blobSize: blob?.size,
+              blobType: blob?.type,
+              exportWidth,
+              exportHeight,
+              context: 'renderOverlayImage canvas'
+            });
+          }
+        } catch (error) {
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logError('Canvas blob creation failed', {
+              error: error.message,
+              stack: error.stack,
+              exportWidth,
+              exportHeight,
+              context: 'renderOverlayImage canvas'
+            });
+          }
+          throw new Error(`Failed to create canvas blob: ${error.message}`);
+        }
+
+        // Add PPI metadata to the blob
+        try {
+          const arrayBuffer = await blob.arrayBuffer();
+          const pngWithPPI = this.injectPNGPPI(arrayBuffer, exportPPI);
+          const finalBlob = new Blob([pngWithPPI], { type: 'image/png' });
+
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logInfo('PPI metadata injected successfully', {
+              originalSize: blob.size,
+              finalSize: finalBlob.size,
+              ppi: exportPPI,
+              context: 'renderOverlayImage PPI injection'
+            });
+          }
+
+          return finalBlob;
+        } catch (error) {
+          if (window.ErrorLogger) {
+            window.ErrorLogger.logWarning('PPI metadata injection failed, using original blob', {
+              error: error.message,
+              blobSize: blob.size,
+              context: 'renderOverlayImage PPI injection'
+            });
+          }
+          return blob;
+        }
       } catch (error) {
-        const errorInfo = {
-          message: `Failed to set canvas dimensions: ${error.message}`,
-          dimensions: { width: exportWidth, height: exportHeight },
-          context: 'Canvas creation',
-          originalError: error.message
-        };
-
-        if (window.ImageErrorHandler) {
-          window.ImageErrorHandler.logImageError(errorInfo);
+        if (window.ErrorLogger) {
+          window.ErrorLogger.logError('renderOverlayImage failed', {
+            error: error.message,
+            stack: error.stack,
+            context: 'renderOverlayImage main'
+          });
         }
-
-        throw new Error(`Canvas dimensions too large for this device. Try using smaller export dimensions. (${exportWidth}x${exportHeight})`);
+        throw error;
       }
-
-      const ctx = canvas.getContext('2d');
-
-      if (!ctx) {
-        const errorInfo = {
-          message: 'Could not get canvas 2d context',
-          dimensions: { width: exportWidth, height: exportHeight },
-          context: 'Canvas context creation'
-        };
-
-        if (window.ImageErrorHandler) {
-          window.ImageErrorHandler.logImageError(errorInfo);
-        }
-
-        throw new Error('Could not get canvas context. Your browser may not support the required canvas size.');
-      }
-
-      // Pass scale ratios to drawing functions so they can scale transforms manually
-      const baseWidth = exportWidth;
-      const baseHeight = exportHeight;
-
-      // 1. Draw black background
-      ctx.fillStyle = BACKGROUND_COLOR;
-      ctx.fillRect(0, 0, baseWidth, baseHeight);
-
-      // 2. Draw image with transforms
-      await this.drawImageWithTransforms(ctx, baseWidth, baseHeight, scaleRatioX, scaleRatioY);
-
-      // 3. Draw chat overlay with transforms
-      await this.drawChatOverlay(ctx, baseWidth, baseHeight, scaleRatioX, scaleRatioY);
-
-      // 4. Return as blob with PPI metadata
-      return this.canvasToBlobWithPPI(canvas, exportPPI);
     },
 
     /**
@@ -343,13 +486,14 @@
       const generatedLines = output.querySelectorAll('.generated');
       if (generatedLines.length === 0) return;
 
-      console.log('[Renderer] Found', generatedLines.length, 'chat lines to render');
-
       // Get text padding from input fields
       const textPaddingHorizontal = document.getElementById('textPaddingHorizontal');
       const textPaddingVertical = document.getElementById('textPaddingVertical');
       const paddingH = parseInt(textPaddingHorizontal?.value) || 0;
       const paddingV = parseInt(textPaddingVertical?.value) || 0;
+
+      // Check if background is active - use global state variable set by chatlog-parser
+      const hasBackground = window.chatlogBackgroundActive || false;
 
       // Apply transforms scaled to export dimensions (WYSIWYG)
       ctx.save();
@@ -365,13 +509,9 @@
       const fontSizeInput = document.getElementById('font-label');
       const fontSize = fontSizeInput ? parseInt(fontSizeInput.value) || TEXT_FONT_SIZE : TEXT_FONT_SIZE;
 
-      console.log('[Renderer] Font size for canvas export:', fontSize);
-
       // Setup text rendering
       ctx.font = `${TEXT_FONT_WEIGHT} ${fontSize}px ${TEXT_FONT_FAMILY}`;
       ctx.textBaseline = TEXT_BASELINE;
-
-      console.log('[Renderer] Canvas font set to:', ctx.font);
 
       // Get computed style from actual chat element for accurate rendering
       const chatElement = document.querySelector('.chat-overlay-container');
@@ -387,7 +527,6 @@
             ? lineHeightValue
             : lineHeightValue * fontSize;
         }
-        console.log('[Renderer] Line height calculated:', LINE_HEIGHT, 'from', lineHeightStr, 'fontSize:', fontSize);
       }
 
       // Color mapping - extract from CSS custom properties
@@ -421,6 +560,25 @@
         // Draw each visual line
         visualLines.forEach((visualLine) => {
           let currentX = paddingH;
+
+          // If background is active, measure the line width first and draw black rectangle
+          if (hasBackground) {
+            let lineWidth = 0;
+            visualLine.forEach((segment) => {
+              lineWidth += ctx.measureText(segment.text).width;
+            });
+
+            // Draw black background bar with padding (matching CSS: padding: 1px 4px)
+            const bgPaddingH = 4; // horizontal padding
+            const bgPaddingTop = 1; // padding-top
+            const bgPaddingBottom = 1; // padding-bottom
+            ctx.fillStyle = BACKGROUND_COLOR;
+            const rectX = currentX - bgPaddingH;
+            const rectY = currentY - bgPaddingTop; // Shift up to account for top padding
+            const rectW = lineWidth + (bgPaddingH * 2);
+            const rectH = LINE_HEIGHT + bgPaddingTop + bgPaddingBottom; // Include both paddings
+            ctx.fillRect(rectX, rectY, rectW, rectH);
+          }
 
           // Draw each text segment in this visual line
           visualLine.forEach((segment) => {
