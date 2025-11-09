@@ -274,16 +274,6 @@
     const url = typeof args[0] === 'string' ? args[0] : args[0]?.url;
     const options = args[1] || {};
 
-    // Skip wrapping for AdSense domains to prevent interference
-    if (url && (
-      url.includes('googlesyndication.com') ||
-      url.includes('googleads.g.doubleclick.net') ||
-      url.includes('google.com/ads') ||
-      url.includes('adservice.google')
-    )) {
-      return originalFetch.apply(this, args);
-    }
-
     // Add timeout support using AbortController
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);

@@ -42,11 +42,7 @@
       const originalImage = window.Image;
       window.Image = function () {
         const img = new originalImage();
-        // Don't set crossOrigin for AdSense images
-        const stack = new Error().stack || '';
-        if (!stack.includes('googlesyndication') && !stack.includes('googleads')) {
-          img.crossOrigin = 'anonymous';
-        }
+        img.crossOrigin = 'anonymous';
         return img;
       };
       window.Image.prototype = originalImage.prototype;
