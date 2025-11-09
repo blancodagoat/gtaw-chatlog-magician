@@ -15,7 +15,7 @@
 
     // Handle external stylesheets that cause CORS issues
     setupStyleSheetHandling: function () {
-      // Monitor for stylesheet loading errors
+      // Monitor for stylesheet loading errors (but don't interfere with scripts)
       const originalAddEventListener = HTMLLinkElement.prototype.addEventListener;
       HTMLLinkElement.prototype.addEventListener = function (type, listener, options) {
         if (type === 'error') {
@@ -42,7 +42,11 @@
       const originalImage = window.Image;
       window.Image = function () {
         const img = new originalImage();
-        img.crossOrigin = 'anonymous';
+        // Don't set crossOrigin for AdSense images
+        const stack = new Error().stack || '';
+        if (!stack.includes('googlesyndication') && !stack.includes('googleads')) {
+          img.crossOrigin = 'anonymous';
+        }
         return img;
       };
       window.Image.prototype = originalImage.prototype;
