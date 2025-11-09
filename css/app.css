@@ -1386,6 +1386,12 @@ label { display: none; }
   border-right: 1px solid var(--border);
 }
 
+.footer-ad-section .adsbygoogle {
+  width: 100%;
+  min-width: 250px;
+  display: block;
+}
+
 .footer-ad-section:last-child {
   border-right: none;
 }
