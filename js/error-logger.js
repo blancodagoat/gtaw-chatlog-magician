@@ -198,9 +198,76 @@
   }
 
   /**
+   * Check if error should be ignored (browser extensions, ad blockers, third-party scripts)
+   */
+  function shouldIgnoreError(message, filename, source) {
+    // Ignore browser extension errors
+    const extensionPatterns = [
+      'chrome-extension://',
+      'moz-extension://',
+      'safari-extension://',
+      'edge-extension://',
+      'content-scripts.js',
+      'injection-tss-mv3.js',
+      'TSS:',
+      'Content Script Bridge',
+    ];
+
+    // Ignore ad blocker and tracking blocker errors
+    const adBlockerPatterns = [
+      'ERR_BLOCKED_BY_CLIENT',
+      'net::ERR_BLOCKED_BY_CLIENT',
+      'Failed to load resource: net::ERR_BLOCKED_BY_CLIENT',
+    ];
+
+    // Ignore third-party iframe errors (ko-fi, PayPal, etc.)
+    const thirdPartyPatterns = [
+      'ko-fi.com',
+      'paypal.com',
+      'googletagmanager.com',
+      'google-analytics.com',
+      'visualstudio.com',
+      'dc.services.visualstudio.com',
+      'turnstile',
+      'preload',
+      '[DOM] Found',
+      'non-unique id',
+    ];
+
+    const checkString = (message || '') + ' ' + (filename || '') + ' ' + (source || '');
+
+    // Check extension patterns
+    if (extensionPatterns.some(pattern => checkString.includes(pattern))) {
+      return true;
+    }
+
+    // Check ad blocker patterns
+    if (adBlockerPatterns.some(pattern => checkString.includes(pattern))) {
+      return true;
+    }
+
+    // Check third-party patterns
+    if (thirdPartyPatterns.some(pattern => checkString.includes(pattern))) {
+      return true;
+    }
+
+    // Ignore errors from iframes (unless it's our own domain)
+    if (filename && !filename.includes(window.location.hostname) && filename.startsWith('http')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Captures uncaught errors
    */
   window.addEventListener('error', function (event) {
+    // Filter out noise from extensions and third-party scripts
+    if (shouldIgnoreError(event.message, event.filename, event.error?.stack)) {
+      return;
+    }
+
     const entry = addLogEntry('errors', event.message, {
       filename: event.filename,
       lineno: event.lineno,
@@ -240,12 +307,20 @@
   };
 
   console.error = function (...args) {
-    addLogEntry('errors', args.join(' '), { args: args });
+    const message = args.join(' ');
+    // Filter out third-party and extension errors
+    if (!shouldIgnoreError(message, '', '')) {
+      addLogEntry('errors', message, { args: args });
+    }
     return originalConsole.error.apply(console, args);
   };
 
   console.warn = function (...args) {
-    addLogEntry('warnings', args.join(' '), { args: args });
+    const message = args.join(' ');
+    // Filter out third-party and extension warnings
+    if (!shouldIgnoreError(message, '', '')) {
+      addLogEntry('warnings', message, { args: args });
+    }
     return originalConsole.warn.apply(console, args);
   };
 
@@ -289,12 +364,15 @@
       .then((response) => {
         clearTimeout(timeoutId);
         if (!response.ok) {
-          addLogEntry('networkIssues', `Failed fetch: ${url}`, {
-            status: response.status,
-            statusText: response.statusText,
-            url: url,
-            method: options.method || 'GET',
-          });
+          // Filter out third-party network errors
+          if (!shouldIgnoreError('', url, '')) {
+            addLogEntry('networkIssues', `Failed fetch: ${url}`, {
+              status: response.status,
+              statusText: response.statusText,
+              url: url,
+              method: options.method || 'GET',
+            });
+          }
         }
         return response;
       })
@@ -305,14 +383,17 @@
         const isTimeout = error.name === 'AbortError';
         const errorMessage = isTimeout ? `Network timeout: ${url}` : `Network error: ${url}`;
 
-        addLogEntry('networkIssues', errorMessage, {
-          error: error.message,
-          errorType: error.name,
-          url: url,
-          stack: error.stack,
-          timeout: isTimeout,
-          timeoutMs: FETCH_TIMEOUT_MS
-        });
+        // Filter out third-party network errors
+        if (!shouldIgnoreError(errorMessage, url, error.stack)) {
+          addLogEntry('networkIssues', errorMessage, {
+            error: error.message,
+            errorType: error.name,
+            url: url,
+            stack: error.stack,
+            timeout: isTimeout,
+            timeoutMs: FETCH_TIMEOUT_MS
+          });
+        }
         throw error;
       });
   };
@@ -324,12 +405,15 @@
     'error',
     function (event) {
       if (event.target !== window && event.target.tagName) {
-        // Resource loading error
-        addLogEntry('resourceIssues', `Failed to load ${event.target.tagName}`, {
-          tagName: event.target.tagName,
-          src: event.target.src || event.target.href,
-          currentSrc: event.target.currentSrc,
-        });
+        const src = event.target.src || event.target.href || '';
+        // Filter out third-party resource errors
+        if (!shouldIgnoreError('', src, '')) {
+          addLogEntry('resourceIssues', `Failed to load ${event.target.tagName}`, {
+            tagName: event.target.tagName,
+            src: src,
+            currentSrc: event.target.currentSrc,
+          });
+        }
       }
     },
     true
@@ -433,131 +517,178 @@
   }
 
   /**
-   * Generates a formatted error report
+   * Generates a developer-friendly structured error report
    */
   function generateReport() {
     capturePerformance();
 
+    // Collect current app state
+    const appState = {
+      mode: document.getElementById('toggleMode')?.dataset?.mode || 'unknown',
+      fontSize: document.getElementById('font-label')?.value || 'N/A',
+      lineLength: document.getElementById('lineLengthInput')?.value || 'N/A',
+      chatlogInput: document.getElementById('chatlogInput')?.value || '',
+      outputHTML: document.getElementById('output')?.innerHTML || '',
+      backgroundEnabled: localStorage.getItem('backgroundEnabled') || 'N/A',
+      characterColoring: localStorage.getItem('characterNameColoring') || 'N/A',
+      exportWidth: document.getElementById('exportWidth')?.value || 'N/A',
+      exportHeight: document.getElementById('exportHeight')?.value || 'N/A',
+      exportPPI: document.getElementById('exportPPI')?.value || 'N/A',
+      paddingH: document.getElementById('textPaddingHorizontal')?.value || 'N/A',
+      paddingV: document.getElementById('textPaddingVertical')?.value || 'N/A',
+    };
+
     const report = [];
-    report.push('═══════════════════════════════════════════════════════');
-    report.push('     GTAW CHATLOG MAGICIAN - ERROR REPORT');
-    report.push('═══════════════════════════════════════════════════════');
-    report.push('');
-    report.push('SESSION INFO:');
-    report.push('  Session ID: ' + errorLog.sessionId);
-    report.push('  Start Time: ' + errorLog.startTime);
-    report.push('  Report Time: ' + timestamp());
-    report.push('  User Agent: ' + errorLog.userAgent);
-    report.push('  Platform: ' + errorLog.platform);
-    report.push('  Screen: ' + errorLog.screenResolution);
-    report.push('  Viewport: ' + errorLog.viewport);
-    report.push('  Timezone: ' + errorLog.timezone);
+
+    report.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    report.push('🐛 ERROR REPORT - GTAW Chatlog Magician');
+    report.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     report.push('');
 
-    // Performance
-    if (errorLog.performance.timing) {
-      report.push('PERFORMANCE:');
-      report.push('  Page Load: ' + errorLog.performance.timing.loadTime + 'ms');
-      report.push('  DOM Ready: ' + errorLog.performance.timing.domReady + 'ms');
-      if (errorLog.performance.memory !== 'N/A') {
-        report.push('  Memory Used: ' + errorLog.performance.memory.usedJSHeapSize);
-        report.push('  Memory Total: ' + errorLog.performance.memory.totalJSHeapSize);
-      }
-      report.push('');
-    }
+    // SESSION INFO
+    report.push('📋 SESSION');
+    report.push('  Session ID:    ' + errorLog.sessionId);
+    report.push('  Timestamp:     ' + timestamp());
+    report.push('  User Agent:    ' + errorLog.userAgent);
+    report.push('  Platform:      ' + errorLog.platform);
+    report.push('  Screen:        ' + errorLog.screenResolution);
+    report.push('  Viewport:      ' + errorLog.viewport);
+    report.push('  Timezone:      ' + errorLog.timezone);
+    report.push('');
 
-    // Errors
+    // ERROR SUMMARY
+    report.push('⚠️  ERROR SUMMARY');
+    report.push('  Errors:        ' + errorLog.errors.length);
+    report.push('  Warnings:      ' + errorLog.warnings.length);
+    report.push('  Network:       ' + (errorLog.networkIssues?.length || 0));
+    report.push('  Resources:     ' + (errorLog.resourceIssues?.length || 0));
+    report.push('');
+
+    // ERRORS - Full details
     if (errorLog.errors.length > 0) {
-      report.push('ERRORS (' + errorLog.errors.length + '):');
+      report.push('❌ ERRORS (' + errorLog.errors.length + ')');
       errorLog.errors.forEach((err, i) => {
-        report.push('  ' + (i + 1) + '. [' + err.timestamp + '] ' + err.message);
+        report.push('  ' + (i + 1) + '. ' + err.message);
+        report.push('     Time:    ' + err.timestamp);
         if (err.details.filename) {
-          report.push(
-            '     File: ' +
-              err.details.filename +
-              ':' +
-              err.details.lineno +
-              ':' +
-              err.details.colno
-          );
+          report.push('     File:    ' + err.details.filename + ':' + err.details.lineno + ':' + err.details.colno);
+        }
+        if (err.details.errorType) {
+          report.push('     Type:    ' + err.details.errorType);
         }
         if (err.stack) {
-          report.push('     Stack: ' + err.stack.split('\n')[0]);
+          const stackLines = err.stack.split('\n').slice(0, 5);
+          report.push('     Stack:   ' + stackLines[0]);
+          stackLines.slice(1).forEach(line => {
+            report.push('              ' + line.trim());
+          });
         }
+        report.push('');
       });
-      report.push('');
     } else {
-      report.push('ERRORS: None ✓');
+      report.push('✓ No errors logged');
       report.push('');
     }
 
-    // Warnings
+    // WARNINGS
     if (errorLog.warnings.length > 0) {
-      report.push('WARNINGS (' + errorLog.warnings.length + '):');
+      report.push('⚠️  WARNINGS (' + errorLog.warnings.length + ')');
       errorLog.warnings.slice(-10).forEach((warn, i) => {
         report.push('  ' + (i + 1) + '. [' + warn.timestamp + '] ' + warn.message);
       });
       report.push('');
-    } else {
-      report.push('WARNINGS: None ✓');
-      report.push('');
     }
 
-    // Recent Info
-    if (errorLog.info.length > 0) {
-      report.push('INFO (Last 5):');
-      errorLog.info.slice(-5).forEach((info, i) => {
-        report.push('  ' + (i + 1) + '. [' + info.timestamp + '] ' + info.message);
-      });
-      report.push('');
-    }
-
-    // Network Issues
+    // NETWORK ISSUES
     if (errorLog.networkIssues && errorLog.networkIssues.length > 0) {
-      report.push('NETWORK ISSUES (' + errorLog.networkIssues.length + '):');
+      report.push('🌐 NETWORK ISSUES (' + errorLog.networkIssues.length + ')');
       errorLog.networkIssues.slice(-10).forEach((err, i) => {
-        report.push('  ' + (i + 1) + '. [' + err.timestamp + '] ' + err.message);
+        report.push('  ' + (i + 1) + '. ' + err.message);
         if (err.details) {
-          report.push('     Status: ' + (err.details.status || 'N/A'));
-          report.push('     URL: ' + (err.details.url || 'N/A'));
+          report.push('     Status: ' + (err.details.status || 'N/A') + ' | URL: ' + (err.details.url || 'N/A'));
+          if (err.details.timeout) {
+            report.push('     Timeout: ' + err.details.timeoutMs + 'ms');
+          }
         }
       });
       report.push('');
-    } else {
-      report.push('NETWORK ISSUES: None ✓');
-      report.push('');
     }
 
-    // Resource Issues
+    // RESOURCE ISSUES
     if (errorLog.resourceIssues && errorLog.resourceIssues.length > 0) {
-      report.push('RESOURCE ISSUES (' + errorLog.resourceIssues.length + '):');
+      report.push('📦 RESOURCE LOADING FAILURES (' + errorLog.resourceIssues.length + ')');
       errorLog.resourceIssues.slice(-10).forEach((err, i) => {
-        report.push('  ' + (i + 1) + '. [' + err.timestamp + '] ' + err.message);
+        report.push('  ' + (i + 1) + '. ' + err.message);
         if (err.details && err.details.src) {
           report.push('     Source: ' + err.details.src);
         }
       });
       report.push('');
-    } else {
-      report.push('RESOURCE ISSUES: None ✓');
-      report.push('');
     }
 
-    // User Activity (Breadcrumbs - Last 10)
+    // USER ACTIVITY
     if (errorLog.userActivity && errorLog.userActivity.length > 0) {
-      report.push('USER ACTIVITY (Last 10):');
+      report.push('👤 USER ACTIVITY (Last 10 actions)');
       errorLog.userActivity.slice(-10).forEach((action, i) => {
         report.push('  ' + (i + 1) + '. [' + action.timestamp + '] ' + action.message);
       });
       report.push('');
-    } else {
-      report.push('USER ACTIVITY: None ✓');
-      report.push('');
     }
 
-    report.push('═══════════════════════════════════════════════════════');
-    report.push('End of Report - Please send this to the developer');
-    report.push('═══════════════════════════════════════════════════════');
+    // APP STATE
+    report.push('⚙️  APP STATE');
+    report.push('  Mode:          ' + appState.mode);
+    report.push('  Font Size:     ' + appState.fontSize);
+    report.push('  Line Length:   ' + appState.lineLength);
+    report.push('  Export:        ' + appState.exportWidth + '×' + appState.exportHeight + 'px @ ' + appState.exportPPI + ' PPI');
+    report.push('  Padding:       H:' + appState.paddingH + ' V:' + appState.paddingV);
+    report.push('  Background:    ' + (appState.backgroundEnabled === 'true' ? 'ON' : 'OFF'));
+    report.push('  Char Coloring: ' + (appState.characterColoring === 'false' ? 'OFF' : 'ON'));
+    report.push('');
+
+    // CHATLOG INPUT
+    report.push('📝 CHATLOG INPUT (' + appState.chatlogInput.length + ' chars)');
+    const inputPreview = appState.chatlogInput.substring(0, 500);
+    if (inputPreview) {
+      report.push('  ' + inputPreview.replace(/\n/g, '\n  '));
+      if (appState.chatlogInput.length > 500) {
+        report.push('  ... (truncated, ' + appState.chatlogInput.length + ' chars total)');
+      }
+    } else {
+      report.push('  (empty)');
+    }
+    report.push('');
+
+    // CHATLOG OUTPUT
+    report.push('🖼️  CHATLOG OUTPUT (' + appState.outputHTML.length + ' chars HTML)');
+    const outputPreview = appState.outputHTML.substring(0, 500);
+    if (outputPreview) {
+      report.push('  ' + outputPreview.replace(/\n/g, '\n  '));
+      if (appState.outputHTML.length > 500) {
+        report.push('  ... (truncated, ' + appState.outputHTML.length + ' chars total)');
+      }
+    } else {
+      report.push('  (empty)');
+    }
+    report.push('');
+
+    // PERFORMANCE
+    report.push('⚡ PERFORMANCE');
+    if (errorLog.performance.timing) {
+      report.push('  Page Load:     ' + errorLog.performance.timing.loadTime + 'ms');
+      report.push('  DOM Ready:     ' + errorLog.performance.timing.domReady + 'ms');
+      report.push('  First Paint:   ' + errorLog.performance.timing.firstPaint + 'ms');
+      if (errorLog.performance.memory !== 'N/A') {
+        report.push('  Memory:        ' + errorLog.performance.memory.usedJSHeapSize + ' / ' + errorLog.performance.memory.totalJSHeapSize + ' (limit: ' + errorLog.performance.memory.limit + ')');
+      }
+    } else {
+      report.push('  Not available');
+    }
+    report.push('');
+
+    report.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    report.push('Auto-generated at ' + new Date().toLocaleString());
+    report.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     return report.join('\n');
   }

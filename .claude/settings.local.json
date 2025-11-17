@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(node:*)",
+      "Bash(\"c:\\Users\\anipa\\Downloads\\gtaw-chatlog-magician\\css\\app.css\")",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

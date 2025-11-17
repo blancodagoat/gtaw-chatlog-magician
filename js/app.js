@@ -1154,12 +1154,16 @@ $(document).ready(function () {
   });
   $('#toggleBackground').click(toggleBackground);
 
-  // Error report button - Auto-sends to Discord/Email
-  $('#copyErrorReport').click(function () {
-    if (window.ErrorLogger) {
-      window.ErrorLogger.sendReport();
-    } else {
-      alert('Error logger not loaded. Please refresh the page and try again.');
+  // Auto-send error reports on console errors (automatic bug reporting)
+  window.addEventListener('error', function(event) {
+    // Debounce - only send once per session for similar errors
+    if (window.ErrorLogger && !window.errorReportSent) {
+      setTimeout(function() {
+        if (window.ErrorLogger.getLog().errors.length > 0) {
+          window.ErrorLogger.sendReport();
+          window.errorReportSent = true; // Prevent spam
+        }
+      }, 2000); // Wait 2 seconds to collect related errors
     }
   });
 

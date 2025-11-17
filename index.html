@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
  <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-T6EJF6GQG3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-T6EJF6GQG3');
+  </script>
+
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -121,14 +131,14 @@
                       <!-- Censor character (Secondary = Utility) -->
                       <button id="censorCharButton" class="button secondary censor-char-button" aria-label="Copy censor character" title="Copy ÷ character">÷</button>
 
-                      <!-- Report bug (Red = Danger/Alert) -->
-                      <button id="copyErrorReport" class="button danger" aria-label="Copy error report" title="Copy error report to send to developer">
-                        <i class="fas fa-bug" aria-hidden="true"></i> Report Bug
+                      <!-- Donate (Gray = Neutral/External) -->
+                      <button id="donateBtn" class="button" aria-label="Donate" title="Support development">
+                        <i class="fas fa-heart" aria-hidden="true"></i> Donate
                       </button>
 
-                      <!-- Donate (Gray = Neutral/External) -->
-                      <a href="https://buymeacoffee.com/blancodagoat" target="_blank" rel="noopener noreferrer" class="button" aria-label="Donate">
-                        <i class="fas fa-dollar-sign" aria-hidden="true"></i> Donate
+                      <!-- Discord (Discord Brand Color) -->
+                      <a href="https://discord.gg/V8jQJrDXxF" target="_blank" rel="noopener noreferrer" class="button secondary censor-char-button" aria-label="Join Discord" title="Join our Discord server" style="background-color: #5865F2; color: #ffffff; text-decoration: none;">
+                        <i class="fab fa-discord" aria-hidden="true"></i>
                       </a>
                     </div>
 
@@ -179,9 +189,6 @@
         </div>
      </div>
      </main>
-     <footer role="contentinfo" class="visually-hidden">
-       <p>© Chatlog Magician</p>
-     </footer>
 
     <!-- Third-party scripts with fallback handling -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/4.0.0-beta.2/jquery.min.js" 
@@ -268,6 +275,32 @@
                  <div class="color-item toyou" data-color="toyou" data-tooltip="Directed at You [!]"></div>
              </div>
      </div>
+
+    <!-- Donate choice modal -->
+    <div id="donateModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 10000; align-items: center; justify-content: center; overflow-y: auto; padding: 20px;">
+      <div style="background: #1a1d23; padding: 24px; border-radius: 0; max-width: 450px; width: 100%; text-align: center; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.5); margin: auto;">
+        <h3 style="margin-top: 0; margin-bottom: 16px; color: #f1f1f1; font-size: 18px; font-weight: 600;">Support Development</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <iframe id='kofiframe' src='https://ko-fi.com/blancoleo/?hidefeed=true&widget=true&embed=true&preview=true' style='border:none;width:100%;padding:4px;background:#000000;border-radius:0;' height='600' title='blancoleo'></iframe>
+          <button id="closeDonateModal" class="button secondary" style="width: 100%; border-radius: 0; margin-top: 4px;">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Donate modal handler
+      document.getElementById('donateBtn').addEventListener('click', function() {
+        document.getElementById('donateModal').style.display = 'flex';
+      });
+      document.getElementById('closeDonateModal').addEventListener('click', function() {
+        document.getElementById('donateModal').style.display = 'none';
+      });
+      document.getElementById('donateModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.style.display = 'none';
+        }
+      });
+    </script>
 
     <script src="js/init.js" defer></script>
  </body>
