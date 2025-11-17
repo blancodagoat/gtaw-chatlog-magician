@@ -12,7 +12,7 @@ This project uses a query parameter versioning system to manage browser caching 
 
 ### Current Version
 
-**Version: `20251103-001`** (Format: `YYYYMMDD-XXX`)
+**Version: `20251103-002`** (Format: `YYYYMMDD-XXX`)
 
 ### When to Increment Version
 
@@ -24,7 +24,7 @@ Increment the version number whenever you make changes to:
 ### How to Increment Version
 
 1. **Choose new version number:**
-   - Use format: `YYYYMMDD-XXX` (e.g., `20251103-002`, `20251104-001`)
+   - Use format: `YYYYMMDD-XXX` (e.g., `20251103-003`, `20251104-002`)
    - Date should be deployment date
    - XXX is incremental counter (001, 002, 003, etc.)
 
@@ -34,7 +34,7 @@ Increment the version number whenever you make changes to:
    grep -n "?v=" index.html
 
    # Replace old version with new version
-   sed -i 's/?v=20251103-001/?v=20251103-002/g' index.html
+   sed -i 's/?v=20251103-002/?v=20251103-003/g' index.html
    ```
 
 3. **Verify changes:**
@@ -45,7 +45,7 @@ Increment the version number whenever you make changes to:
 4. **Commit and deploy:**
    ```bash
    git add index.html
-   git commit -m "Bump version to 20251103-002"
+   git commit -m "Bump version to 20251103-003"
    git push
    ```
 
