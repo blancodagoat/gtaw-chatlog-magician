@@ -998,35 +998,38 @@ label { display: none; }
 }
 
 .history-panel .history-header {
-    box-sizing: border-box;
-    padding: 20px 24px; /* 8px grid */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: transparent;
-    color: var(--text);
-    flex-shrink: 0;
-    box-shadow: none;
+    box-sizing: border-box !important;
+    padding: 20px 24px !important; /* 8px grid */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background: var(--surface) !important; /* Match website surface color */
+    color: var(--text) !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .history-panel .history-header h3 {
-    margin: 0;
-    font-size: clamp(1.125rem, 3.5vw, 1.5rem);
-    font-weight: 600;
-    color: var(--text);
-    text-wrap: balance;
+    margin: 0 !important;
+    font-size: clamp(1.125rem, 3.5vw, 1.5rem) !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+    text-wrap: balance !important;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
-.history-items {
-	flex: 1;
-	overflow-y: auto;
-	padding: 16px 20px; /* 8px grid */
-	scrollbar-width: thin;
-	scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-	gap: 12px;
-	display: flex;
-	flex-direction: column;
+.history-panel .history-items {
+	flex: 1 !important;
+	overflow-y: auto !important;
+	padding: 20px 24px !important; /* 8px grid */
+	scrollbar-width: thin !important;
+	scrollbar-color: rgba(255, 255, 255, 0.3) transparent !important;
+	gap: 16px !important; /* 8px grid */
+	display: flex !important;
+	flex-direction: column !important;
+	background: var(--bg) !important; /* Match website background */
 }
 
 .history-items::-webkit-scrollbar {
@@ -1046,25 +1049,57 @@ label { display: none; }
 	background: rgba(255, 255, 255, 0.5);
 }
 
-.history-item {
-	padding: 16px; /* 8px grid */
-	cursor: pointer;
-	border: 1px solid rgba(0, 0, 0, 0.2);
-	border-radius: 0; /* Blocky style */
-	background: var(--surface-2);
-	color: var(--text);
-	transition: all var(--dur-hover) var(--ease-hover);
-	box-shadow: var(--elev-1);
-	max-height: 200px;
-	overflow-y: auto;
-	position: relative;
+.history-panel .history-item {
+	padding: 16px 20px !important; /* 8px grid */
+	cursor: pointer !important;
+	border: 1px solid rgba(0, 0, 0, 0.2) !important;
+	border-radius: 0 !important; /* Blocky style */
+	background: var(--surface-2) !important;
+	color: var(--text) !important;
+	transition: all var(--dur-hover) var(--ease-hover) !important;
+	box-shadow: var(--elev-1) !important;
+	max-height: 200px !important;
+	overflow-y: auto !important;
+	position: relative !important;
 }
 
-.history-item:hover {
-    background: rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.18);
-    box-shadow: 0 12px 24px rgba(0,0,0,.28);
-	transform: translateY(-1px);
+/* Liquid glass wrapper - ensure it inherits history-item styling */
+.history-panel .history-item.liquidGlass-wrapper {
+	padding: 16px 20px !important;
+	background: var(--surface-2) !important;
+	border: 1px solid rgba(0, 0, 0, 0.2) !important;
+	border-radius: 0 !important;
+	box-shadow: var(--elev-1) !important;
+	position: relative !important;
+	overflow: hidden !important;
+}
+
+/* Hide liquid glass effects - we're using flat design */
+.history-panel .history-item .liquidGlass-effect,
+.history-panel .history-item .liquidGlass-tint,
+.history-panel .history-item .liquidGlass-shine {
+	display: none !important;
+}
+
+/* Ensure text container is properly positioned */
+.history-panel .history-item .liquidGlass-text {
+	position: relative !important;
+	z-index: 1 !important;
+	width: 100% !important;
+}
+
+.history-panel .history-item:hover {
+    background: rgba(255,255,255,0.08) !important;
+    border-color: rgba(255,255,255,0.2) !important;
+    box-shadow: var(--elev-2) !important;
+	transform: translateY(-1px) !important;
+}
+
+.history-panel .history-item.liquidGlass-wrapper:hover {
+	background: rgba(255,255,255,0.08) !important;
+	border-color: rgba(255,255,255,0.2) !important;
+	box-shadow: var(--elev-2) !important;
+	transform: translateY(-1px) !important;
 }
 
 .history-item:focus-visible {
@@ -1079,7 +1114,7 @@ label { display: none; }
 	font-weight: 700;
 	font-size: 12px;
 	line-height: 1.45;
-	color: #fff;
+	color: #fff; /* Base color, but color classes will override */
 	/* 8-direction text-shadow to match output black outline */
 	text-shadow:
 		0 1px 0 #000,
@@ -1102,6 +1137,24 @@ label { display: none; }
 	margin: 0;
 	padding: 0;
 }
+
+/* Ensure color classes in history items override base color and are preserved */
+.history-panel .history-item-text .me,
+.history-panel .history-item-text .ame { color: #c2a3da !important; }
+.history-panel .history-item-text .darkgrey { color: #5a5a5b !important; }
+.history-panel .history-item-text .grey { color: #939799 !important; }
+.history-panel .history-item-text .lightgrey { color: #c6c4c4 !important; }
+.history-panel .history-item-text .death { color: #f00000 !important; }
+.history-panel .history-item-text .yellow { color: #fbf724 !important; }
+.history-panel .history-item-text .green { color: #56d64b !important; }
+.history-panel .history-item-text .orange { color: #eda841 !important; }
+.history-panel .history-item-text .blue { color: #3896f3 !important; }
+.history-panel .history-item-text .white { color: #f1f1f1 !important; }
+.history-panel .history-item-text .radioColor { color: #ffec8b !important; }
+.history-panel .history-item-text .radioColor2 { color: #a19558 !important; }
+.history-panel .history-item-text .depColor { color: #ccca15 !important; }
+.history-panel .history-item-text .vesseltraffic { color: #33C1C9 !important; }
+.history-panel .history-item-text .toyou { color: #ff00bc !important; }
 
 /* Style line breaks - they should preserve spacing */
 .history-item-text br {
@@ -1148,21 +1201,23 @@ label { display: none; }
 .history-loading {
 	display: none;
 	text-align: center;
-	padding: 32px 20px; /* 8px grid */
+	padding: 48px 24px; /* 8px grid */
+	flex: 1;
+	justify-content: center;
+	align-items: center;
+	background: var(--bg) !important; /* Match website background */
 }
 
 .history-loading.active {
 	display: flex;
-	justify-content: center;
-	align-items: center;
 }
 
 /* Loader for history panel */
 .history-loading .spinner {
   width: fit-content;
-  font-weight: bold;
-  font-family: sans-serif;
-  font-size: 20px;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
   color: var(--text);
   padding-bottom: 6px;
   background: linear-gradient(currentColor 0 0) 0 100%/0% 3px no-repeat;
@@ -1182,26 +1237,41 @@ label { display: none; }
 	text-align: center;
 	padding: 48px 24px; /* 8px grid */
 	color: var(--muted);
-	font-size: 16px;
-	line-height: 1.5;
+	font-size: 14px;
+	line-height: 1.6;
+	flex: 1;
+	justify-content: center;
+	align-items: center;
+	background: var(--bg) !important; /* Match website background */
+	font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .history-empty.active {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	gap: 16px;
+	gap: 12px;
 }
 
 .history-empty::before {
 	content: "📝";
 	font-size: 48px;
-	opacity: 0.5;
+	opacity: 0.4;
+	margin-bottom: 12px;
+	display: block;
 }
 
 .history-empty p {
 	margin: 0;
 	font-weight: 500;
+	color: var(--text);
+	font-size: 15px;
+}
+
+.history-empty p:last-child {
+	font-size: 13px;
+	color: var(--muted);
+	font-weight: 400;
+	opacity: 0.8;
 }
 
 
@@ -1210,30 +1280,33 @@ label { display: none; }
 }
 
 .clear-history-btn {
-    /* Apply blocky button style with alert color (Red = Delete/Clear) */
-    background-color: #dc3545;
-    color: #ffffff;
-    border: none;
-    border-radius: 0;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.5em 0.75em;
-    height: 32px;
-    line-height: 1;
-    cursor: pointer;
-    transition: background-color 0.25s ease-out;
-    margin-left: 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    /* Apply blocky button style with alert color (Red = Delete/Clear) - matches .button.alert */
+    background-color: #dc3545 !important; /* ARIA-friendly red - matches site buttons */
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 0 !important; /* Blocky style to match site */
+    font-size: 0.8rem !important;
+    font-weight: bold !important; /* Match site button font-weight */
+    padding: 0.5em 0.875em !important;
+    height: auto !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    transition: background-color 0.25s ease-out, box-shadow 0.25s ease-out !important;
+    margin-left: 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    box-shadow: var(--elev-1) !important;
 }
 
 .clear-history-btn:hover {
-    background-color: #c82333;
+    background-color: #c82333 !important; /* Darker red on hover - matches .button.alert:hover */
+    box-shadow: var(--elev-2) !important;
 }
 .clear-history-btn:focus-visible {
-    outline: 2px solid rgba(59, 130, 246, 0.45);
-    outline-offset: 2px;
+    outline: 2px solid rgba(59, 130, 246, 0.45) !important;
+    outline-offset: 2px !important;
 }
 
 .history-tab {
@@ -1277,15 +1350,14 @@ label { display: none; }
     width: 350px;
     height: 100vh;
     container-type: inline-size;
-    background-color: var(--surface);
-    box-shadow: -2px 0 20px rgba(0, 0, 0, 0.3);
+    background-color: var(--bg) !important; /* Match website background */
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
     transition: right var(--dur-panel) ease;
     z-index: 1000;
-    display: block !important;
+    display: flex !important;
+    flex-direction: column;
     border-left: 1px solid rgba(0, 0, 0, 0.3);
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
 }
 @media (prefers-reduced-motion: reduce) {
   .history-panel { transition: none; }
@@ -1293,6 +1365,7 @@ label { display: none; }
 
 .history-panel.open {
 	right: 0;
+	display: flex !important;
 }
 
 .history-tab.hidden {
@@ -1342,23 +1415,5 @@ label { display: none; }
     background: rgba(255, 255, 255, 0.35);
 }
 
-.history-header {
-	padding: 20px 24px; /* 8px grid */
-	border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	background: transparent;
-	color: var(--text);
-	flex-shrink: 0;
-	box-shadow: none;
-}
-
-.history-header h3 {
-    margin: 0;
-    font-size: clamp(1.125rem, 3.5vw, 1.5rem);
-    font-weight: 600;
-    color: var(--text);
-    text-wrap: balance;
-}
+/* Removed duplicate .history-header rules - using .history-panel .history-header above for better specificity */
 }

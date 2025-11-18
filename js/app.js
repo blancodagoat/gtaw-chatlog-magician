@@ -1188,8 +1188,11 @@ $(document).ready(function () {
   );
 
   $(document).on('click', function (e) {
-    if (!$(e.target).closest('#historyPanel, #chatlogInput').length) {
-      $('#historyPanel').hide();
+    if (!$(e.target).closest('#historyPanel, #chatlogInput, .history-tab').length) {
+      const panel = document.getElementById('historyPanel');
+      if (panel && panel.classList.contains('open')) {
+        toggleHistoryPanel();
+      }
     }
   });
 
@@ -1198,7 +1201,10 @@ $(document).ready(function () {
     const history = loadHistory();
     if (history[index]) {
       $('#chatlogInput').val(history[index]).trigger('input');
-      $('#historyPanel').hide();
+      const panel = document.getElementById('historyPanel');
+      if (panel && panel.classList.contains('open')) {
+        toggleHistoryPanel();
+      }
     }
   });
 
