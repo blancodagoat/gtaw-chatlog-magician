@@ -41,7 +41,7 @@
         },
         {
           "key": "Permissions-Policy",
-          "value": "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+          "value": "geolocation=(), microphone=(), camera=(), payment=(self \"https://ko-fi.com\"), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
         }
       ]
     },
