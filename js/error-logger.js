@@ -211,6 +211,8 @@
       'injection-tss-mv3.js',
       'TSS:',
       'Content Script Bridge',
+      'listener indicated an asynchronous response',
+      'message channel closed',
     ];
 
     // Ignore ad blocker and tracking blocker errors

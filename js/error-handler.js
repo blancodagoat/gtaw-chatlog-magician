@@ -8,6 +8,8 @@
     CROSS_ORIGIN: ['cross-origin', 'XrayWrapper', 'Cannot access rules', 'SecurityError'],
     DOMTOIMAGE: ['domtoimage', 'dom-to-image', 'cssRules', 'SecurityError: Failed to read'],
     IGNORED: ['ResizeObserver loop', 'ResizeObserver loop limit exceeded'],
+    BROWSER_EXTENSION: ['listener indicated an asynchronous response', 'message channel closed', 'Content Script Bridge', 'ERR_BLOCKED_BY_CLIENT'],
+    GOOGLE_ANALYTICS: ['googletagmanager.com', 'google-analytics.com', 'gtag', 'ERR_BLOCKED_BY_CLIENT'],
     // Image mode specific error categories - DO NOT IGNORE, LOG FOR DEBUGGING
     IMAGE_LOAD: ['Failed to load image', 'Image load timeout', 'image may be too large', 'image may be corrupted'],
     CANVAS_MEMORY: ['Canvas memory', 'out of memory', 'Canvas too large', 'Canvas dimensions exceed'],
@@ -27,7 +29,7 @@
       return errorCache.get(errorText);
     }
 
-    const result = matchesErrorCategory(errorText, ['FONT_AWESOME', 'CLIPBOARD', 'SOURCE_MAP', 'WXT_STORAGE', 'CROSS_ORIGIN', 'DOMTOIMAGE', 'IGNORED']);
+    const result = matchesErrorCategory(errorText, ['FONT_AWESOME', 'CLIPBOARD', 'SOURCE_MAP', 'WXT_STORAGE', 'CROSS_ORIGIN', 'DOMTOIMAGE', 'IGNORED', 'BROWSER_EXTENSION', 'GOOGLE_ANALYTICS']);
     errorCache.set(errorText, result);
     return result;
   };
