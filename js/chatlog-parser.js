@@ -1370,14 +1370,15 @@ $(document).ready(function () {
   function formatIncomingCall(line) {
     line = line.replace(/[\[\]]/g, '');
 
-    const match = line.match(
+    // Try to match the full format with commands
+    const fullMatch = line.match(
       /\(([^)]+)\) Incoming call from (.+)\. Use (.+) to answer or (.+) to decline\./
     );
-    if (match) {
-      const parenthetical = escapeHTML(match[1]);
-      const caller = escapeHTML(match[2]);
-      const pickupCommand = escapeHTML(match[3]);
-      const hangupCommand = escapeHTML(match[4]);
+    if (fullMatch) {
+      const parenthetical = escapeHTML(fullMatch[1]);
+      const caller = escapeHTML(fullMatch[2]);
+      const pickupCommand = escapeHTML(fullMatch[3]);
+      const hangupCommand = escapeHTML(fullMatch[4]);
 
       return (
         '<span class="yellow">(' +
@@ -1390,9 +1391,25 @@ $(document).ready(function () {
         hangupCommand +
         ' to decline.</span>'
       );
-    } else {
-      return '<span class="white">' + escapeHTML(line) + '</span>';
     }
+
+    // Try to match the simple format: (Phone) Incoming call from Name.
+    const simpleMatch = line.match(/\(([^)]+)\) Incoming call from (.+)\.$/);
+    if (simpleMatch) {
+      const parenthetical = escapeHTML(simpleMatch[1]);
+      const caller = escapeHTML(simpleMatch[2]);
+
+      return (
+        '<span class="yellow">(' +
+        parenthetical +
+        ')</span> <span class="white">Incoming call from </span><span class="yellow">' +
+        caller +
+        '</span><span class="white">.</span>'
+      );
+    }
+
+    // Fallback for unmatched patterns
+    return '<span class="white">' + escapeHTML(line) + '</span>';
   }
 
   function colorInfoLine(line) {
