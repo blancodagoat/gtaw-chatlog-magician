@@ -41,9 +41,6 @@
     "prettier": "^3.3.3",
     "vitest": "^4.0.5"
   },
-  "dependencies": {
-    "@vercel/speed-insights": "^1.2.0"
-  },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
