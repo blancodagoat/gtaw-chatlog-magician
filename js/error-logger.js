@@ -858,7 +858,8 @@
       fullReport: report,
     };
 
-    return fetch('/api/report-bug', {
+    // Use native fetch to avoid logging errors from error logger itself
+    return originalFetch('/api/report-bug', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -934,7 +935,8 @@
         '\n...\n```',
     };
 
-    return fetch(webhookUrl, {
+    // Use native fetch to avoid logging errors from error logger itself
+    return originalFetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
