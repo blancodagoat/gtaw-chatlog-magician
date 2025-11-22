@@ -348,12 +348,8 @@ function downloadOutputImage() {
             if (node.classList && node.classList.contains('selected-for-coloring')) return false;
             return true;
           },
-          // Skip font embedding to prevent 404 errors for external fonts
-          fontEmbedFn: function (url) {
-            // Return null to skip embedding fonts - prevents 404 errors
-            console.log('Skipping font embedding for:', url);
-            return Promise.resolve(null);
-          },
+          // Skip font embedding to prevent CORS and blob errors for external fonts
+          skipFonts: true,
           imagePlaceholder:
             'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y0ZjRmNCIvPjwvc3ZnPg==',
         };
