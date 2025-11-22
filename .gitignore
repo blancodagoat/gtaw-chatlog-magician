@@ -98,6 +98,9 @@ hooks/
 # Config files with sensitive data (webhook URLs, API keys)
 js/config.js
 
+# Changelog (for local use only)
+CHANGELOG.md
+
 # Temporary files
 *.tmp
 *.temp
