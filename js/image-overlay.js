@@ -259,7 +259,7 @@
       // Ensure initial state matches current mode (chat mode by default)
       // Clear Image button should only be visible when NOT in chat mode
       if (this.currentMode === 'chat') {
-        if (clearImageBtn) clearImageBtn.style.display = 'none';
+        if (clearImageBtn) clearImageBtn.classList.add('button-hidden');
         if (overlayControlsGroup) overlayControlsGroup.style.display = 'none';
         if (overlaySection) overlaySection.style.display = 'none';
         if (outputDiv) outputDiv.style.display = 'block';
@@ -275,7 +275,7 @@
           toggleButton.querySelector('.mode-text').textContent = 'Image Overlay';
           if (overlaySection) overlaySection.style.display = 'block';
           if (outputDiv) outputDiv.style.display = 'none';
-          if (clearImageBtn) clearImageBtn.style.display = 'inline-block';
+          if (clearImageBtn) clearImageBtn.classList.remove('button-hidden');
           if (overlayControlsGroup) overlayControlsGroup.style.display = 'flex';
         } else {
           toggleButton.classList.add('active');
@@ -283,7 +283,7 @@
           toggleButton.querySelector('.mode-text').textContent = 'Chat Only';
           if (overlaySection) overlaySection.style.display = 'none';
           if (outputDiv) outputDiv.style.display = 'block';
-          if (clearImageBtn) clearImageBtn.style.display = 'none';
+          if (clearImageBtn) clearImageBtn.classList.add('button-hidden');
           if (overlayControlsGroup) overlayControlsGroup.style.display = 'none';
         }
       });

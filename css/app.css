@@ -555,6 +555,11 @@ label { display: none; }
     justify-content: center !important;
 }
 
+/* Hidden button state - must override button-group display */
+.button-group .button.button-hidden {
+    display: none !important;
+}
+
 /* Overlay controls group - matches button-group styling */
 .overlay-controls-group {
     display: flex;
