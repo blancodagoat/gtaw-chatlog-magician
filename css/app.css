@@ -901,6 +901,25 @@ label { display: none; }
 	opacity: 0;
 }
 
+/* Censored content - blur mode */
+.censored-content.blur-mode {
+	opacity: 1 !important;
+	filter: blur(4px);
+	-webkit-filter: blur(4px);
+	user-select: none;
+	pointer-events: none;
+}
+
+/* Output font styles for Trebuchet MS */
+.output.font-trebuchet {
+	font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif !important;
+}
+
+/* History items should also respect font choice */
+.history-item-text.font-trebuchet {
+	font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif !important;
+}
+
 .info-bracket {
 	display: inline-block;
 	align-items: center;
