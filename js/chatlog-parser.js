@@ -5,6 +5,12 @@ $(document).ready(function () {
   let applyBackground = false;
   let applyCensorship = false;
   let disableCharacterNameColoring = false;
+  
+  // Censor style: 'remove' (hidden) or 'blur' (pixelated blur)
+  let censorStyle = localStorage.getItem('chatlogCensorStyle') || 'remove';
+  
+  // Font style: 'arial' or 'trebuchet'
+  let fontStyle = localStorage.getItem('chatlogFontStyle') || 'arial';
 
   const $textarea = $('#chatlogInput');
   const $output = $('#output');
@@ -12,6 +18,8 @@ $(document).ready(function () {
   const $toggleCensorshipBtn = $('#toggleCensorship');
   const $toggleCharacterNameColoringBtn = $('#toggleCharacterNameColoring');
   const $censorCharButton = $('#censorCharButton');
+  const $toggleCensorStyleBtn = $('#toggleCensorStyle');
+  const $toggleFontBtn = $('#toggleFont');
   const $lineLengthInput = $('#lineLengthInput');
   const $characterNameInput = $('#characterNameInput');
   const _$toggleColorPaletteBtn = $('#toggleColorPalette');
@@ -21,9 +29,16 @@ $(document).ready(function () {
   $toggleCensorshipBtn.click(toggleCensorship);
   $toggleCharacterNameColoringBtn.click(toggleCharacterNameColoring);
   $censorCharButton.click(copyCensorChar);
+  $toggleCensorStyleBtn.click(toggleCensorStyle);
+  $toggleFontBtn.click(toggleFontStyle);
   $lineLengthInput.on('input', processOutput);
   $characterNameInput.on('input', applyFilter);
   $textarea.off('input').on('input', throttle(processOutput, 200));
+  
+  // Initialize UI state from stored settings
+  updateCensorStyleUI();
+  updateFontStyleUI();
+  applyFontStyle();
 
   function toggleBackground() {
     applyBackground = !applyBackground;
@@ -54,6 +69,62 @@ $(document).ready(function () {
       .toggleClass('btn-outline-dark', !disableCharacterNameColoring);
     processOutput();
   }
+
+  function toggleCensorStyle() {
+    // Toggle between 'remove' and 'blur'
+    censorStyle = censorStyle === 'remove' ? 'blur' : 'remove';
+    localStorage.setItem('chatlogCensorStyle', censorStyle);
+    updateCensorStyleUI();
+    processOutput();
+  }
+
+  function updateCensorStyleUI() {
+    const $icon = $toggleCensorStyleBtn.find('i');
+    const $text = $toggleCensorStyleBtn.find('.censor-style-text');
+    
+    if (censorStyle === 'blur') {
+      $icon.removeClass('fa-eye-slash').addClass('fa-eye');
+      $text.text('Blur');
+      $toggleCensorStyleBtn.attr('title', 'Currently: Blur mode - Click to switch to removal');
+    } else {
+      $icon.removeClass('fa-eye').addClass('fa-eye-slash');
+      $text.text('Remove');
+      $toggleCensorStyleBtn.attr('title', 'Currently: Remove mode - Click to switch to blur');
+    }
+  }
+
+  function toggleFontStyle() {
+    // Toggle between 'arial' and 'trebuchet'
+    fontStyle = fontStyle === 'arial' ? 'trebuchet' : 'arial';
+    localStorage.setItem('chatlogFontStyle', fontStyle);
+    updateFontStyleUI();
+    applyFontStyle();
+  }
+
+  function updateFontStyleUI() {
+    const $text = $toggleFontBtn.find('.font-style-text');
+    
+    if (fontStyle === 'trebuchet') {
+      $text.text('Trebuchet');
+      $toggleFontBtn.attr('title', 'Currently: Trebuchet MS - Click to switch to Arial');
+    } else {
+      $text.text('Arial');
+      $toggleFontBtn.attr('title', 'Currently: Arial - Click to switch to Trebuchet MS');
+    }
+  }
+
+  function applyFontStyle() {
+    if (fontStyle === 'trebuchet') {
+      $output.addClass('font-trebuchet');
+    } else {
+      $output.removeClass('font-trebuchet');
+    }
+  }
+  
+  // Expose censor style getter for other modules
+  window.getCensorStyle = function() {
+    return censorStyle;
+  };
 
   function applyFilter() {
     processOutput();
@@ -501,7 +572,9 @@ $(document).ready(function () {
       return line.replace(/÷(.*?)÷/g, (match, p1) => {
         // Ensure we're not duplicating content
         if (p1 && p1.trim()) {
-          return `<span class="hidden censored-content" data-original="${p1.replace(/"/g, '&quot;')}">${p1}</span>`;
+          // Apply class based on censor style setting
+          const blurClass = censorStyle === 'blur' ? ' blur-mode' : '';
+          return `<span class="hidden censored-content${blurClass}" data-original="${p1.replace(/"/g, '&quot;')}">${p1}</span>`;
         }
         return match; // Return original if no content to censor
       });
@@ -1131,7 +1204,9 @@ $(document).ready(function () {
 
     const flushCensor = () => {
       if (censorBuffer.length > 0) {
-        html += `<span class="hidden censored-content" data-original="${censorBuffer}">${censorBuffer}</span>`;
+        // Apply class based on censor style setting
+        const blurClass = censorStyle === 'blur' ? ' blur-mode' : '';
+        html += `<span class="hidden censored-content${blurClass}" data-original="${censorBuffer}">${censorBuffer}</span>`;
         censorBuffer = '';
       }
     };

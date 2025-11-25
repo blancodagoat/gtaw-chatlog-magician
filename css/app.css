@@ -555,28 +555,19 @@ label { display: none; }
     justify-content: center !important;
 }
 
-/* Overlay controls group - matches button-group styling */
-.overlay-controls-group {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: stretch;
-    gap: 0.25rem;
-    margin-bottom: 1rem;
+/* Hidden button/control state - must override button-group display */
+.button-group .button.button-hidden,
+.button-group > div.button.button-hidden {
+    display: none !important;
 }
 
-.overlay-controls-group > div {
-    margin: 0 !important;
-    border-radius: 0 !important;
+/* Overlay controls within button-group */
+.button-group .overlay-control {
     flex-shrink: 0;
-    height: 44px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0.85em 1em !important;
     gap: 4px;
 }
 
-.overlay-controls-group input[type="number"] {
+.button-group .overlay-control input[type="number"] {
     background: transparent !important;
     border: none !important;
     color: inherit !important;
@@ -588,7 +579,7 @@ label { display: none; }
     box-shadow: none !important;
 }
 
-.overlay-controls-group input[type="number"]:focus {
+.button-group .overlay-control input[type="number"]:focus {
     outline: 1px solid rgba(255, 255, 255, 0.3) !important;
     outline-offset: -1px !important;
 }
@@ -899,6 +890,25 @@ label { display: none; }
 
 .hidden {
 	opacity: 0;
+}
+
+/* Censored content - blur mode */
+.censored-content.blur-mode {
+	opacity: 1 !important;
+	filter: blur(4px);
+	-webkit-filter: blur(4px);
+	user-select: none;
+	pointer-events: none;
+}
+
+/* Output font styles for Trebuchet MS */
+.output.font-trebuchet {
+	font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif !important;
+}
+
+/* History items should also respect font choice */
+.history-item-text.font-trebuchet {
+	font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif !important;
 }
 
 .info-bracket {
