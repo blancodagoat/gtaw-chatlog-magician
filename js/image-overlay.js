@@ -253,14 +253,13 @@
       const toggleButton = document.getElementById('toggleMode');
       const overlaySection = document.getElementById('imageOverlaySection');
       const outputDiv = document.getElementById('output');
-      const clearImageBtn = document.getElementById('clearImageBtn');
-      const overlayControlsGroup = document.querySelector('.overlay-controls-group');
+      // Get all overlay controls (includes clearImageBtn, textPaddingControl, exportDimensionsControl)
+      const overlayControls = document.querySelectorAll('.overlay-control');
 
       // Ensure initial state matches current mode (chat mode by default)
-      // Clear Image button should only be visible when NOT in chat mode
+      // Overlay controls should only be visible when NOT in chat mode
       if (this.currentMode === 'chat') {
-        if (clearImageBtn) clearImageBtn.classList.add('button-hidden');
-        if (overlayControlsGroup) overlayControlsGroup.style.display = 'none';
+        overlayControls.forEach(control => control.classList.add('button-hidden'));
         if (overlaySection) overlaySection.style.display = 'none';
         if (outputDiv) outputDiv.style.display = 'block';
       }
@@ -275,16 +274,16 @@
           toggleButton.querySelector('.mode-text').textContent = 'Image Overlay';
           if (overlaySection) overlaySection.style.display = 'block';
           if (outputDiv) outputDiv.style.display = 'none';
-          if (clearImageBtn) clearImageBtn.classList.remove('button-hidden');
-          if (overlayControlsGroup) overlayControlsGroup.style.display = 'flex';
+          // Show all overlay controls
+          overlayControls.forEach(control => control.classList.remove('button-hidden'));
         } else {
           toggleButton.classList.add('active');
           toggleButton.querySelector('.fas').className = 'fas fa-align-left';
           toggleButton.querySelector('.mode-text').textContent = 'Chat Only';
           if (overlaySection) overlaySection.style.display = 'none';
           if (outputDiv) outputDiv.style.display = 'block';
-          if (clearImageBtn) clearImageBtn.classList.add('button-hidden');
-          if (overlayControlsGroup) overlayControlsGroup.style.display = 'none';
+          // Hide all overlay controls
+          overlayControls.forEach(control => control.classList.add('button-hidden'));
         }
       });
     },

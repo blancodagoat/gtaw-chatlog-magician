@@ -123,11 +123,6 @@
                         <i class="fas fa-align-left" aria-hidden="true"></i> <span class="mode-text">Chat Only</span>
                       </button>
 
-                      <!-- Clear image (Red = Alert/Remove) - Only visible in overlay mode -->
-                      <button id="clearImageBtn" class="button alert button-hidden" type="button" title="Remove image">
-                        <i class="fas fa-times" aria-hidden="true"></i> Clear Image
-                      </button>
-
                       <!-- Toggle background (Yellow = Warning/Toggle) -->
                       <button id="toggleBackground" class="button warning" aria-label="Toggle background color" title="Switch between black and transparent background">
                         <i class="fas fa-adjust" aria-hidden="true"></i> Background
@@ -165,17 +160,15 @@
                       <a href="https://discord.gg/V8jQJrDXxF" target="_blank" rel="noopener noreferrer" class="button secondary censor-char-button" aria-label="Join Discord" title="Join our Discord server" style="background-color: #5865F2; color: #ffffff; text-decoration: none;">
                         <i class="fab fa-discord" aria-hidden="true"></i>
                       </a>
-                    </div>
 
-                    <!-- Hidden controls (displayed when overlay mode is active) -->
-                    <div class="overlay-controls-group" style="display: none;">
-                      <div class="button info" id="textPaddingControl">
+                      <!-- Overlay controls (only visible in overlay mode) -->
+                      <div class="button info overlay-control button-hidden" id="textPaddingControl">
                         <input type="number" id="textPaddingHorizontal" min="0" max="200" value="0" step="5" style="width: 60px; height: auto; margin: 0; padding: 0; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center;" title="Horizontal padding (px)">
                         <span style="opacity: 0.7;">×</span>
                         <input type="number" id="textPaddingVertical" min="0" max="200" value="0" step="5" style="width: 60px; height: auto; margin: 0; padding: 0; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center;" title="Vertical padding (px)">
                         <span style="opacity: 0.7; font-size: 12px;">px</span>
                       </div>
-                      <div class="button warning" id="exportDimensionsControl">
+                      <div class="button warning overlay-control button-hidden" id="exportDimensionsControl">
                         <input type="number" id="exportWidth" min="100" max="7680" value="1600" step="1" style="width: 70px; height: auto; margin: 0; padding: 2px 4px; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center; border-radius: 0;" title="Export width (px)">
                         <span style="opacity: 0.7;">×</span>
                         <input type="number" id="exportHeight" min="100" max="4320" value="1200" step="1" style="width: 70px; height: auto; margin: 0; padding: 2px 4px; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center; border-radius: 0;" title="Export height (px)">
@@ -184,6 +177,11 @@
                         <input type="number" id="exportPPI" min="72" max="600" value="96" step="1" style="width: 60px; height: auto; margin: 0; padding: 2px 4px; border: none; background: transparent; color: inherit; font-size: inherit; text-align: center; border-radius: 0;" title="Export PPI">
                         <span style="opacity: 0.7; font-size: 12px;">PPI</span>
                       </div>
+
+                      <!-- Clear image (Red = Alert/Remove) - Only visible in overlay mode -->
+                      <button id="clearImageBtn" class="button alert overlay-control button-hidden" type="button" title="Remove image">
+                        <i class="fas fa-times" aria-hidden="true"></i> Clear Image
+                      </button>
                     </div>
                  </div>
               </div>
