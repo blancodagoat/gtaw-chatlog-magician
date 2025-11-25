@@ -254,12 +254,21 @@
       const overlaySection = document.getElementById('imageOverlaySection');
       const outputDiv = document.getElementById('output');
       const clearImageBtn = document.getElementById('clearImageBtn');
+      const overlayControlsGroup = document.querySelector('.overlay-controls-group');
+
+      // Ensure initial state matches current mode (chat mode by default)
+      // Clear Image button should only be visible when NOT in chat mode
+      if (this.currentMode === 'chat') {
+        if (clearImageBtn) clearImageBtn.style.display = 'none';
+        if (overlayControlsGroup) overlayControlsGroup.style.display = 'none';
+        if (overlaySection) overlaySection.style.display = 'none';
+        if (outputDiv) outputDiv.style.display = 'block';
+      }
 
       toggleButton?.addEventListener('click', () => {
         const newMode = this.currentMode === 'chat' ? 'overlay' : 'chat';
         this.currentMode = newMode;
 
-        const overlayControlsGroup = document.querySelector('.overlay-controls-group');
         if (newMode === 'overlay') {
           toggleButton.classList.remove('active');
           toggleButton.querySelector('.fas').className = 'fas fa-layer-group';
