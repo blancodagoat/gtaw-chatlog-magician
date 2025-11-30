@@ -11,12 +11,15 @@ This project has been migrated from Vercel to Cloudflare Pages.
 3. Connect your Git repository
 4. **IMPORTANT - Configure build settings:**
    - **Framework preset**: `None` or `Other`
-   - **Build command**: (leave completely empty - do NOT use `npx wrangler deploy`)
-   - **Build output directory**: `/` (root directory)
-   - **Root directory**: `/` (leave as root)
+   - **Build command**: ⚠️ **LEAVE COMPLETELY EMPTY** - do NOT enter `/`, do NOT enter `npx wrangler deploy`, do NOT enter anything. The field should be blank.
+   - **Build output directory**: `/` (just type a forward slash `/`)
+   - **Root directory**: `/` (just type a forward slash `/`)
    - **Node.js version**: `22` (or latest)
 
-**⚠️ CRITICAL:** Make sure the build command is **completely empty**. Cloudflare Pages will automatically detect and deploy your static files and Functions.
+**⚠️ CRITICAL:** 
+- Build command = **EMPTY/BLANK** (not `/`, not any text, just empty)
+- Build output directory = `/` (this is the directory path, not the command)
+- If you see "Permission denied" or "Executing user deploy command: /", you set the build command to `/` by mistake - clear it completely!
 
 ### 2. Set Environment Variables
 
@@ -76,14 +79,17 @@ After deployment, test:
 4. Click **Builds & deployments** (under Settings)
 5. Find the **Build configuration** section
 6. Click **Edit configuration** or the pencil icon
-7. **DELETE/CLEAR the "Build command" field** - make it completely empty
-8. Set **Build output directory** to `/` (just a forward slash)
-9. Set **Root directory** to `/` (just a forward slash)  
+7. **DELETE/CLEAR the "Build command" field** - make it completely empty (not `/`, not any text, just blank)
+8. Set **Build output directory** to `/` (this is a directory path, not a command)
+9. Set **Root directory** to `/` (this is a directory path, not a command)
 10. **Framework preset**: Select `None` or `Other`
 11. Click **Save**
 12. Go to **Deployments** tab and click **Retry deployment** or push a new commit
 
-**⚠️ The build command field must be COMPLETELY EMPTY - no text, no spaces, nothing.**
+**⚠️ IMPORTANT DISTINCTION:**
+- **Build command** = EMPTY/BLANK (this is what gets executed - leave it empty!)
+- **Build output directory** = `/` (this is where files are served from - this is correct!)
+- If you see "Permission denied" or "Executing user deploy command: /", you accidentally put `/` in the build command field - clear it!
 
 ### Functions Not Working
 
