@@ -65,15 +65,25 @@ After deployment, test:
 
 ## Troubleshooting
 
-### Error: "Missing entry-point to Worker script"
+### Error: "Missing entry-point to Worker script" or "Executing user deploy command: npx wrangler deploy"
 
-**Problem:** Cloudflare Pages is trying to use `npx wrangler deploy` which is for Workers, not Pages.
+**Problem:** Cloudflare Pages is trying to use `npx wrangler deploy` which is for Workers, not Pages. This happens when a build command is set in the dashboard.
 
-**Solution:**
-1. Go to your Cloudflare Pages project → **Settings** → **Builds & deployments**
-2. **Clear/remove the build command** (leave it completely empty)
-3. Set **Build output directory** to `/` (root)
-4. Save and redeploy
+**Solution - STEP BY STEP:**
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. Navigate to **Pages** → **Your Project Name**
+3. Click **Settings** (left sidebar)
+4. Click **Builds & deployments** (under Settings)
+5. Find the **Build configuration** section
+6. Click **Edit configuration** or the pencil icon
+7. **DELETE/CLEAR the "Build command" field** - make it completely empty
+8. Set **Build output directory** to `/` (just a forward slash)
+9. Set **Root directory** to `/` (just a forward slash)  
+10. **Framework preset**: Select `None` or `Other`
+11. Click **Save**
+12. Go to **Deployments** tab and click **Retry deployment** or push a new commit
+
+**⚠️ The build command field must be COMPLETELY EMPTY - no text, no spaces, nothing.**
 
 ### Functions Not Working
 
