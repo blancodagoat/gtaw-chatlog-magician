@@ -11,15 +11,17 @@ This project has been migrated from Vercel to Cloudflare Pages.
 3. Connect your Git repository
 4. **IMPORTANT - Configure build settings:**
    - **Framework preset**: `None` or `Other`
-   - **Build command**: ⚠️ **LEAVE COMPLETELY EMPTY** - do NOT enter `/`, do NOT enter `npx wrangler deploy`, do NOT enter anything. The field should be blank.
+   - **Build command**: Leave empty/None (do NOT enter `/`, do NOT enter `npx wrangler deploy`)
+   - **Deploy command**: ⚠️ **LEAVE COMPLETELY EMPTY** - This is the field causing your error! Do NOT enter `/`, do NOT enter anything. The field should be blank.
    - **Build output directory**: `/` (just type a forward slash `/`)
    - **Root directory**: `/` (just type a forward slash `/`)
    - **Node.js version**: `22` (or latest)
 
 **⚠️ CRITICAL:** 
-- Build command = **EMPTY/BLANK** (not `/`, not any text, just empty)
-- Build output directory = `/` (this is the directory path, not the command)
-- If you see "Permission denied" or "Executing user deploy command: /", you set the build command to `/` by mistake - clear it completely!
+- **Build command** = Empty/None (this is correct)
+- **Deploy command** = **MUST BE EMPTY/BLANK** - This is what's causing "Executing user deploy command: /" error!
+- **Build output directory** = `/` (this is the directory path, not a command)
+- **Root directory** = `/` (this is correct)
 
 ### 2. Set Environment Variables
 
@@ -79,17 +81,21 @@ After deployment, test:
 4. Click **Builds & deployments** (under Settings)
 5. Find the **Build configuration** section
 6. Click **Edit configuration** or the pencil icon
-7. **DELETE/CLEAR the "Build command" field** - make it completely empty (not `/`, not any text, just blank)
-8. Set **Build output directory** to `/` (this is a directory path, not a command)
-9. Set **Root directory** to `/` (this is a directory path, not a command)
-10. **Framework preset**: Select `None` or `Other`
-11. Click **Save**
-12. Go to **Deployments** tab and click **Retry deployment** or push a new commit
+7. **DELETE/CLEAR the "Deploy command" field** - make it completely empty (not `/`, not any text, just blank)
+8. **Build command** should also be empty/None
+9. Set **Build output directory** to `/` (this is a directory path, not a command)
+10. Set **Root directory** to `/` (this is a directory path, not a command)
+11. **Framework preset**: Select `None` or `Other`
+12. Click **Save**
+13. Go to **Deployments** tab and click **Retry deployment** or push a new commit
 
-**⚠️ IMPORTANT DISTINCTION:**
-- **Build command** = EMPTY/BLANK (this is what gets executed - leave it empty!)
+**⚠️ IMPORTANT - Cloudflare Pages has TWO command fields:**
+- **Build command** = Should be empty/None (this is correct if it says "None")
+- **Deploy command** = ⚠️ **MUST BE EMPTY** - This is what's causing your error! Clear this field completely!
 - **Build output directory** = `/` (this is where files are served from - this is correct!)
-- If you see "Permission denied" or "Executing user deploy command: /", you accidentally put `/` in the build command field - clear it!
+- **Root directory** = `/` (this is correct!)
+
+**If you see "Executing user deploy command: /" or "Permission denied", you have `/` in the "Deploy command" field - clear it!**
 
 ### Functions Not Working
 
