@@ -15,9 +15,14 @@
   const TEXT_BASELINE = 'top';
   const TEXT_OFFSET_Y = 1; // pixel offset for text rendering
   const SHADOW_DIRECTIONS = [
-    [-1, -1], [-1, 0], [-1, 1],
-    [0, -1],           [0, 1],
-    [1, -1],  [1, 0],  [1, 1]
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
   ];
   const SHADOW_COLOR = '#000000';
   const BACKGROUND_COLOR = '#000000';
@@ -38,7 +43,7 @@
     const result = {
       valid: true,
       error: null,
-      warning: null
+      warning: null,
     };
 
     // Check for invalid dimensions
@@ -89,7 +94,7 @@
             window.ErrorLogger.logError('Overlay renderer prerequisite check failed', {
               error: error.message,
               imageOverlayState: !!window.ImageOverlayState,
-              context: 'renderAndDownload validation'
+              context: 'renderAndDownload validation',
             });
           }
           throw error;
@@ -102,7 +107,7 @@
               error: error.message,
               imageDropZone: !!window.ImageDropZone,
               droppedImageSrc: !!window.ImageDropZone?.state?.droppedImageSrc,
-              context: 'renderAndDownload validation'
+              context: 'renderAndDownload validation',
             });
           }
           throw error;
@@ -114,8 +119,9 @@
             window.ErrorLogger.logError('No chat messages for overlay rendering', {
               error: error.message,
               outputElement: !!document.getElementById('output'),
-              generatedCount: document.getElementById('output')?.querySelectorAll('.generated').length || 0,
-              context: 'renderAndDownload validation'
+              generatedCount:
+                document.getElementById('output')?.querySelectorAll('.generated').length || 0,
+              context: 'renderAndDownload validation',
             });
           }
           throw error;
@@ -131,7 +137,7 @@
             window.ErrorLogger.logError('Blob generation failed', {
               error: error.message,
               blobType: typeof blob,
-              context: 'renderAndDownload blob check'
+              context: 'renderAndDownload blob check',
             });
           }
           throw error;
@@ -144,7 +150,7 @@
           window.ErrorLogger.logInfo('Overlay image rendered successfully', {
             filename,
             blobSize: blob.size,
-            blobType: blob.type
+            blobType: blob.type,
           });
         }
       } catch (error) {
@@ -152,10 +158,11 @@
           window.ErrorLogger.logError('Overlay render and download failed', {
             error: error.message,
             stack: error.stack,
-            context: 'renderAndDownload main'
+            context: 'renderAndDownload main',
           });
         }
-        const userMessage = error.message || 'There was an error generating the overlay image. Please try again.';
+        const userMessage =
+          error.message || 'There was an error generating the overlay image. Please try again.';
         alert(userMessage);
       } finally {
         hideLoadingIndicator();
@@ -175,7 +182,7 @@
               error: error.message,
               imageOverlayState: !!window.ImageOverlayState,
               imageDropZone: !!window.ImageDropZone,
-              context: 'renderOverlayImage initialization'
+              context: 'renderOverlayImage initialization',
             });
           }
           throw error;
@@ -188,7 +195,7 @@
           if (window.ErrorLogger) {
             window.ErrorLogger.logError('Dropzone element not found', {
               error: error.message,
-              context: 'renderOverlayImage dropzone lookup'
+              context: 'renderOverlayImage dropzone lookup',
             });
           }
           throw error;
@@ -208,7 +215,7 @@
             exportWidth,
             exportHeight,
             exportPPI,
-            context: 'renderOverlayImage dimensions'
+            context: 'renderOverlayImage dimensions',
           });
         }
 
@@ -221,7 +228,7 @@
               error: error.message,
               exportWidth,
               exportHeight,
-              context: 'renderOverlayImage validation'
+              context: 'renderOverlayImage validation',
             });
           }
           throw error;
@@ -232,7 +239,7 @@
             warning: validation.warning,
             exportWidth,
             exportHeight,
-            context: 'renderOverlayImage validation'
+            context: 'renderOverlayImage validation',
           });
         }
 
@@ -257,7 +264,13 @@
         ctx.fillRect(0, 0, exportWidth, exportHeight);
 
         // 2. Draw the background image with its transforms
-        await this.drawImageWithTransforms(ctx, exportWidth, exportHeight, scaleRatioX, scaleRatioY);
+        await this.drawImageWithTransforms(
+          ctx,
+          exportWidth,
+          exportHeight,
+          scaleRatioX,
+          scaleRatioY
+        );
 
         // 3. Draw the chat overlay - use dom-to-image to capture CSS-styled overlay
         const overlayContainer = document.querySelector('.chat-overlay-container');
@@ -265,7 +278,7 @@
           try {
             // Capture the overlay container as an image (preserves all CSS styling)
             const overlayBlob = await domtoimage.toBlob(overlayContainer, {
-              fontEmbedFn: () => Promise.resolve(null)
+              fontEmbedFn: () => Promise.resolve(null),
             });
 
             // Convert blob to image
@@ -295,7 +308,7 @@
             if (window.ErrorLogger) {
               window.ErrorLogger.logWarning('Overlay capture failed, using fallback', {
                 error: error.message,
-                context: 'renderOverlayImage overlay capture'
+                context: 'renderOverlayImage overlay capture',
               });
             }
             await this.drawChatOverlay(ctx, exportWidth, exportHeight, scaleRatioX, scaleRatioY);
@@ -321,7 +334,7 @@
               blobType: blob?.type,
               exportWidth,
               exportHeight,
-              context: 'renderOverlayImage canvas'
+              context: 'renderOverlayImage canvas',
             });
           }
         } catch (error) {
@@ -331,7 +344,7 @@
               stack: error.stack,
               exportWidth,
               exportHeight,
-              context: 'renderOverlayImage canvas'
+              context: 'renderOverlayImage canvas',
             });
           }
           throw new Error(`Failed to create canvas blob: ${error.message}`);
@@ -348,7 +361,7 @@
               originalSize: blob.size,
               finalSize: finalBlob.size,
               ppi: exportPPI,
-              context: 'renderOverlayImage PPI injection'
+              context: 'renderOverlayImage PPI injection',
             });
           }
 
@@ -358,7 +371,7 @@
             window.ErrorLogger.logWarning('PPI metadata injection failed, using original blob', {
               error: error.message,
               blobSize: blob.size,
-              context: 'renderOverlayImage PPI injection'
+              context: 'renderOverlayImage PPI injection',
             });
           }
           return blob;
@@ -368,7 +381,7 @@
           window.ErrorLogger.logError('renderOverlayImage failed', {
             error: error.message,
             stack: error.stack,
-            context: 'renderOverlayImage main'
+            context: 'renderOverlayImage main',
           });
         }
         throw error;
@@ -383,7 +396,13 @@
      * @param {number} scaleRatioX - Scale ratio for width (export/display)
      * @param {number} scaleRatioY - Scale ratio for height (export/display)
      */
-    drawImageWithTransforms: async function (ctx, canvasWidth, canvasHeight, scaleRatioX = 1.0, scaleRatioY = 1.0) {
+    drawImageWithTransforms: async function (
+      ctx,
+      canvasWidth,
+      canvasHeight,
+      scaleRatioX = 1.0,
+      scaleRatioY = 1.0
+    ) {
       const state = window.ImageOverlayState;
       const imgSrc = window.ImageDropZone?.state?.droppedImageSrc;
 
@@ -415,14 +434,16 @@
           message: error.message,
           context: 'Image loading for canvas rendering',
           timeout: IMAGE_LOAD_TIMEOUT_MS,
-          imageSource: imgSrc?.substring(0, 100) + '...' // Log first 100 chars
+          imageSource: imgSrc?.substring(0, 100) + '...', // Log first 100 chars
         };
 
         if (window.ImageErrorHandler) {
           window.ImageErrorHandler.logImageError(errorInfo);
         }
 
-        throw new Error('Failed to load image. The image may be too large or corrupted. Please try uploading a smaller image or refresh the page.');
+        throw new Error(
+          'Failed to load image. The image may be too large or corrupted. Please try uploading a smaller image or refresh the page.'
+        );
       }
 
       // Calculate object-fit: contain dimensions
@@ -476,7 +497,13 @@
      * @param {number} scaleRatioX - Scale ratio for width (export/display)
      * @param {number} scaleRatioY - Scale ratio for height (export/display)
      */
-    drawChatOverlay: async function (ctx, canvasWidth, canvasHeight, scaleRatioX = 1.0, scaleRatioY = 1.0) {
+    drawChatOverlay: async function (
+      ctx,
+      canvasWidth,
+      canvasHeight,
+      scaleRatioX = 1.0,
+      scaleRatioY = 1.0
+    ) {
       const state = window.ImageOverlayState;
 
       // Get chat lines from output
@@ -493,7 +520,7 @@
       const paddingV = parseInt(textPaddingVertical?.value) || 0;
 
       // Check if background is active - use global state variable set by chatlog-parser
-      const hasBackground = window.chatlogBackgroundActive || false;
+      const hasBackground = ChatlogParser.backgroundActive || false;
 
       // Apply transforms scaled to export dimensions (WYSIWYG)
       ctx.save();
@@ -507,7 +534,9 @@
 
       // Get font size from input field (matches actual chat display)
       const fontSizeInput = document.getElementById('font-label');
-      const fontSize = fontSizeInput ? parseInt(fontSizeInput.value) || TEXT_FONT_SIZE : TEXT_FONT_SIZE;
+      const fontSize = fontSizeInput
+        ? parseInt(fontSizeInput.value) || TEXT_FONT_SIZE
+        : TEXT_FONT_SIZE;
 
       // Setup text rendering
       ctx.font = `${TEXT_FONT_WEIGHT} ${fontSize}px ${TEXT_FONT_FAMILY}`;
@@ -523,9 +552,7 @@
         if (!isNaN(lineHeightValue)) {
           // If it's a unitless value like "1.3", multiply by font size
           // If it's already in pixels like "15.6px", parseFloat returns 15.6
-          LINE_HEIGHT = lineHeightStr.includes('px')
-            ? lineHeightValue
-            : lineHeightValue * fontSize;
+          LINE_HEIGHT = lineHeightStr.includes('px') ? lineHeightValue : lineHeightValue * fontSize;
         }
       }
 
@@ -534,7 +561,8 @@
         return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
       };
 
-      const colors = {
+      // Reserved for future use - color mapping from CSS variables
+      const _colors = {
         white: getCSSVariable('--white-color') || '#f1f1f1',
         grey: getCSSVariable('--grey-color') || '#939799',
         lightgrey: getCSSVariable('--lightgrey-color') || '#c6c4c4',
@@ -575,7 +603,7 @@
             ctx.fillStyle = BACKGROUND_COLOR;
             const rectX = currentX - bgPaddingH;
             const rectY = currentY - bgPaddingTop; // Shift up to account for top padding
-            const rectW = lineWidth + (bgPaddingH * 2);
+            const rectW = lineWidth + bgPaddingH * 2;
             const rectH = LINE_HEIGHT + bgPaddingTop + bgPaddingBottom; // Include both paddings
             ctx.fillRect(rectX, rectY, rectW, rectH);
           }
@@ -616,7 +644,8 @@
           if (text) {
             // Get color from parent span
             const parentSpan = node.parentElement;
-            const color = parentSpan && parentSpan.tagName === 'SPAN' ? getColor(parentSpan) : '#f1f1f1';
+            const color =
+              parentSpan && parentSpan.tagName === 'SPAN' ? getColor(parentSpan) : '#f1f1f1';
             currentLine.push({ text, color });
           }
         } else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -691,26 +720,30 @@
               const errorInfo = {
                 message: 'Failed to create blob from canvas',
                 context: 'Canvas blob creation',
-                canvasSize: `${canvas.width}x${canvas.height}`
+                canvasSize: `${canvas.width}x${canvas.height}`,
               };
 
               if (window.ImageErrorHandler) {
                 window.ImageErrorHandler.logImageError(errorInfo);
               }
 
-              reject(new Error('Failed to create blob from canvas. The canvas may be too large or the browser ran out of memory.'));
+              reject(
+                new Error(
+                  'Failed to create blob from canvas. The canvas may be too large or the browser ran out of memory.'
+                )
+              );
               return;
             }
 
             try {
               // Read the blob as ArrayBuffer to inject PPI metadata
-              const arrayBuffer = await blob.arrayBuffer().catch(error => {
+              const arrayBuffer = await blob.arrayBuffer().catch((error) => {
                 console.warn('[Renderer] Failed to read blob as ArrayBuffer:', error);
                 if (window.ErrorLogger) {
                   window.ErrorLogger.logWarning('Failed to read blob as ArrayBuffer', {
                     error: error.message,
                     blobSize: blob.size,
-                    context: 'ArrayBuffer conversion'
+                    context: 'ArrayBuffer conversion',
                   });
                 }
                 throw error;
@@ -720,13 +753,19 @@
               const finalBlob = new Blob([pngWithPPI], { type: CANVAS_IMAGE_FORMAT });
               resolve(finalBlob);
             } catch (error) {
-              console.warn('[Renderer] Failed to inject PPI metadata, returning blob without it:', error);
+              console.warn(
+                '[Renderer] Failed to inject PPI metadata, returning blob without it:',
+                error
+              );
               if (window.ErrorLogger) {
-                window.ErrorLogger.logWarning('PPI metadata injection failed, using original blob', {
-                  error: error.message,
-                  blobSize: blob.size,
-                  context: 'PPI injection'
-                });
+                window.ErrorLogger.logWarning(
+                  'PPI metadata injection failed, using original blob',
+                  {
+                    error: error.message,
+                    blobSize: blob.size,
+                    context: 'PPI injection',
+                  }
+                );
               }
               // Fall back to original blob without PPI if injection fails
               resolve(blob);
@@ -754,9 +793,15 @@
       // Find IHDR chunk end (search for IHDR signature)
       let ihdrEnd = -1;
       for (let i = 8; i < data.length - 4; i++) {
-        if (data[i] === 0x49 && data[i + 1] === 0x48 && data[i + 2] === 0x44 && data[i + 3] === 0x52) {
+        if (
+          data[i] === 0x49 &&
+          data[i + 1] === 0x48 &&
+          data[i + 2] === 0x44 &&
+          data[i + 3] === 0x52
+        ) {
           // IHDR found at i, chunk length is 4 bytes before
-          const chunkLength = (data[i - 4] << 24) | (data[i - 3] << 16) | (data[i - 2] << 8) | data[i - 1];
+          const chunkLength =
+            (data[i - 4] << 24) | (data[i - 3] << 16) | (data[i - 2] << 8) | data[i - 1];
           // Skip: chunk type (4) + data (chunkLength) + CRC (4)
           ihdrEnd = i + 4 + chunkLength + 4;
           break;
@@ -795,26 +840,26 @@
       phys[7] = 0x73; // s
 
       // X pixels per meter (big-endian)
-      phys[8] = (pixelsPerMeter >> 24) & 0xFF;
-      phys[9] = (pixelsPerMeter >> 16) & 0xFF;
-      phys[10] = (pixelsPerMeter >> 8) & 0xFF;
-      phys[11] = pixelsPerMeter & 0xFF;
+      phys[8] = (pixelsPerMeter >> 24) & 0xff;
+      phys[9] = (pixelsPerMeter >> 16) & 0xff;
+      phys[10] = (pixelsPerMeter >> 8) & 0xff;
+      phys[11] = pixelsPerMeter & 0xff;
 
       // Y pixels per meter (big-endian)
-      phys[12] = (pixelsPerMeter >> 24) & 0xFF;
-      phys[13] = (pixelsPerMeter >> 16) & 0xFF;
-      phys[14] = (pixelsPerMeter >> 8) & 0xFF;
-      phys[15] = pixelsPerMeter & 0xFF;
+      phys[12] = (pixelsPerMeter >> 24) & 0xff;
+      phys[13] = (pixelsPerMeter >> 16) & 0xff;
+      phys[14] = (pixelsPerMeter >> 8) & 0xff;
+      phys[15] = pixelsPerMeter & 0xff;
 
       // Unit: 1 = meter
       phys[16] = 0x01;
 
       // Calculate CRC for chunk type + data
       const crc = this.crc32(phys.slice(4, 17));
-      phys[17] = (crc >> 24) & 0xFF;
-      phys[18] = (crc >> 16) & 0xFF;
-      phys[19] = (crc >> 8) & 0xFF;
-      phys[20] = crc & 0xFF;
+      phys[17] = (crc >> 24) & 0xff;
+      phys[18] = (crc >> 16) & 0xff;
+      phys[19] = (crc >> 8) & 0xff;
+      phys[20] = crc & 0xff;
 
       // Combine: PNG signature + IHDR + pHYs + rest of PNG
       const result = new Uint8Array(data.length + 21);
@@ -831,16 +876,16 @@
      * @returns {number} - CRC32 checksum
      */
     crc32: function (data) {
-      let crc = 0xFFFFFFFF;
+      let crc = 0xffffffff;
 
       for (let i = 0; i < data.length; i++) {
         crc ^= data[i];
         for (let j = 0; j < 8; j++) {
-          crc = (crc >>> 1) ^ (0xEDB88320 & -(crc & 1));
+          crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
         }
       }
 
-      return (crc ^ 0xFFFFFFFF) >>> 0;
+      return (crc ^ 0xffffffff) >>> 0;
     },
   };
 

@@ -7,8 +7,8 @@
   // Constants
   const ZOOM_MIN_SCALE = 0.1;
   const ZOOM_MAX_SCALE = 5.0;
-  const ZOOM_STEP = 0.1;
-  const ZOOM_WHEEL_SENSITIVITY = 0.001;
+  const _ZOOM_STEP = 0.1; // Reserved for future use
+  const _ZOOM_WHEEL_SENSITIVITY = 0.001; // Reserved for future use
   const DEFAULT_SCALE = 1.0;
   const DEFAULT_DROPZONE_WIDTH = 800;
   const DEFAULT_DROPZONE_HEIGHT = 600;
@@ -185,7 +185,7 @@
       chatOverlay.className = 'chat-overlay-container';
 
       // Add data attribute if background is active (use global state from chatlog-parser)
-      if (window.chatlogBackgroundActive) {
+      if (ChatlogParser.backgroundActive) {
         chatOverlay.setAttribute('data-background', 'active');
       }
 
@@ -259,7 +259,7 @@
       // Ensure initial state matches current mode (chat mode by default)
       // Overlay controls should only be visible when NOT in chat mode
       if (this.currentMode === 'chat') {
-        overlayControls.forEach(control => control.classList.add('button-hidden'));
+        overlayControls.forEach((control) => control.classList.add('button-hidden'));
         if (overlaySection) overlaySection.style.display = 'none';
         if (outputDiv) outputDiv.style.display = 'block';
       }
@@ -270,20 +270,20 @@
 
         if (newMode === 'overlay') {
           toggleButton.classList.remove('active');
-          toggleButton.querySelector('.fas').className = 'fas fa-layer-group';
-          toggleButton.querySelector('.mode-text').textContent = 'Image Overlay';
+          const modeText = toggleButton.querySelector('.mode-text');
+          if (modeText) modeText.textContent = 'Overlay';
           if (overlaySection) overlaySection.style.display = 'block';
           if (outputDiv) outputDiv.style.display = 'none';
           // Show all overlay controls
-          overlayControls.forEach(control => control.classList.remove('button-hidden'));
+          overlayControls.forEach((control) => control.classList.remove('button-hidden'));
         } else {
           toggleButton.classList.add('active');
-          toggleButton.querySelector('.fas').className = 'fas fa-align-left';
-          toggleButton.querySelector('.mode-text').textContent = 'Chat Only';
+          const modeText = toggleButton.querySelector('.mode-text');
+          if (modeText) modeText.textContent = 'Chat';
           if (overlaySection) overlaySection.style.display = 'none';
           if (outputDiv) outputDiv.style.display = 'block';
           // Hide all overlay controls
-          overlayControls.forEach(control => control.classList.add('button-hidden'));
+          overlayControls.forEach((control) => control.classList.add('button-hidden'));
         }
       });
     },
@@ -370,7 +370,10 @@
         if (isChatControl && this.isChatDraggingEnabled) {
           // Ctrl/Cmd + scroll scales chat
           const delta = e.deltaY > 0 ? 0.9 : 1.1;
-          const newScale = Math.max(ZOOM_MIN_SCALE, Math.min(ZOOM_MAX_SCALE, this.chatTransform.scale * delta));
+          const newScale = Math.max(
+            ZOOM_MIN_SCALE,
+            Math.min(ZOOM_MAX_SCALE, this.chatTransform.scale * delta)
+          );
           this.chatTransform.scale = newScale;
           this.updateChatTransform();
         } else if (this.isImageDraggingEnabled) {
@@ -782,8 +785,10 @@
         if (exportWidthInput) localStorage.setItem('overlayExportWidth', exportWidthInput.value);
         if (exportHeightInput) localStorage.setItem('overlayExportHeight', exportHeightInput.value);
         if (exportPPIInput) localStorage.setItem('overlayExportPPI', exportPPIInput.value);
-        if (textPaddingHorizontal) localStorage.setItem('overlayPaddingHorizontal', textPaddingHorizontal.value);
-        if (textPaddingVertical) localStorage.setItem('overlayPaddingVertical', textPaddingVertical.value);
+        if (textPaddingHorizontal)
+          localStorage.setItem('overlayPaddingHorizontal', textPaddingHorizontal.value);
+        if (textPaddingVertical)
+          localStorage.setItem('overlayPaddingVertical', textPaddingVertical.value);
       } catch (e) {
         console.warn('[ImageOverlay] Could not save settings to localStorage:', e);
       }

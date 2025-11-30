@@ -1,11 +1,17 @@
 /**
- * DEPRECATED: This file is for Vercel. 
- * For Cloudflare Pages, use: functions/api/report-bug.js
+ * Cloudflare Pages Function - Bug Report Proxy
  * 
- * This file is kept for reference but will not be used on Cloudflare Pages.
+ * This keeps your Discord webhook URL completely private!
+ * The webhook URL is stored as an environment variable in Cloudflare Pages.
+ * 
+ * Setup in Cloudflare Pages Dashboard:
+ * 1. Go to your project settings
+ * 2. Settings → Environment Variables
+ * 3. Add: DISCORD_WEBHOOK_URL = your_webhook_url
+ * 4. Add: DEVELOPER_EMAIL = your_email (optional)
  */
 
-// naive in-memory rate limiter (best-effort within a single function instance)
+// Naive in-memory rate limiter (best-effort within a single function instance)
 const RATE_WINDOW_MS = 60_000; // 1 minute
 const RATE_MAX = 5;
 const requestLog = new Map(); // key -> [timestamps]
@@ -20,27 +26,27 @@ function allowRequest(key) {
   return true;
 }
 
-export default async (req, res) => {
-  // Only allow POST requests
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+export async function onRequestPost(context) {
+  const { request, env } = context;
 
-  // CORS headers for your domain
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Consider restricting to your domain in production
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  // CORS headers
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*', // Consider restricting to your domain in production
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
 
   try {
-    // basic rate limit by session or IP
-    const key = (req.body && req.body.sessionId) || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    // Basic rate limit by session or IP
+    const body = await request.json();
+    const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const key = body?.sessionId || clientIP;
+    
     if (!allowRequest(String(key))) {
-      return res.status(429).json({ error: 'Too many reports. Please wait and try again.' });
+      return new Response(
+        JSON.stringify({ error: 'Too many reports. Please wait and try again.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const {
@@ -52,11 +58,14 @@ export default async (req, res) => {
       errors,
       performance,
       fullReport
-    } = req.body;
+    } = body;
 
     // Basic validation
     if (typeof sessionId !== 'string' || typeof fullReport !== 'string') {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Sanitize/limit payload sizes
@@ -73,8 +82,8 @@ export default async (req, res) => {
     const truncatedReport = fullReport.slice(0, 1800);
 
     // Get webhook URL from environment variable (kept private!)
-    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-    const developerEmail = process.env.DEVELOPER_EMAIL;
+    const webhookUrl = env.DISCORD_WEBHOOK_URL;
+    const developerEmail = env.DEVELOPER_EMAIL;
 
     // Try Discord first
     if (webhookUrl) {
@@ -156,11 +165,14 @@ export default async (req, res) => {
       });
 
       if (discordResponse.ok) {
-        return res.status(200).json({
-          success: true,
-          message: 'Report sent to Discord',
-          method: 'discord'
-        });
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'Report sent to Discord',
+            method: 'discord'
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       } else {
         const errorText = await discordResponse.text().catch(() => 'Unable to read error');
         console.error('Discord webhook failed:', {
@@ -176,26 +188,47 @@ export default async (req, res) => {
 
     // Try email fallback if Discord failed or not configured
     if (developerEmail) {
-      // Note: For email, you'd need another serverless function or use client-side FormSubmit
+      // Note: For email, you'd need another function or use client-side FormSubmit
       // For now, return error to trigger client-side email fallback
-      return res.status(500).json({ 
-        error: 'Discord failed, use client-side email fallback',
-        fallback: 'email'
-      });
+      return new Response(
+        JSON.stringify({ 
+          error: 'Discord failed, use client-side email fallback',
+          fallback: 'email'
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    return res.status(500).json({ 
-      error: 'No reporting method configured',
-      fallback: 'manual'
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: 'No reporting method configured',
+        fallback: 'manual'
+      }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
     console.error('Error in bug report handler:', error);
-    return res.status(500).json({ 
-      error: 'Internal server error',
-      message: error.message,
-      fallback: 'manual'
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: 'Internal server error',
+        message: error.message,
+        fallback: 'manual'
+      }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
-};
+}
+
+// Handle OPTIONS for CORS preflight
+export async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
 

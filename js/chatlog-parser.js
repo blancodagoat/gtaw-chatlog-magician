@@ -1,40 +1,40 @@
+// Create namespace for chatlog parser API
+window.ChatlogParser = window.ChatlogParser || {};
+
 $(document).ready(function () {
   // Debug mode - set to false for production
   const DEBUG_MODE = false;
 
   let applyBackground = false;
-  let applyCensorship = false;
   let disableCharacterNameColoring = false;
-  
+
   // Censor style: 'remove' (hidden) or 'blur' (pixelated blur)
   let censorStyle = localStorage.getItem('chatlogCensorStyle') || 'remove';
-  
+
   // Font style: 'arial' or 'trebuchet'
   let fontStyle = localStorage.getItem('chatlogFontStyle') || 'arial';
 
   const $textarea = $('#chatlogInput');
   const $output = $('#output');
   const $toggleBackgroundBtn = $('#toggleBackground');
-  const $toggleCensorshipBtn = $('#toggleCensorship');
   const $toggleCharacterNameColoringBtn = $('#toggleCharacterNameColoring');
   const $censorCharButton = $('#censorCharButton');
   const $toggleCensorStyleBtn = $('#toggleCensorStyle');
   const $toggleFontBtn = $('#toggleFont');
   const $lineLengthInput = $('#lineLengthInput');
   const $characterNameInput = $('#characterNameInput');
-  const _$toggleColorPaletteBtn = $('#toggleColorPalette');
-  let _$colorPalette = $('#colorPalette');
 
   $toggleBackgroundBtn.click(toggleBackground);
-  $toggleCensorshipBtn.click(toggleCensorship);
   $toggleCharacterNameColoringBtn.click(toggleCharacterNameColoring);
   $censorCharButton.click(copyCensorChar);
   $toggleCensorStyleBtn.click(toggleCensorStyle);
   $toggleFontBtn.click(toggleFontStyle);
   $lineLengthInput.on('input', processOutput);
   $characterNameInput.on('input', applyFilter);
-  $textarea.off('input').on('input', throttle(processOutput, 200));
-  
+  // Use CONFIG if available, fallback to 200ms
+  const throttleDelay = (typeof CONFIG !== 'undefined' && CONFIG.INPUT_THROTTLE_MS) || 200;
+  $textarea.off('input').on('input', throttle(processOutput, throttleDelay));
+
   // Initialize UI state from stored settings
   updateCensorStyleUI();
   updateFontStyleUI();
@@ -44,29 +44,24 @@ $(document).ready(function () {
     applyBackground = !applyBackground;
     $output.toggleClass('background-active', applyBackground);
 
-    // Store background state globally so canvas renderer can access it
-    window.chatlogBackgroundActive = applyBackground;
+    // Store background state for other modules (image-renderer, image-overlay)
+    ChatlogParser.backgroundActive = applyBackground;
 
-    $toggleBackgroundBtn
-      .toggleClass('btn-dark', applyBackground)
-      .toggleClass('btn-outline-dark', !applyBackground);
+    // Update visual state
+    $toggleBackgroundBtn.toggleClass('active', applyBackground);
+    $toggleBackgroundBtn.find('.bg-text').text(applyBackground ? 'BG: On' : 'BG: Off');
 
-    processOutput();
-  }
-
-  function toggleCensorship() {
-    applyCensorship = !applyCensorship;
-    $toggleCensorshipBtn
-      .toggleClass('btn-dark', applyCensorship)
-      .toggleClass('btn-outline-dark', !applyCensorship);
     processOutput();
   }
 
   function toggleCharacterNameColoring() {
     disableCharacterNameColoring = !disableCharacterNameColoring;
+    // When disabled, button is NOT active (coloring is off)
+    // When enabled (not disabled), button IS active (coloring is on)
+    $toggleCharacterNameColoringBtn.toggleClass('active', !disableCharacterNameColoring);
     $toggleCharacterNameColoringBtn
-      .toggleClass('btn-dark', disableCharacterNameColoring)
-      .toggleClass('btn-outline-dark', !disableCharacterNameColoring);
+      .find('.name-color-text')
+      .text(disableCharacterNameColoring ? 'Names: Off' : 'Names: On');
     processOutput();
   }
 
@@ -79,18 +74,10 @@ $(document).ready(function () {
   }
 
   function updateCensorStyleUI() {
-    const $icon = $toggleCensorStyleBtn.find('i');
-    const $text = $toggleCensorStyleBtn.find('.censor-style-text');
-    
-    if (censorStyle === 'blur') {
-      $icon.removeClass('fa-eye-slash').addClass('fa-eye');
-      $text.text('Blur');
-      $toggleCensorStyleBtn.attr('title', 'Currently: Blur mode - Click to switch to removal');
-    } else {
-      $icon.removeClass('fa-eye').addClass('fa-eye-slash');
-      $text.text('Remove');
-      $toggleCensorStyleBtn.attr('title', 'Currently: Remove mode - Click to switch to blur');
-    }
+    $toggleCensorStyleBtn
+      .find('.censor-text')
+      .text(censorStyle === 'blur' ? 'Censor: Blur' : 'Censor: Remove');
+    $toggleCensorStyleBtn.toggleClass('active', censorStyle === 'blur');
   }
 
   function toggleFontStyle() {
@@ -102,15 +89,8 @@ $(document).ready(function () {
   }
 
   function updateFontStyleUI() {
-    const $text = $toggleFontBtn.find('.font-style-text');
-    
-    if (fontStyle === 'trebuchet') {
-      $text.text('Trebuchet');
-      $toggleFontBtn.attr('title', 'Currently: Trebuchet MS - Click to switch to Arial');
-    } else {
-      $text.text('Arial');
-      $toggleFontBtn.attr('title', 'Currently: Arial - Click to switch to Trebuchet MS');
-    }
+    $toggleFontBtn.find('.font-text').text(fontStyle === 'trebuchet' ? 'Trebuchet' : 'Arial');
+    $toggleFontBtn.toggleClass('active', fontStyle === 'trebuchet');
   }
 
   function applyFontStyle() {
@@ -120,9 +100,9 @@ $(document).ready(function () {
       $output.removeClass('font-trebuchet');
     }
   }
-  
+
   // Expose censor style getter for other modules
-  window.getCensorStyle = function() {
+  ChatlogParser.getCensorStyle = function () {
     return censorStyle;
   };
 
@@ -130,16 +110,8 @@ $(document).ready(function () {
     processOutput();
   }
 
-  // Make applyFilter globally accessible
-  window.applyFilter = applyFilter;
-
-  function _debounce(func, wait) {
-    let timeout;
-    return function (...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-  }
+  // Make applyFilter accessible to other modules
+  ChatlogParser.applyFilter = applyFilter;
 
   function throttle(func, limit) {
     let lastFunc, lastRan;
@@ -162,10 +134,6 @@ $(document).ready(function () {
         );
       }
     };
-  }
-
-  function _escapeRegex(text) {
-    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   function formatSaysLine(line, currentCharacterName) {
@@ -419,8 +387,8 @@ $(document).ready(function () {
     makeTextColorable();
   }
 
-  // Make processOutput globally accessible
-  window.processOutput = processOutput;
+  // Make processOutput accessible to other modules
+  ChatlogParser.processOutput = processOutput;
 
   function makeTextColorable() {
     // Process each .generated div individually
@@ -562,8 +530,8 @@ $(document).ready(function () {
       );
   }
 
-  // Make makeTextColorable globally accessible for the color palette
-  window.makeTextColorable = makeTextColorable;
+  // Make makeTextColorable accessible for the color palette
+  ChatlogParser.makeTextColorable = makeTextColorable;
 
   function applyUserCensorship(line) {
     // Use a more robust approach that handles browser compatibility issues
@@ -839,18 +807,18 @@ $(document).ready(function () {
     }
 
     if (line.startsWith('Age range:')) {
-      const parts = line.split('Age range:');
-      return wrapSpan('blue', 'Age range:') + wrapSpan('white', parts[1]);
+      const rest = line.substring('Age range:'.length);
+      return wrapSpan('blue', 'Age range:') + wrapSpan('white', rest);
     }
 
     if (line.startsWith('->')) {
-      const parts = line.split('->');
-      return wrapSpan('blue', '->') + wrapSpan('white', parts[1]);
+      const rest = line.substring('->'.length);
+      return wrapSpan('blue', '->') + wrapSpan('white', rest);
     }
 
     if (line.startsWith('[INFO]')) {
-      const parts = line.split('[INFO]');
-      return wrapSpan('blue', '[INFO]') + wrapSpan('white', parts[1]);
+      const rest = line.substring('[INFO]'.length);
+      return wrapSpan('blue', '[INFO]') + wrapSpan('white', rest);
     }
 
     if (line.match(/^___Tattoos description of .+___$/)) {
@@ -858,8 +826,8 @@ $(document).ready(function () {
     }
 
     if (line.startsWith('[CASHTAP]')) {
-      const parts = line.split('[CASHTAP]');
-      return wrapSpan('green', '[CASHTAP]') + wrapSpan('white', parts[1]);
+      const rest = line.substring('[CASHTAP]'.length);
+      return wrapSpan('green', '[CASHTAP]') + wrapSpan('white', rest);
     }
 
     if (line.match(/\|------ .+'s Items \d{2}\/[A-Z]{3}\/\d{4} - \d{2}:\d{2}:\d{2} ------\|/)) {
@@ -1046,21 +1014,25 @@ $(document).ready(function () {
 
     if (line.includes('You have received an invitation to join the')) {
       const parts = line.split('join the ');
-      const factionPart = parts[1].split(',')[0];
-      return (
-        parts[0] + 'join the ' + wrapSpan('yellow', factionPart) + ', type /faccept to confirm'
-      );
+      if (parts[1]) {
+        const factionPart = parts[1].split(',')[0];
+        return (
+          parts[0] + 'join the ' + wrapSpan('yellow', factionPart) + ', type /faccept to confirm'
+        );
+      }
     }
 
     if (line.includes("You're now a member of")) {
       const parts = line.split('member of ');
-      const factionPart = parts[1].split(' you')[0];
-      return (
-        parts[0] +
-        'member of ' +
-        wrapSpan('yellow', factionPart) +
-        ' you may need to /switchfactions to set it as your active faction!'
-      );
+      if (parts[1]) {
+        const factionPart = parts[1].split(' you')[0];
+        return (
+          parts[0] +
+          'member of ' +
+          wrapSpan('yellow', factionPart) +
+          ' you may need to /switchfactions to set it as your active faction!'
+        );
+      }
     }
 
     if (lowerLine.startsWith("you've cut")) return formatDrugCut(line);
@@ -1184,8 +1156,8 @@ $(document).ready(function () {
     return line;
   }
 
-  // Make formatLineWithFilter globally accessible for history panel
-  window.formatLineWithFilter = formatLineWithFilter;
+  // Make formatLineWithFilter accessible for history panel
+  ChatlogParser.formatLineWithFilter = formatLineWithFilter;
 
   function escapeHTML(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };

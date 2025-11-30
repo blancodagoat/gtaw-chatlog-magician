@@ -988,8 +988,35 @@ label { display: none; }
 }
 
 .censor-char-button {
-	/* Remove custom overrides - use default button styling */
-	min-width: 44px !important; /* Just wide enough for the symbol */
+	min-width: 44px !important;
+	font-size: 1.25rem !important;
+	font-weight: bold !important;
+}
+
+/* Icon-only buttons */
+.button.icon-btn {
+	min-width: 44px;
+	padding: 0.85em !important;
+	aspect-ratio: 1;
+}
+
+.button.icon-btn i {
+	font-size: 1rem;
+}
+
+/* Active state for toggle icon buttons - brighter with ring */
+.button.icon-btn.active {
+	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.button.warning.icon-btn.active {
+	background-color: #e0a800;
+	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 193, 7, 0.5);
+}
+
+.button.secondary.icon-btn.active {
+	background-color: #5a6268;
+	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(108, 117, 125, 0.5);
 }
 
 .history-dropdown {

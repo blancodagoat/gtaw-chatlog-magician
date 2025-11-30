@@ -5,31 +5,46 @@ if (typeof window.Foundation !== 'undefined') {
   console.warn('Foundation framework not available');
 }
 
-// Debug mode - set to false for production
-const _DEBUG_MODE = false;
-
-// Configuration constants
+// Configuration constants - shared across modules via window.CONFIG
 const CONFIG = {
+  // Font settings
   FONT_SIZE_SMALL_THRESHOLD: 13, // Font sizes <= this get smoothing
   FONT_SIZE_MIN: 8, // Minimum allowed font size
   FONT_SIZE_MAX: 24, // Maximum allowed font size
   FONT_SIZE_DEFAULT: 12, // Default font size
+  FONT_SIZE_LARGE_THRESHOLD: 20, // Font sizes >= this are considered large
+
+  // Line settings
   LINE_LENGTH_MIN: 1, // Minimum line length
   LINE_LENGTH_DEFAULT: 77, // Default line length
-  MAX_HISTORY_ITEMS: 20, // Maximum history items to store
-  PROCESSING_DEBOUNCE_MS: 300, // Debounce delay for text processing
-  COPY_FEEDBACK_DURATION_MS: 1500, // How long to show copy feedback
-  AUTO_SAVE_INDICATOR_MS: 2000, // How long to show auto-save indicator
-  DRAG_FLAG_RESET_MS: 150, // Delay before resetting drag flag
   LINE_HEIGHT_SMALL: 1.5, // Line height for small fonts
   LINE_HEIGHT_DEFAULT: 1.45, // Default line height
   LINE_HEIGHT_LARGE: 1.35, // Line height for large fonts
-  FONT_SIZE_LARGE_THRESHOLD: 20, // Font sizes >= this are considered large
+
+  // Performance
+  INPUT_THROTTLE_MS: 200, // Throttle delay for input processing
+  PROCESSING_DEBOUNCE_MS: 300, // Debounce delay for text processing
+  IMAGE_LOAD_TIMEOUT_MS: 30000, // Image load timeout (30 seconds)
+
+  // UI timing
+  COPY_FEEDBACK_DURATION_MS: 1500, // How long to show copy feedback
+  AUTO_SAVE_INDICATOR_MS: 2000, // How long to show auto-save indicator
+  TOOLTIP_FADE_MS: 200, // Tooltip fade duration
+  ANIMATION_FADE_MS: 600, // General fade animation duration
+  DRAG_FLAG_RESET_MS: 150, // Delay before resetting drag flag
+
+  // History
+  MAX_HISTORY_ITEMS: 20, // Maximum history items to store
+
+  // BMC button nudge
   BMC_NUDGE_INITIAL_DELAY_MS: 15000, // Initial delay for BMC button nudge
   BMC_NUDGE_MIN_INTERVAL_MS: 20000, // Min time between BMC nudges
   BMC_NUDGE_MAX_INTERVAL_MS: 60000, // Max time between BMC nudges
   BMC_NUDGE_ANIMATION_MS: 800, // Duration of BMC nudge animation
 };
+
+// Expose CONFIG globally for other modules
+window.CONFIG = CONFIG;
 
 // Auto-save toast helper and localStorage instrumentation
 function showAutoSaveIndicator(message) {
@@ -509,7 +524,7 @@ function downloadOutputImage() {
         }
       };
 
-      img.onerror = function (event) {
+      img.onerror = function (_event) {
         if (hasCompleted) return;
         hasCompleted = true;
 
@@ -617,8 +632,8 @@ function hideLoadingIndicator() {
 function toggleBackground() {
   $('#output').toggleClass('background-active');
 
-  if (typeof processOutput === 'function') {
-    processOutput();
+  if (typeof ChatlogParser.processOutput === 'function') {
+    ChatlogParser.processOutput();
   }
 }
 
@@ -632,8 +647,8 @@ function autoResizeTextarea() {
   clearTimeout(processingTimeout);
   processingTimeout = setTimeout(() => {
     lastProcessedText = currentText;
-    if (typeof processOutput === 'function') {
-      processOutput();
+    if (typeof ChatlogParser.processOutput === 'function') {
+      ChatlogParser.processOutput();
     }
   }, CONFIG.PROCESSING_DEBOUNCE_MS);
 }
@@ -712,17 +727,18 @@ function showCopyError(button) {
   }, CONFIG.COPY_FEEDBACK_DURATION_MS);
 }
 
-function handleKeyboardShortcuts(_e) {
+// Reserved for future use - keyboard shortcuts handler
+function _handleKeyboardShortcuts(_e) {
   // Keyboard shortcuts removed as requested
 }
 
 function initTooltips() {
   $('.info-bracket').hover(
     function () {
-      $(this).find('.tooltip-text').fadeIn(200);
+      $(this).find('.tooltip-text').fadeIn(CONFIG.TOOLTIP_FADE_MS);
     },
     function () {
-      $(this).find('.tooltip-text').fadeOut(200);
+      $(this).find('.tooltip-text').fadeOut(CONFIG.TOOLTIP_FADE_MS);
     }
   );
 }
@@ -900,8 +916,8 @@ function refreshHistoryPanel() {
       const lines = text.split('\n');
       const formattedLines = lines.map((line) => {
         // Use the same formatting function as the main output
-        if (typeof window.formatLineWithFilter === 'function') {
-          return window.formatLineWithFilter(line);
+        if (typeof ChatlogParser.formatLineWithFilter === 'function') {
+          return ChatlogParser.formatLineWithFilter(line);
         }
         // Fallback: escape HTML and wrap in white span to match output
         const sanitized = line.replace(/[<>&"']/g, function (match) {
@@ -944,7 +960,6 @@ function _escapeHtml(unsafe) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
-
 
 $(document).ready(function () {
   // Initialize ColorPalette after all scripts are loaded
@@ -1026,7 +1041,7 @@ $(document).ready(function () {
     $('#characterNameInput').val(name);
     $('#characterNameDropdown').hide();
     localStorage.setItem('chatlogCharacterName', name);
-    if (typeof applyFilter === 'function') applyFilter();
+    if (typeof ChatlogParser.applyFilter === 'function') ChatlogParser.applyFilter();
   });
 
   $(document).on('click', '.remove-character-btn', function (e) {
@@ -1077,8 +1092,8 @@ $(document).ready(function () {
     updateFontSize();
 
     // Reprocess output to recalculate line breaks with new font size
-    if (typeof processOutput === 'function') {
-      processOutput();
+    if (typeof ChatlogParser.processOutput === 'function') {
+      ChatlogParser.processOutput();
     }
 
     showAutoSaveIndicator();
@@ -1094,8 +1109,8 @@ $(document).ready(function () {
     } catch (e) {
       console.warn('Could not save line length to localStorage:', e);
     }
-    if (typeof processOutput === 'function') {
-      processOutput();
+    if (typeof ChatlogParser.processOutput === 'function') {
+      ChatlogParser.processOutput();
     }
     showAutoSaveIndicator();
   });
@@ -1106,8 +1121,8 @@ $(document).ready(function () {
     } catch (e) {
       console.warn('Could not save character name to localStorage:', e);
     }
-    if (typeof applyFilter === 'function') {
-      applyFilter();
+    if (typeof ChatlogParser.applyFilter === 'function') {
+      ChatlogParser.applyFilter();
     }
     showAutoSaveIndicator();
   });
@@ -1151,10 +1166,10 @@ $(document).ready(function () {
   $('#toggleBackground').click(toggleBackground);
 
   // Auto-send error reports on console errors (automatic bug reporting)
-  window.addEventListener('error', function(event) {
+  window.addEventListener('error', function (_event) {
     // Debounce - only send once per session for similar errors
     if (window.ErrorLogger && !window.errorReportSent) {
-      setTimeout(function() {
+      setTimeout(function () {
         if (window.ErrorLogger.getLog().errors.length > 0) {
           window.ErrorLogger.sendReport();
           window.errorReportSent = true; // Prevent spam
@@ -1222,7 +1237,6 @@ $(document).ready(function () {
       }
     });
   })();
-
 });
 
 // Randomly shake the Buy Me a Coffee button to draw attention (non-intrusive)

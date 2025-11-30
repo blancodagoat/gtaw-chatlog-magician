@@ -399,8 +399,8 @@
 
   function makeTextColorable() {
     // Use the main chatlog parser's makeTextColorable function if it exists
-    if (typeof window.makeTextColorable === 'function') {
-      window.makeTextColorable();
+    if (typeof ChatlogParser !== 'undefined' && typeof ChatlogParser.makeTextColorable === 'function') {
+      ChatlogParser.makeTextColorable();
     } else {
       // Fallback to simple implementation
       $output.find('span').addClass('colorable');

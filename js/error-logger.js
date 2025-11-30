@@ -89,7 +89,7 @@
 
       // Calculate current usage
       for (let key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
           used += localStorage[key].length + key.length;
         }
       }
@@ -106,7 +106,7 @@
         used: used,
         percentage: percentage.toFixed(2),
         usedMB: (used / (1024 * 1024)).toFixed(2),
-        totalMB: (total / (1024 * 1024)).toFixed(2)
+        totalMB: (total / (1024 * 1024)).toFixed(2),
       };
     } catch (e) {
       console.warn('Could not check localStorage quota:', e);
@@ -122,11 +122,17 @@
       // Check quota before attempting to save
       const quota = checkLocalStorageQuota();
       if (quota && quota.percentage > 90) {
-        console.warn(`[ErrorLogger] localStorage usage high (${quota.percentage}%). Some logs may be lost.`);
-        addLogEntry('warnings', `localStorage quota critical: ${quota.percentage}% used (${quota.usedMB}MB / ${quota.totalMB}MB)`, {
-          quota: quota,
-          context: 'localStorage quota check'
-        });
+        console.warn(
+          `[ErrorLogger] localStorage usage high (${quota.percentage}%). Some logs may be lost.`
+        );
+        addLogEntry(
+          'warnings',
+          `localStorage quota critical: ${quota.percentage}% used (${quota.usedMB}MB / ${quota.totalMB}MB)`,
+          {
+            quota: quota,
+            context: 'localStorage quota check',
+          }
+        );
 
         // Try to clear old data if we're over 95%
         if (quota.percentage > 95) {
@@ -149,12 +155,18 @@
 
       // Check if this specific save will exceed quota
       if (quota && serialized.length > quota.available) {
-        console.error(`[ErrorLogger] Cannot save to localStorage - data size (${sizeKB}KB) exceeds available space (${(quota.available / 1024).toFixed(2)}KB)`);
-        addLogEntry('errors', `localStorage save failed: data too large (${sizeKB}KB > ${(quota.available / 1024).toFixed(2)}KB available)`, {
-          dataSize: serialized.length,
-          available: quota.available,
-          context: 'localStorage save'
-        });
+        console.error(
+          `[ErrorLogger] Cannot save to localStorage - data size (${sizeKB}KB) exceeds available space (${(quota.available / 1024).toFixed(2)}KB)`
+        );
+        addLogEntry(
+          'errors',
+          `localStorage save failed: data too large (${sizeKB}KB > ${(quota.available / 1024).toFixed(2)}KB available)`,
+          {
+            dataSize: serialized.length,
+            available: quota.available,
+            context: 'localStorage save',
+          }
+        );
         return;
       }
 
@@ -166,14 +178,14 @@
           error: e.message,
           errorName: e.name,
           context: 'localStorage save',
-          quota: checkLocalStorageQuota()
+          quota: checkLocalStorageQuota(),
         });
       } else {
         console.warn('[ErrorLogger] Could not save error log to localStorage:', e);
         addLogEntry('warnings', 'Failed to save error log to localStorage', {
           error: e.message,
           errorName: e.name,
-          context: 'localStorage save'
+          context: 'localStorage save',
         });
       }
     }
@@ -239,17 +251,17 @@
     const checkString = (message || '') + ' ' + (filename || '') + ' ' + (source || '');
 
     // Check extension patterns
-    if (extensionPatterns.some(pattern => checkString.includes(pattern))) {
+    if (extensionPatterns.some((pattern) => checkString.includes(pattern))) {
       return true;
     }
 
     // Check ad blocker patterns
-    if (adBlockerPatterns.some(pattern => checkString.includes(pattern))) {
+    if (adBlockerPatterns.some((pattern) => checkString.includes(pattern))) {
       return true;
     }
 
     // Check third-party patterns
-    if (thirdPartyPatterns.some(pattern => checkString.includes(pattern))) {
+    if (thirdPartyPatterns.some((pattern) => checkString.includes(pattern))) {
       return true;
     }
 
@@ -358,7 +370,7 @@
     // Merge abort signal with existing options
     const fetchOptions = {
       ...options,
-      signal: controller.signal
+      signal: controller.signal,
     };
 
     return originalFetch
@@ -393,7 +405,7 @@
             url: url,
             stack: error.stack,
             timeout: isTimeout,
-            timeoutMs: FETCH_TIMEOUT_MS
+            timeoutMs: FETCH_TIMEOUT_MS,
           });
         }
         throw error;
@@ -478,17 +490,19 @@
           valueSizeKB: valueSizeKB,
           error: e.message,
           quota: quota,
-          suggestion: 'Clear old data or reduce storage usage'
+          suggestion: 'Clear old data or reduce storage usage',
         });
 
-        console.error(`[ErrorLogger] localStorage quota exceeded when setting key "${key}" (${valueSizeKB}KB). Current usage: ${quota?.percentage}%`);
+        console.error(
+          `[ErrorLogger] localStorage quota exceeded when setting key "${key}" (${valueSizeKB}KB). Current usage: ${quota?.percentage}%`
+        );
       } else {
         console.error('[ErrorLogger] localStorage setItem failed:', e);
         addLogEntry('errors', `LocalStorage setItem failed for key "${key}"`, {
           key: key,
           valueSize: value.length,
           error: e.message,
-          errorName: e.name
+          errorName: e.name,
         });
       }
       throw e;
@@ -573,7 +587,14 @@
         report.push('  ' + (i + 1) + '. ' + err.message);
         report.push('     Time:    ' + err.timestamp);
         if (err.details.filename) {
-          report.push('     File:    ' + err.details.filename + ':' + err.details.lineno + ':' + err.details.colno);
+          report.push(
+            '     File:    ' +
+              err.details.filename +
+              ':' +
+              err.details.lineno +
+              ':' +
+              err.details.colno
+          );
         }
         if (err.details.errorType) {
           report.push('     Type:    ' + err.details.errorType);
@@ -581,7 +602,7 @@
         if (err.stack) {
           const stackLines = err.stack.split('\n').slice(0, 5);
           report.push('     Stack:   ' + stackLines[0]);
-          stackLines.slice(1).forEach(line => {
+          stackLines.slice(1).forEach((line) => {
             report.push('              ' + line.trim());
           });
         }
@@ -607,7 +628,12 @@
       errorLog.networkIssues.slice(-10).forEach((err, i) => {
         report.push('  ' + (i + 1) + '. ' + err.message);
         if (err.details) {
-          report.push('     Status: ' + (err.details.status || 'N/A') + ' | URL: ' + (err.details.url || 'N/A'));
+          report.push(
+            '     Status: ' +
+              (err.details.status || 'N/A') +
+              ' | URL: ' +
+              (err.details.url || 'N/A')
+          );
           if (err.details.timeout) {
             report.push('     Timeout: ' + err.details.timeoutMs + 'ms');
           }
@@ -642,33 +668,33 @@
     report.push('  Mode:          ' + appState.mode);
     report.push('  Font Size:     ' + appState.fontSize);
     report.push('  Line Length:   ' + appState.lineLength);
-    report.push('  Export:        ' + appState.exportWidth + '×' + appState.exportHeight + 'px @ ' + appState.exportPPI + ' PPI');
+    report.push(
+      '  Export:        ' +
+        appState.exportWidth +
+        '×' +
+        appState.exportHeight +
+        'px @ ' +
+        appState.exportPPI +
+        ' PPI'
+    );
     report.push('  Padding:       H:' + appState.paddingH + ' V:' + appState.paddingV);
     report.push('  Background:    ' + (appState.backgroundEnabled === 'true' ? 'ON' : 'OFF'));
     report.push('  Char Coloring: ' + (appState.characterColoring === 'false' ? 'OFF' : 'ON'));
     report.push('');
 
-    // CHATLOG INPUT
+    // CHATLOG INPUT - Always show full content
     report.push('📝 CHATLOG INPUT (' + appState.chatlogInput.length + ' chars)');
-    const inputPreview = appState.chatlogInput.substring(0, 500);
-    if (inputPreview) {
-      report.push('  ' + inputPreview.replace(/\n/g, '\n  '));
-      if (appState.chatlogInput.length > 500) {
-        report.push('  ... (truncated, ' + appState.chatlogInput.length + ' chars total)');
-      }
+    if (appState.chatlogInput) {
+      report.push('  ' + appState.chatlogInput.replace(/\n/g, '\n  '));
     } else {
       report.push('  (empty)');
     }
     report.push('');
 
-    // CHATLOG OUTPUT
+    // CHATLOG OUTPUT - Always show full content
     report.push('🖼️  CHATLOG OUTPUT (' + appState.outputHTML.length + ' chars HTML)');
-    const outputPreview = appState.outputHTML.substring(0, 500);
-    if (outputPreview) {
-      report.push('  ' + outputPreview.replace(/\n/g, '\n  '));
-      if (appState.outputHTML.length > 500) {
-        report.push('  ... (truncated, ' + appState.outputHTML.length + ' chars total)');
-      }
+    if (appState.outputHTML) {
+      report.push('  ' + appState.outputHTML.replace(/\n/g, '\n  '));
     } else {
       report.push('  (empty)');
     }
@@ -681,7 +707,15 @@
       report.push('  DOM Ready:     ' + errorLog.performance.timing.domReady + 'ms');
       report.push('  First Paint:   ' + errorLog.performance.timing.firstPaint + 'ms');
       if (errorLog.performance.memory !== 'N/A') {
-        report.push('  Memory:        ' + errorLog.performance.memory.usedJSHeapSize + ' / ' + errorLog.performance.memory.totalJSHeapSize + ' (limit: ' + errorLog.performance.memory.limit + ')');
+        report.push(
+          '  Memory:        ' +
+            errorLog.performance.memory.usedJSHeapSize +
+            ' / ' +
+            errorLog.performance.memory.totalJSHeapSize +
+            ' (limit: ' +
+            errorLog.performance.memory.limit +
+            ')'
+        );
       }
     } else {
       report.push('  Not available');
@@ -760,7 +794,7 @@
   function getConfig() {
     // Use default config if window.BUG_REPORT_CONFIG is not loaded
     const defaults = {
-      USE_SERVERLESS_PROXY: true, // Default to serverless proxy (Vercel)
+      USE_SERVERLESS_PROXY: true, // Default to serverless proxy (Cloudflare Pages)
       DISCORD_WEBHOOK_URL: '',
       RATE_LIMIT: {
         ENABLED: true,

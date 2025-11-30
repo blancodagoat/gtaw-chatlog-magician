@@ -1,17 +1,19 @@
 /**
  * Configuration Template for Automated Bug Reporting
  * 
- * SETUP INSTRUCTIONS (Vercel Deployment):
+ * SETUP INSTRUCTIONS (Cloudflare Pages Deployment):
  * ============================================================
  * 1. Copy this file to js/config.js:
  *    cp js/config.example.js js/config.js
  * 
- * 2. Add your Discord webhook to Vercel Environment Variables:
- *    - Vercel Dashboard → Settings → Environment Variables
+ * 2. Add your Discord webhook to Cloudflare Pages Environment Variables:
+ *    - Cloudflare Dashboard → Pages → Your Project → Settings → Environment Variables
  *    - Add: DISCORD_WEBHOOK_URL = your_webhook_url
+ *    - Add: DEVELOPER_EMAIL = your_email (optional)
  * 
- * 3. Deploy to Vercel:
+ * 3. Deploy to Cloudflare Pages:
  *    git push origin main
+ *    (or connect your repo in Cloudflare Pages dashboard)
  * 
  * 4. Your webhook URL stays 100% private on the server!
  * 
@@ -19,10 +21,10 @@
  */
 
 const BUG_REPORT_CONFIG = {
-  // Use serverless proxy (keeps webhook private on Vercel)
+  // Use serverless proxy (keeps webhook private on Cloudflare Pages)
   USE_SERVERLESS_PROXY: true,
   
-  // Leave empty - webhook is in Vercel environment variables (secure!)
+  // Leave empty - webhook is in Cloudflare Pages environment variables (secure!)
   DISCORD_WEBHOOK_URL: '',
   
   
