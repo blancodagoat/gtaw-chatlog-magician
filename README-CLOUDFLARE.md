@@ -9,10 +9,14 @@ This project has been migrated from Vercel to Cloudflare Pages.
 1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
 2. Navigate to **Pages** → **Create a project**
 3. Connect your Git repository
-4. Configure build settings:
-   - **Build command**: (leave empty - static site)
-   - **Build output directory**: `/` (root)
-   - **Root directory**: `/` (root)
+4. **IMPORTANT - Configure build settings:**
+   - **Framework preset**: `None` or `Other`
+   - **Build command**: (leave completely empty - do NOT use `npx wrangler deploy`)
+   - **Build output directory**: `/` (root directory)
+   - **Root directory**: `/` (leave as root)
+   - **Node.js version**: `22` (or latest)
+
+**⚠️ CRITICAL:** Make sure the build command is **completely empty**. Cloudflare Pages will automatically detect and deploy your static files and Functions.
 
 ### 2. Set Environment Variables
 
@@ -59,6 +63,30 @@ After deployment, test:
 - ✅ Image overlay functionality works
 - ✅ Download functionality works
 
+## Troubleshooting
+
+### Error: "Missing entry-point to Worker script"
+
+**Problem:** Cloudflare Pages is trying to use `npx wrangler deploy` which is for Workers, not Pages.
+
+**Solution:**
+1. Go to your Cloudflare Pages project → **Settings** → **Builds & deployments**
+2. **Clear/remove the build command** (leave it completely empty)
+3. Set **Build output directory** to `/` (root)
+4. Save and redeploy
+
+### Functions Not Working
+
+- Make sure `functions/api/report-bug.js` exists in your repository
+- Cloudflare Pages automatically detects Functions in the `functions/` directory
+- No additional configuration needed
+
+### Environment Variables Not Working
+
+- Make sure variables are set in **Settings** → **Environment Variables**
+- Variables are available in Functions via `env.DISCORD_WEBHOOK_URL`
+- Redeploy after adding/changing variables
+
 ## Support
 
 If you encounter issues:
@@ -66,4 +94,5 @@ If you encounter issues:
 2. Check browser console for errors
 3. Verify environment variables are set correctly
 4. Test the `/api/report-bug` endpoint manually
+5. Make sure build command is **empty** (not `npx wrangler deploy`)
 
