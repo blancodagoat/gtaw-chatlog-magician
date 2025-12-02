@@ -1,5 +1,4 @@
 # Cloudflare Pages Redirects/Rewrites
-# Equivalent to vercel.json rewrites
 
 /SiteMap.aspx /sitemap.txt 200
 

@@ -10,7 +10,8 @@
       "Bash(git push:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nFix incoming call syntax highlighting for simple format\n\nAdded support for simple incoming call format: (Phone) Incoming call from Name.\n- Phone identifier (e.g., iFruit 15) now highlights in yellow\n- Caller name highlights in yellow\n- Dot stays white\n- Maintains backward compatibility with full format including answer/decline commands\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(npm install:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
